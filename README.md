@@ -5,7 +5,7 @@ This is currently unfinished, I'm not sure when/if I'm going to finish this, so 
 
 Unfinished features:
 1. Models (props?) don't get converted (neither do sprites).
-2. Automatic entity conversion is unfinished and in a testing state (this is most needed for direct bsp to bsp conversion, disabled for VMFS right now).
+2. Automatic entity conversion is unfinished and in a testing state (this is most needed for direct bsp to bsp conversion, entities are converted as is for VMFS right now).
 3. Visibility doesn't work in converted BSPs.
 4. Water doesn't work quite properly in converted BSPs.
 5. Skybox textures don't get converted.
