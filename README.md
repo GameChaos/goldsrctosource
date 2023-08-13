@@ -27,6 +27,4 @@ For compiling debug shaders, you have to get sokol-shdc.exe. Dear ImGui and soko
 
 ## Example usage
 
-`-input "D:\Steam\steamapps\common\Half-Life\cstrike\maps\8b1_hellinashop.bsp" -outputvmf 8b1_hellinashop.vmf -outputbsp 8b1_hellinashop.bsp -valvepath "D:\Steam\steamapps\common\Half-Life\valve" -cstrikepath "D:\Steam\steamapps\common\Half-Life\cstrike"`
-
-`-valvepath` and `-cstrikepath` are hacks right now, they're only used for finding WADs. I don't read the WAD files from the worldspawn entity right now (which I really should do).
+`-input "D:\Steam\steamapps\common\Half-Life\cstrike\maps\kz_man_everest.bsp" -outputvmf debug/out.vmf -outputbsp debug/out.bsp -mod cstrike -enginepath "D:\Steam\steamapps\common\Half-Life"`
