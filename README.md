@@ -26,4 +26,9 @@ For compiling debug shaders, you have to get sokol-shdc.exe. Dear ImGui and soko
 
 ## Example usage
 
-`-input "D:\Steam\steamapps\common\Half-Life\cstrike\maps\kz_man_everest.bsp" -outputvmf debug/out.vmf -outputbsp debug/out.bsp -mod cstrike -enginepath "D:\Steam\steamapps\common\Half-Life" -assetpath "C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\csgo"`
+`goldsrctosource.exe -input "D:\Steam\steamapps\common\Half-Life\cstrike\maps\kz_man_everest.bsp" \
+-outputvmf debug/out.vmf \
+-outputbsp debug/out.bsp \
+-mod cstrike
+-enginepath "D:\Steam\steamapps\common\Half-Life" \
+-assetpath "C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\csgo"`
