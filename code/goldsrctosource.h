@@ -17,6 +17,9 @@
 #define SRC_MAX_BRUSH_SIDES 128
 #define SRC_MAX_SIDE_VERTS (SRC_MAX_BRUSH_SIDES - 1)
 
+#define CONVERTED_MATERIAL_FOLDER "gsrcconv/"
+#define CONVERTED_MATERIAL_PATH "materials/" CONVERTED_MATERIAL_FOLDER
+
 typedef hmm_vec2 v2;
 typedef hmm_vec3 v3;
 typedef hmm_vec4 v4;
@@ -77,8 +80,9 @@ union CmdArgs
 		CmdArg outputvmf;
 		CmdArg enginePath;
 		CmdArg mod;
+		CmdArg assetPath;
 	};
-	CmdArg args[6];
+	CmdArg args[7];
 };
 static_assert(MEMBER_SIZE(CmdArgs, args) == sizeof(CmdArgs), "CmdArgs size and args array length are mismatched!");
 

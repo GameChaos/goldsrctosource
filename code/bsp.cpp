@@ -334,7 +334,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		b32 transparent = mipTexture.name[0] == '{';
 		
 		char vtfFileName[256];
-		s32 vtfFileNameLen = Format(vtfFileName, sizeof(vtfFileName), "materials/gsrcconv/%s.vtf", mipTexture.name);
+		s32 vtfFileNameLen = Format(vtfFileName, sizeof(vtfFileName), CONVERTED_MATERIAL_PATH "%s.vtf", mipTexture.name);
 		GsrcMipTextureToVtf(tempArena, &texBuffer, mipTexture, textureData);
 #ifdef DEBUG_GRAPHICS
 		// TODO: both vmf.cpp and this can double texture count cos they both convert textures separately.
@@ -359,7 +359,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		BufferReset(&texBuffer);
 		
 		char vmtFileName[256];
-		s32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), "materials/gsrcconv/%s.vmt", mipTexture.name);
+		s32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), CONVERTED_MATERIAL_PATH "%s.vmt", mipTexture.name);
 		
 		char vmt[256];
 		s32 vmtFileLength = 0;
@@ -367,7 +367,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		{
 			vmtFileLength = Format(vmt, sizeof(vmt), "LightmappedGeneric\r\n"
 								   "{\r\n"
-								   "\t$basetexture \"gsrcconv/%s\"\r\n"
+								   "\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
 								   "\t$alphatest \"1\"\r\n"
 								   "}\r\n", mipTexture.name);
 		}
@@ -375,7 +375,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		{
 			vmtFileLength = Format(vmt, sizeof(vmt), "LightmappedGeneric\r\n"
 								   "{\r\n"
-								   "\t$basetexture \"gsrcconv/%s\"\r\n"
+								   "\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
 								   "}\r\n", mipTexture.name);
 		}
 		ZipBuilderAddFile(&zipBuilder, vmtFileName, vmtFileNameLen, vmt, vmtFileLength);
@@ -429,7 +429,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		}
 		else
 		{
-			formattedLen = Format(tdStringData, len, "gsrcconv/%s", mapData->lumpTextures.mipTextures[i]->name);
+			formattedLen = Format(tdStringData, len, CONVERTED_MATERIAL_FOLDER "%s", mapData->lumpTextures.mipTextures[i]->name);
 		}
 		Print("Texture: %s\n", mapData->lumpTextures.mipTextures[i]->name);
 		tdStringData += formattedLen + 1;

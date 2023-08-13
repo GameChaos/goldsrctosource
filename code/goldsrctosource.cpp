@@ -210,6 +210,8 @@ void BSPMain(s32 argCount, char *arguments[])
 	cmdArgs.outputvmf = {"-outputvmf", "Output path of the converted vmf file.", CMDARG_STRING};
 	cmdArgs.enginePath = {"-enginepath", "Path of the Half-Life/ folder. Example: \"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\"", CMDARG_STRING};
 	cmdArgs.mod = {"-mod", "Name of the mod folder. Example: cstrike", CMDARG_STRING};
+	// TODO: enable the usage of this when converting a bsp as well.
+	cmdArgs.assetPath = {"-assetpath", "Path to export materials and assets to when converting a VMF. Example: \"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\\". Converted materials will be put into \"" CONVERTED_MATERIAL_PATH "\" in this path.", CMDARG_STRING};
 	
 	if (!ParseCmdArgs(&cmdArgs, argCount, arguments))
 	{
@@ -218,6 +220,7 @@ void BSPMain(s32 argCount, char *arguments[])
 		return;
 	}
 	
+	// TODO: check if all the paths are valid
 	if (!cmdArgs.input.isInCmdLine)
 	{
 		Print("ERROR: Please provide an input bsp file with -input.\n\n");
@@ -246,6 +249,12 @@ void BSPMain(s32 argCount, char *arguments[])
 		return;
 	}
 	
+	char *assetPath = NULL;
+	if (cmdArgs.assetPath.isInCmdLine)
+	{
+		assetPath = cmdArgs.assetPath.stringValue;
+	}
+	
 	char valvePath[512];
 	Format(valvePath, sizeof(valvePath), "%s", cmdArgs.enginePath.stringValue);
 	AppendToPath(valvePath, sizeof(valvePath), "valve");
@@ -262,6 +271,7 @@ void BSPMain(s32 argCount, char *arguments[])
 	GsrcMapData mapData = {};
 	mapData.fileDataSize = fileData.size;
 	mapData.fileData = fileData.contents;
+	
 	
 	if (GsrcImportBsp(&tempArena, &mapData))
 	{
@@ -330,8 +340,8 @@ void BSPMain(s32 argCount, char *arguments[])
 		if (cmdArgs.outputvmf.isInCmdLine)
 		{
 			if (VmfFromGoldsource(&arena, &tempArena, &mapData, CMDARG_GET_STRING(cmdArgs.outputvmf),
-								  modPath, valvePath))
-			{		
+								  modPath, valvePath, assetPath))
+			{
 			}
 		}
 	}

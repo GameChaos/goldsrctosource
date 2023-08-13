@@ -192,7 +192,7 @@ internal void Polygon2DIntersect(Polygon2D *a, Polygon2D *b, Polygon2D *out)
     }
 }
 
-internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapData, char *outputPath, char *modPath, char *valvePath)
+internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapData, char *outputPath, char *modPath, char *valvePath, char *assetPath)
 {
 	b32 result = false;
 	ASSERT(outputPath);
@@ -213,89 +213,101 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	local_persist Wad3 wads[MAX_WADS] = {};
 	s32 wadCount = LoadWads(arena, modPath, valvePath, wads);
 	
-	//
-	// LUMP_PAKFILE
-	// convert GSRC_LUMP_TEXTURES into "files" in LUMP_PAKFILE
-	
-	FileWritingBuffer texBuffer = BufferCreate(tempArena, 8192 * 8192 * 3);
-	for (u32 i = 0; i < mapData->lumpTextures.mipTextureCount; i++)
+	// convert GSRC_LUMP_TEXTURES into files
+	// TODO: this should be merged with bsp.cpp somehow
+#ifdef DEBUG_GRAPHICS
+	if (true)
+#else
+	if (assetPath)
+#endif
 	{
-		if (mapData->lumpTextures.mipTextureOffsets[i] <= 0)
+		FileWritingBuffer texBuffer = BufferCreate(tempArena, 8192 * 8192 * 3);
+		for (u32 i = 0; i < mapData->lumpTextures.mipTextureCount; i++)
 		{
-			continue;
-		}
-		GsrcMipTexture mipTexture = *mapData->lumpTextures.mipTextures[i];
-		u8 *textureData = (u8 *)mapData->lumpTextures.mipTextures[i];
-		// NOTE(GameChaos): wad3 texture header and bsp miptexture structs are
-		// the exact same and they point to the exact same data as well!
-		static_assert(sizeof(Wad3TextureHeader) == sizeof(GsrcMipTexture), "");
-		if (mipTexture.offsets[0] <= 0)
-		{
-			FindTextureResult find = FindTextureInWads(wads, wadCount, mipTexture.name);
-			if (find.found)
+			if (mapData->lumpTextures.mipTextureOffsets[i] <= 0)
 			{
-				mipTexture = *(GsrcMipTexture *)wads[find.wadIndex].textures[find.textureIndex];
-				textureData = (u8 *)wads[find.wadIndex].textures[find.textureIndex];
+				continue;
+			}
+			GsrcMipTexture mipTexture = *mapData->lumpTextures.mipTextures[i];
+			u8 *textureData = (u8 *)mapData->lumpTextures.mipTextures[i];
+			// NOTE(GameChaos): wad3 texture header and bsp miptexture structs are
+			// the exact same and they point to the exact same data as well!
+			static_assert(sizeof(Wad3TextureHeader) == sizeof(GsrcMipTexture), "");
+			if (mipTexture.offsets[0] <= 0)
+			{
+				FindTextureResult find = FindTextureInWads(wads, wadCount, mipTexture.name);
+				if (find.found)
+				{
+					mipTexture = *(GsrcMipTexture *)wads[find.wadIndex].textures[find.textureIndex];
+					textureData = (u8 *)wads[find.wadIndex].textures[find.textureIndex];
+				}
+				else
+				{
+					Print("Couldn't find texture %s from wad files :(\n", mipTexture.name);
+					continue;
+				}
+			}
+			
+			GsrcMipTextureToVtf(tempArena, &texBuffer, mipTexture, textureData);
+#ifdef DEBUG_GRAPHICS
+			// TODO: both bsp.cpp and this can double texture count cos they both convert textures separately.
+			// do something about this!
+			ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
+			u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * 3);
+			u32 pixels = mipTexture.width * mipTexture.height;
+			u8 *palette = textureData + 2 + mipTexture.offsets[0] + pixels + (pixels >> 2) + (pixels >> 4) + (pixels >> 6);
+			for (u32 pix = 0; pix < pixels; pix++)
+			{
+				// NOTE(GameChaos): nonsense data for now
+				// TODO: downscale properly!
+				u32 indexOffset = mipTexture.offsets[0] + pix;
+				tempImgDataRgb888[pix * 3 + 0] = palette[textureData[indexOffset] * 3 + 2];
+				tempImgDataRgb888[pix * 3 + 1] = palette[textureData[indexOffset] * 3 + 1];
+				tempImgDataRgb888[pix * 3 + 2] = palette[textureData[indexOffset] * 3 + 0];
+			}
+			DebugGfxAddTexture(tempImgDataRgb888, mipTexture.width, mipTexture.height, true);
+			ArenaEndTemp(arenaTmp);
+#endif
+			
+			char pathBuffer[512];
+			if (assetPath)
+			{
+				Format(pathBuffer, sizeof(pathBuffer), assetPath);
+				char vtfFileName[64];
+				Format(vtfFileName, sizeof(vtfFileName), CONVERTED_MATERIAL_PATH "%s.vtf", mipTexture.name);
+				AppendToPath(pathBuffer, sizeof(pathBuffer), vtfFileName);
+				WriteEntireFile(pathBuffer, texBuffer.memory, (u32)texBuffer.usedBytes);
+			}
+			BufferReset(&texBuffer);
+			
+			char vmt[256];
+			s32 vmtFileLength = 0;
+			// NOTE(GameChaos): { means transparent
+			if (mipTexture.name[0] == '{')
+			{
+				vmtFileLength = Format(vmt, sizeof(vmt), "LightmappedGeneric\r\n"
+									   "{\r\n"
+									   "\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
+									   "\t$alphatest \"1\"\r\n"
+									   "}\r\n", mipTexture.name);
 			}
 			else
 			{
-				Print("Couldn't find texture %s from wad files :(\n", mipTexture.name);
-				continue;
+				vmtFileLength = Format(vmt, sizeof(vmt), "LightmappedGeneric\r\n"
+									   "{\r\n"
+									   "\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
+									   "}\r\n", mipTexture.name);
+			}
+			
+			if (assetPath)
+			{
+				Format(pathBuffer, sizeof(pathBuffer), assetPath);
+				char vmtFileName[64];
+				s32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), CONVERTED_MATERIAL_PATH "%s.vmt", mipTexture.name);
+				AppendToPath(pathBuffer, sizeof(pathBuffer), vmtFileName);
+				WriteEntireFile(pathBuffer, vmt, vmtFileLength);
 			}
 		}
-		
-		// TODO: don't hardcode material paths
-		char vtfFileName[256];
-		s32 vtfFileNameLen = Format(vtfFileName, sizeof(vtfFileName), "materials/gsrcconv/%s.vtf", mipTexture.name);
-		
-		GsrcMipTextureToVtf(tempArena, &texBuffer, mipTexture, textureData);
-#ifdef DEBUG_GRAPHICS
-		// TODO: both bsp.cpp and this can double texture count cos they both convert textures separately.
-		// do something about this!
-		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-		u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * 3);
-		u32 pixels = mipTexture.width * mipTexture.height;
-		u8 *palette = textureData + 2 + mipTexture.offsets[0] + pixels + (pixels >> 2) + (pixels >> 4) + (pixels >> 6);
-		for (u32 pix = 0; pix < pixels; pix++)
-		{
-			// NOTE(GameChaos): nonsense data for now
-			// TODO: downscale properly!
-			u32 indexOffset = mipTexture.offsets[0] + pix;
-			tempImgDataRgb888[pix * 3 + 0] = palette[textureData[indexOffset] * 3 + 2];
-			tempImgDataRgb888[pix * 3 + 1] = palette[textureData[indexOffset] * 3 + 1];
-			tempImgDataRgb888[pix * 3 + 2] = palette[textureData[indexOffset] * 3 + 0];
-		}
-		DebugGfxAddTexture(tempImgDataRgb888, mipTexture.width, mipTexture.height, true);
-		ArenaEndTemp(arenaTmp);
-#endif
-		// TODO: vmt and vtf files should be written to a place defined by the user!
-#ifdef GC_DEBUG
-		WriteEntireFile(vtfFileName, texBuffer.memory, (u32)texBuffer.usedBytes);
-		BufferReset(&texBuffer);
-		
-		char vmtFileName[256];
-		s32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), "materials/gsrcconv/%s.vmt", mipTexture.name);
-		
-		char vmt[256];
-		s32 vmtFileLength = 0;
-		// NOTE(GameChaos): { means transparent
-		if (mipTexture.name[0] == '{')
-		{
-			vmtFileLength = Format(vmt, sizeof(vmt), "LightmappedGeneric\r\n"
-								   "{\r\n"
-								   "\t$basetexture \"gsrcconv/%s\"\r\n"
-								   "\t$alphatest \"1\"\r\n"
-								   "}\r\n", mipTexture.name);
-		}
-		else
-		{
-			vmtFileLength = Format(vmt, sizeof(vmt), "LightmappedGeneric\r\n"
-								   "{\r\n"
-								   "\t$basetexture \"gsrcconv/%s\"\r\n"
-								   "}\r\n", mipTexture.name);
-		}
-		WriteEntireFile(vmtFileName, vmt, vmtFileLength);
-#endif
 	}
 	
 	//
@@ -337,7 +349,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			}
 		}
 		char *texName = mapData->lumpTextures.mipTextures[mapData->lumpTexinfo[i].miptex]->name;
-		Format(texture.name, sizeof(texture.name), "gsrcconv/%s", texName);
+		Format(texture.name, sizeof(texture.name), CONVERTED_MATERIAL_FOLDER "%s", texName);
 		g_textures[textureCount++] = texture;
 	}
 	
