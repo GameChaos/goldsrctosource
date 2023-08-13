@@ -1,0 +1,17 @@
+build/
+debug/
+allthelumps.bsp
+*.obj
+*.vtf
+*.tga
+*.mdmp
+*.vmf
+*.bsp*
+*.prt
+*.log
+*.vmx
+.vscode/
+materials/
+
+sokol-shdc.exe
+timeit.exe
