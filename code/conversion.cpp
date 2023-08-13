@@ -1,13 +1,11 @@
 
-internal s32 LoadWads(Arena *arena, Wad3 out[MAX_WADS])
+internal s32 LoadWads(Arena *arena, char *cstrikePath, char *valvePath, Wad3 out[MAX_WADS])
 {
 	FileInfo wadFileInfo[MAX_WADS] = {};
 	
 	s32 result = 0;
-	// TODO: don't hardcode!
 	// TODO: get wad file names from the worldspawn entity in the entity lump.
-	s32 wadCount = GetDirectoryFiles("D:\\Steam\\steamapps\\common\\Half-Life\\cstrike",
-									 wadFileInfo, ARRAYCOUNT(wadFileInfo), ".wad");
+	s32 wadCount = GetDirectoryFiles(cstrikePath, wadFileInfo, ARRAYCOUNT(wadFileInfo), ".wad");
 	for (s32 i = 0; i < wadCount; i++)
 	{
 		ASSERT(result < MAX_WADS);
@@ -15,8 +13,7 @@ internal s32 LoadWads(Arena *arena, Wad3 out[MAX_WADS])
 	}
 	
 	// NOTE(GameChaos): load hl1 wads too hahahahaha
-	s32 wadCount2 = GetDirectoryFiles("D:\\Steam\\steamapps\\common\\Half-Life\\valve",
-									  wadFileInfo, ARRAYCOUNT(wadFileInfo), ".wad");
+	s32 wadCount2 = GetDirectoryFiles(valvePath, wadFileInfo, ARRAYCOUNT(wadFileInfo), ".wad");
 	for (s32 i = 0; i < wadCount2; i++)
 	{
 		ASSERT(result < MAX_WADS);

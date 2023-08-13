@@ -208,6 +208,8 @@ void BSPMain(s32 argCount, char *arguments[])
 	cmdArgs.input = {"-input", "Input GoldSrc v31 bsp file to be converted.", CMDARG_STRING};
 	cmdArgs.outputbsp = {"-outputbsp", "Output path of the converted v21 Source bsp file (CS:GO).", CMDARG_STRING};
 	cmdArgs.outputvmf = {"-outputvmf", "Output path of the converted vmf file.", CMDARG_STRING};
+	cmdArgs.valvePath = {"-valvepath", "Path of the valve/ mod folder. Example: \"C:\\Steam\\steamapps\\common\\Half-Life\\valve\".", CMDARG_STRING};
+	cmdArgs.cstrikePath = {"-cstrikepath", "Path of the cstrike/ mod folder. Example: \"C:\\Steam\\steamapps\\common\\Half-Life\\cstrike\".", CMDARG_STRING};
 	
 	if (!ParseCmdArgs(&cmdArgs, argCount, arguments))
 	{
@@ -226,6 +228,22 @@ void BSPMain(s32 argCount, char *arguments[])
 	if (!cmdArgs.outputbsp.isInCmdLine && !cmdArgs.outputvmf.isInCmdLine)
 	{
 		Print("ERROR: Please provide an output path with -outputbsp or -outputvmf.\n\n");
+		PrintCmdLineHelp(&cmdArgs);
+		return;
+	}
+	
+	// NOTE(GameChaos): massive hack 
+	// TODO: get wad paths from worldspawn
+	if (!cmdArgs.valvePath.isInCmdLine)
+	{
+		Print("ERROR: Please provide a path for the valve/ mod folder with -valvepath.\n\n");
+		PrintCmdLineHelp(&cmdArgs);
+		return;
+	}
+	
+	if (!cmdArgs.cstrikePath.isInCmdLine)
+	{
+		Print("ERROR: Please provide a path for the cstrike/ mod folder with -cstrikepath.\n\n");
 		PrintCmdLineHelp(&cmdArgs);
 		return;
 	}
@@ -283,7 +301,8 @@ void BSPMain(s32 argCount, char *arguments[])
 		SrcMapData srcMapData = {};
 		if (cmdArgs.outputbsp.isInCmdLine)
 		{
-			if (BspFromGoldsource(&arena, &tempArena, &mapData, &srcMapData, CMDARG_GET_STRING(cmdArgs.outputbsp)))
+			if (BspFromGoldsource(&arena, &tempArena, &mapData, &srcMapData, CMDARG_GET_STRING(cmdArgs.outputbsp),
+								  cmdArgs.cstrikePath.stringValue, cmdArgs.valvePath.stringValue))
 			{		
 				Print("\n");
 				for (int i = 0; i < SRC_HEADER_LUMPS; i++)
@@ -304,7 +323,8 @@ void BSPMain(s32 argCount, char *arguments[])
 		}
 		if (cmdArgs.outputvmf.isInCmdLine)
 		{
-			if (VmfFromGoldsource(&arena, &tempArena, &mapData, CMDARG_GET_STRING(cmdArgs.outputvmf)))
+			if (VmfFromGoldsource(&arena, &tempArena, &mapData, CMDARG_GET_STRING(cmdArgs.outputvmf),
+								  cmdArgs.cstrikePath.stringValue, cmdArgs.valvePath.stringValue))
 			{		
 			}
 		}

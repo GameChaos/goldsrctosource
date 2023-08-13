@@ -75,8 +75,10 @@ union CmdArgs
 		CmdArg input;
 		CmdArg outputbsp;
 		CmdArg outputvmf;
+		CmdArg valvePath;
+		CmdArg cstrikePath;
 	};
-	CmdArg args[4];
+	CmdArg args[6];
 };
 static_assert(MEMBER_SIZE(CmdArgs, args) == sizeof(CmdArgs), "CmdArgs size and args array length are mismatched!");
 

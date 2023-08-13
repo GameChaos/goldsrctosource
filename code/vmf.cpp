@@ -192,7 +192,7 @@ internal void Polygon2DIntersect(Polygon2D *a, Polygon2D *b, Polygon2D *out)
     }
 }
 
-internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapData, char *outputPath)
+internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapData, char *outputPath, char *cstrikePath, char *valvePath)
 {
 	b32 result = false;
 	ASSERT(outputPath);
@@ -212,7 +212,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	// load WADs
 	// TODO: wads are actually stored in the worldspawn entity, so get them from there instead of loading every single wad ever!
 	local_persist Wad3 wads[MAX_WADS] = {};
-	s32 wadCount = LoadWads(arena, wads);
+	s32 wadCount = LoadWads(arena, cstrikePath, valvePath, wads);
 	
 	//
 	// LUMP_PAKFILE
