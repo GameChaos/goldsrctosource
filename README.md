@@ -8,8 +8,7 @@ Unfinished features:
 2. Automatic entity conversion is unfinished and in a testing state (this is most needed for direct bsp to bsp conversion, disabled for VMFS right now).
 3. Visibility doesn't work in converted BSPs.
 4. Water doesn't work quite properly in converted BSPs.
-5. Textures and materials don't get exported when exporting as a VMF (easy fix, just need to add an output path).
-6. Skybox textures don't get converted.
+5. Skybox textures don't get converted.
 
 Some (mostly finished) features:
 1. Automatic texture conversion (including transparent textures). Source 1 also seems to support goldsrc animated textures.
@@ -27,4 +26,4 @@ For compiling debug shaders, you have to get sokol-shdc.exe. Dear ImGui and soko
 
 ## Example usage
 
-`-input "D:\Steam\steamapps\common\Half-Life\cstrike\maps\kz_man_everest.bsp" -outputvmf debug/out.vmf -outputbsp debug/out.bsp -mod cstrike -enginepath "D:\Steam\steamapps\common\Half-Life"`
+`-input "D:\Steam\steamapps\common\Half-Life\cstrike\maps\kz_man_everest.bsp" -outputvmf debug/out.vmf -outputbsp debug/out.bsp -mod cstrike -enginepath "D:\Steam\steamapps\common\Half-Life" -assetpath "C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\csgo"`
