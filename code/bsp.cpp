@@ -248,7 +248,7 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 	return result;
 }
 
-internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapData, SrcMapData *srcMapData, char *outputPath, char *cstrikePath, char *valvePath)
+internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapData, SrcMapData *srcMapData, char *outputPath, char *modPath, char *valvePath)
 {
 	b32 result = false;
 	ASSERT(outputPath);
@@ -294,9 +294,8 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	SrcLump *lump = (SrcLump *)&fileHeader->lump;
 	
 	// load WADs
-	// TODO: wads are actually stored in the worldspawn entity, so get them from there instead of loading every single wad ever!
 	local_persist Wad3 wads[MAX_WADS] = {};
-	s32 wadCount = LoadWads(arena, cstrikePath, valvePath, wads);
+	s32 wadCount = LoadWads(arena, modPath, valvePath, wads);
 	
 	//
 	// LUMP_PAKFILE

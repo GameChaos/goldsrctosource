@@ -1,18 +1,16 @@
 
-internal s32 LoadWads(Arena *arena, char *cstrikePath, char *valvePath, Wad3 out[MAX_WADS])
+internal s32 LoadWads(Arena *arena, char *modPath, char *valvePath, Wad3 out[MAX_WADS])
 {
 	FileInfo wadFileInfo[MAX_WADS] = {};
 	
 	s32 result = 0;
-	// TODO: get wad file names from the worldspawn entity in the entity lump.
-	s32 wadCount = GetDirectoryFiles(cstrikePath, wadFileInfo, ARRAYCOUNT(wadFileInfo), ".wad");
+	s32 wadCount = GetDirectoryFiles(modPath, wadFileInfo, ARRAYCOUNT(wadFileInfo), ".wad");
 	for (s32 i = 0; i < wadCount; i++)
 	{
 		ASSERT(result < MAX_WADS);
 		out[result++] = Wad3FromFile(arena, wadFileInfo[i].path);
 	}
 	
-	// NOTE(GameChaos): load hl1 wads too hahahahaha
 	s32 wadCount2 = GetDirectoryFiles(valvePath, wadFileInfo, ARRAYCOUNT(wadFileInfo), ".wad");
 	for (s32 i = 0; i < wadCount2; i++)
 	{
@@ -162,7 +160,6 @@ internal EntList GsrcEntitiesToSrcEntities(Arena *arena, EntList gsrcEnts, b32 *
 					EntPushProp(ent, gsrcEnt->properties[prop].key, gsrcEnt->properties[prop].value);
 				}
 			}
-			// TODO: extract wad paths
 			// TODO: correct mins & maxs
 			EntPushProp(ent, STR("world_maxs"),     STR("16383 16383 16383"));
 			EntPushProp(ent, STR("world_mins"),     STR("-16383 -16383 -16383"));

@@ -1,5 +1,8 @@
 
+#define UNICODE
+
 #include "goldsrctosource.cpp"
+
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -11,9 +14,13 @@
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb/stb_sprintf.h"
 
-global SYSTEM_INFO g_systemInfo = {0};
-
 #include <intrin.h>
+#include <wchar.h.>
+
+typedef wchar_t wchar;
+
+global SYSTEM_INFO g_systemInfo = {0};
+global wchar g_wcharBuffer[2048];
 
 union simd128
 {
@@ -199,6 +206,21 @@ internal b32 WriteEntireFile(char *filename, void *memory, u32 bytes)
 	return result;
 }
 
+internal void AppendToPath(char *path, s64 pathLength, char *file)
+{
+	size_t pathStrLen = strlen(path);
+	// TODO: this could be more robust probably
+	if (path[pathStrLen - 1] == '\\' || path[pathStrLen - 1] == '/'
+		|| pathStrLen == 0)
+	{
+		Format(path + pathStrLen, (pathLength - pathStrLen), "%s", file);
+	}
+	else
+	{
+		Format(path + pathStrLen, (pathLength - pathStrLen), "\\%s", file);
+	}
+}
+
 #ifdef GC_DEBUG
 struct DebugFopenPayload
 {
@@ -279,22 +301,51 @@ internal void DebugFclose(File *file)
 }
 #endif
 
-internal void Win32AppendToPath(char *path, s64 pathLength, char *file)
+internal s32 Win32Utf8ToUtf16(char *utf8, wchar *utf16, s32 utf16Chars)
 {
-	size_t pathStrLen = strlen(path);
-	// TODO: this could be more robust probably
-	if (path[pathStrLen - 1] == '\\' || path[pathStrLen - 1] == '/'
-		|| pathStrLen == 0)
+	if (utf16)
 	{
-		Format(path + pathStrLen, (pathLength - pathStrLen), "%s", file);
+		utf16[0] = L'\0';
+	}
+	s32 result = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, utf16, utf16Chars);
+	return result;
+}
+
+internal s32 Win32Utf16ToUtf8(wchar *utf16, char *utf8, s32 utf8Chars)
+{
+	if (utf8)
+	{
+		utf8[0] = '\0';
+	}
+	s32 result = WideCharToMultiByte(CP_UTF8, 0, utf16, -1, utf8, utf8Chars, NULL, NULL);
+	return result;
+}
+
+internal b32 StringEqualsW(wchar *a, wchar *b, b32 caseSensitive)
+{
+	b32 result = true;
+	if (caseSensitive)
+	{
+		result = wcscmp(a, b) == 0;
 	}
 	else
 	{
-		Format(path + pathStrLen, (pathLength - pathStrLen), "\\%s", file);
+		for (wchar *c1 = a, *c2 = b;
+			 *c1 && *c2;
+			 c1++, c2++)
+		{
+			wchar lower1 = *c1 <= L'z' ? *c1 & 0xdf : *c1;
+			wchar lower2 = *c2 <= L'z' ? *c2 & 0xdf : *c1;
+			if (lower1 != lower2)
+			{
+				result = false;
+				break;
+			}
+		}
 	}
+	return result;
 }
-
-internal void Win32FixInconsistentSlashes(char *path)
+internal void FixInconsistentSlashes(char *path)
 {
 	for (char *c = path; *c != 0; c++)
 	{
@@ -305,19 +356,19 @@ internal void Win32FixInconsistentSlashes(char *path)
 	}
 }
 
-internal char *Win32GetFileExtension(char *file)
+internal wchar *Win32GetFileExtension(wchar *file)
 {
-	char *result = NULL;
+	wchar *result = NULL;
 	if (file)
 	{
-		u64 strLen = StringLength(file);
+		u64 strLen = wcslen(file);
 		if (strLen)
 		{
-			for (char *c = file + strLen - 1;
+			for (wchar *c = file + strLen - 1;
 				 c != file;
 				 c--)
 			{
-				if (*c == '.')
+				if (*c == L'.')
 				{
 					result = c;
 					break;
@@ -331,12 +382,16 @@ internal char *Win32GetFileExtension(char *file)
 internal u32 GetDirectoryFiles(char *path, FileInfo *out, u32 maxFileCount, char *fileExtFilter)
 {
 	WIN32_FIND_DATA findFileData = {};
-	char wildcardPath[MAX_PATH] = "";
-	size_t pathLen = strlen(path);
-	Format(wildcardPath, sizeof(wildcardPath), "%s", path);
-	Win32AppendToPath(wildcardPath, sizeof(wildcardPath), "*");
+	char wildcardPath[1024] = "";
+	wchar fileExtFilterW[128] = L"";
 	
-	HANDLE findFile = FindFirstFile(wildcardPath, &findFileData);
+	Format(wildcardPath, sizeof(wildcardPath), "%s", path);
+	AppendToPath(wildcardPath, sizeof(wildcardPath), "*");
+	
+	Win32Utf8ToUtf16(path, g_wcharBuffer, ARRAYCOUNT(g_wcharBuffer));
+	Win32Utf8ToUtf16(fileExtFilter, fileExtFilterW, ARRAYCOUNT(fileExtFilterW));
+	
+	HANDLE findFile = FindFirstFile(g_wcharBuffer, &findFileData);
 	
 	u32 result = 0;
 	if (findFile != INVALID_HANDLE_VALUE)
@@ -347,18 +402,21 @@ internal u32 GetDirectoryFiles(char *path, FileInfo *out, u32 maxFileCount, char
 		{
 			if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			{
-				char *ext = Win32GetFileExtension(findFileData.cFileName);
+				wchar *ext = Win32GetFileExtension(findFileData.cFileName);
 				if (fileExtFilter != NULL)
 				{
-					if (!ext || !StringEquals(ext, fileExtFilter, false))
+					if (!ext || !StringEqualsW(ext, fileExtFilterW, false))
 					{
 						continue;
 					}
 				}
 				FileInfo fileInfo = {};
 				Format(fileInfo.path, sizeof(fileInfo.path), "%s", path);
-				Win32AppendToPath(fileInfo.path, sizeof(fileInfo.path), findFileData.cFileName);
-				Win32FixInconsistentSlashes(fileInfo.path);
+				char filename[128];
+				
+				Win32Utf16ToUtf8(findFileData.cFileName, filename, ARRAYCOUNT(filename));
+				AppendToPath(fileInfo.path, sizeof(fileInfo.path), filename);
+				FixInconsistentSlashes(fileInfo.path);
 				out[result++] = fileInfo;
 			}
 		}
@@ -631,6 +689,8 @@ internal void PlatformStart()
 extern "C" int mainCRTStartup()
 {
 	GetSystemInfo(&g_systemInfo);
+	wchar test = L'a';
+	wchar test2 = L'A';
 #ifdef DEBUG_GRAPHICS
 	DebugGfxMain();
 #else

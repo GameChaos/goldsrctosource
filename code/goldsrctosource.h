@@ -75,8 +75,8 @@ union CmdArgs
 		CmdArg input;
 		CmdArg outputbsp;
 		CmdArg outputvmf;
-		CmdArg valvePath;
-		CmdArg cstrikePath;
+		CmdArg enginePath;
+		CmdArg mod;
 	};
 	CmdArg args[6];
 };

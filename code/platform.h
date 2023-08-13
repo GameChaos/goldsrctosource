@@ -51,6 +51,7 @@ internal f32 Acos(f32 value);
 
 internal ReadFileResult ReadEntireFile(Arena *arena, char *filePath);
 internal b32 WriteEntireFile(char *filename, void *memory, u32 bytes);
+internal void AppendToPath(char *path, s64 pathLength, char *file);
 internal u32 GetDirectoryFiles(char *path, FileInfo *out, u32 maxFileCount, char *fileExtFilter = NULL);
 
 internal Arena ArenaCreate(s64 bytes);
