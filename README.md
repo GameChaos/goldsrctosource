@@ -14,7 +14,8 @@ Some (mostly finished) features:
 1. Automatic texture conversion (including transparent textures). Source 1 also seems to support GoldSrc animated textures.
 2. Lighting conversion from GoldSrc to Source 1 BSP. (1:1 lighting!)
 3. Conversion to BSP and VMF (as mentioned before).
-4. Loads of jank and bugs.
+4. CLI output is a mess, mostly debug stuff right now.
+5. Loads of jank and bugs.
 
 ## Building
 
