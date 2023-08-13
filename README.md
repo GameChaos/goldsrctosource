@@ -1,11 +1,11 @@
-# goldsrctosource
+# GoldSrcToSource
 Tool that converts GoldSrc BSPs into Source 1 BSPs (and VMFs).
 
 This is currently unfinished, I'm not sure when/if I'm going to finish this, so here it is for now.
 
 Unfinished features:
 1. Models (props?) don't get converted (neither do sprites).
-2. Automatic entity conversion is unfinished and in a testing state (this is most needed for direct bsp to bsp conversion, should disable it for vmf output tbh).
+2. Automatic entity conversion is unfinished and in a testing state (this is most needed for direct bsp to bsp conversion, disabled for VMFS right now).
 3. Visibility doesn't work in converted BSPs.
 4. Water doesn't work quite properly in converted BSPs.
 5. Textures and materials don't get exported when exporting as a VMF (easy fix, just need to add an output path).
