@@ -399,7 +399,9 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	
 	
 	EntList gsrcEnts = GsrcParseEntities(arena, mapData->lumpEntities);
-	EntList srcEnts = GsrcEntitiesToSrcEntities(arena, gsrcEnts, NULL);
+	// NOTE(GameChaos): don't convert to source entities for now. vmfs don't require conversion anyway.
+	EntList srcEnts = gsrcEnts;
+	//EntList srcEnts = GsrcEntitiesToSrcEntities(arena, gsrcEnts, NULL);
 	
 	// ====================================================================
 	// NOTE: this bit generates new brushes and planes and brush leaf data.
