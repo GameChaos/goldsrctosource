@@ -6,18 +6,12 @@
 #include "platform.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HMM_PREFIX
-#define HMM_COSF Cos
-#define HMM_SINF Sin
-#define HMM_LOGF Log
-#define HMM_EXPF Exp
-#define HMM_ACOSF Acos
 #include "handmade_math.h"
 
 #include "str.cpp"
 #include "goldsrctosource.h"
 #include "vtf.h"
 #include "utils.cpp"
-
 
 #include "sourcebsp.cpp"
 #include "goldsrcbsp.cpp"

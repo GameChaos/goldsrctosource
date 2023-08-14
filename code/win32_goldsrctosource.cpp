@@ -3,100 +3,30 @@
 
 #include "goldsrctosource.cpp"
 
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <shellapi.h>
 #include <shlobj_core.h>
-#define USE_SSE2
-#include "sse_mathfun.h"
 
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb/stb_sprintf.h"
-
-#include <intrin.h>
-#include <wchar.h.>
 
 typedef wchar_t wchar;
 
 global SYSTEM_INFO g_systemInfo = {0};
 global wchar g_wcharBuffer[2048];
 
-union simd128
-{
-	__m128 packedF;
-	__m128i packedI;
-	f32 arrayF32[4];
-	s32 arrayS32[4];
-};
-
 inline f32 f32floor(f32 value)
 {
-	simd128 data = {};
-	data.arrayF32[0] = value;
-	
-	simd128 result = {};
-	result.packedF = _mm_floor_ps(data.packedF);
-	return result.arrayF32[0];
+	f32 result = floorf(value);
+	return result;
 }
 
 inline f32 f32ceil(f32 value)
 {
-	simd128 data = {};
-	data.arrayF32[0] = value;
-	
-	simd128 result = {};
-	result.packedF = _mm_ceil_ps(data.packedF);
-	return result.arrayF32[0];
+	f32 result = ceilf(value);
+	return result;
 }
-
-internal f32 Cos(f32 value)
-{
-	simd128 data = {};
-	data.arrayF32[0] = value;
-	simd128 result = {};
-	result.packedF = cos_ps(data.packedF);
-	
-	return result.arrayF32[0];
-}
-
-internal f32 Sin(f32 value)
-{
-	simd128 data = {};
-	data.arrayF32[0] = value;
-	simd128 result = {};
-	result.packedF = sin_ps(data.packedF);
-	
-	return result.arrayF32[0];
-}
-
-internal f32 Exp(f32 value)
-{
-	simd128 data = {};
-	data.arrayF32[0] = value;
-	simd128 result = {};
-	result.packedF = exp_ps(data.packedF);
-	
-	return result.arrayF32[0];
-}
-
-internal f32 Log(f32 value)
-{
-	simd128 data = {};
-	data.arrayF32[0] = value;
-	simd128 result = {};
-	result.packedF = log_ps(data.packedF);
-	
-	return result.arrayF32[0];
-}
-
-internal f32 Acos(f32 value)
-{
-	// TODO:
-	*(volatile int *)0 = 0;
-	return F32_MAX;
-}
-
 
 internal ReadFileResult ReadEntireFile(Arena *arena, char *filePath)
 {
@@ -425,21 +355,6 @@ internal u32 GetDirectoryFiles(char *path, FileInfo *out, u32 maxFileCount, char
 	return result;
 }
 
-inline size_t Win32GetAllocationSize(void *memory)
-{
-	size_t result = 0;
-	
-	if (memory)
-	{
-		MEMORY_BASIC_INFORMATION memInfo = {};
-		size_t bufferSize = VirtualQuery(memory, &memInfo, sizeof(memInfo));
-		ASSERT(bufferSize != 0);
-		result = memInfo.RegionSize;
-	}
-	
-	return result;
-}
-
 inline s64 AlignUp_(s64 val, s64 granularity)
 {
     s64 result = (val / granularity) * granularity + granularity;
@@ -656,45 +571,17 @@ internal void FatalError(char *error)
 	ExitProcess(1);
 }
 
-internal void PlatformStart()
-{
-	s32 argCount = 0;
-	char **arguments = NULL;
-	LPCWSTR cmdLineW = GetCommandLineW();
-	if (cmdLineW)
-	{
-		LPWSTR *argsW = CommandLineToArgvW(cmdLineW, &argCount);
-		if (argsW)
-		{
-			Arena argsArena = ArenaCreate(wcslen(cmdLineW) * 4 + argCount * sizeof(*arguments));
-			arguments = (char **)ArenaAlloc(&argsArena, argCount * sizeof(*arguments));
-			for (s32 arg = 0; arg < argCount; arg++)
-			{
-				s32 requiredBytes = WideCharToMultiByte(CP_UTF8, 0, argsW[arg], -1, NULL, 0, NULL, NULL);
-				
-				arguments[arg] = (char *)ArenaAlloc(&argsArena, requiredBytes);
-				WideCharToMultiByte(CP_UTF8, 0, argsW[arg], -1, arguments[arg], requiredBytes, NULL, NULL);
-			}
-		}
-	}
-	BSPMain(argCount, arguments);
-	
-#ifdef GC_DEBUG
-#ifndef DEBUG_GRAPHICS
-	Sleep(500000);
-#endif
-#endif
-}
-
-extern "C" int mainCRTStartup()
+int main(int argc, char **argv)
 {
 	GetSystemInfo(&g_systemInfo);
-	wchar test = L'a';
-	wchar test2 = L'A';
 #ifdef DEBUG_GRAPHICS
-	DebugGfxMain();
+	DebugGfxMain(argc, argv);
 #else
-	PlatformStart();
+	BSPMain(argc, argv);
+#ifdef GC_DEBUG
+	// pause
+	getc();
+#endif
 #endif
 	ExitProcess(0);
 }

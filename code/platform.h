@@ -42,12 +42,6 @@ internal void DebugFclose(File *file);
 
 inline f32 f32floor(f32 value);
 inline f32 f32ceil(f32 value);
-internal f32 Cos(f32 value);
-internal f32 Sin(f32 value);
-internal f32 Exp(f32 value);
-internal f32 Log(f32 value);
-// TODO:
-internal f32 Acos(f32 value);
 
 internal ReadFileResult ReadEntireFile(Arena *arena, char *filePath);
 internal b32 WriteEntireFile(char *filename, void *memory, u32 bytes);
@@ -74,7 +68,5 @@ internal size_t StringLength(char *string);
 internal b32 StringEquals(char *a, char *b, b32 caseSensitive = true);
 
 internal void FatalError(char *error);
-
-internal void PlatformStart();
 
 #endif //PLATFORM_H

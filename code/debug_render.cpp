@@ -503,7 +503,7 @@ internal void DebugGfxInit(void *userData)
 	
 	ArenaEndTemp(arenaTemp);
 	
-	PlatformStart();
+	BSPMain(state->argCount, state->arguments);
 }
 
 internal void DrawMesh(GfxState *state, GfxMesh *mesh, mat4 mvp, b32 solid)
@@ -1246,11 +1246,13 @@ button.actionCount++;\
 #undef KEYBOARD_BUTTON_HELPER
 }
 
-internal void DebugGfxMain()
+internal void DebugGfxMain(s32 argCount, char *arguments[])
 {
 	Arena arena = ArenaCreate(GIGABYTES(4));
 	g_gfxState = (GfxState *)ArenaAlloc(&arena, sizeof(*g_gfxState));
 	g_gfxState->arena = arena;
+	g_gfxState->argCount = argCount;
+	g_gfxState->arguments = arguments;
 	
 	sapp_desc desc = {};
 	desc.user_data = g_gfxState;

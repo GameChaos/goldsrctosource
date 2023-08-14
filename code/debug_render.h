@@ -84,6 +84,10 @@ struct GfxBrush
 
 struct GfxState
 {
+	// arguments passed to main()
+	s32 argCount;
+	char **arguments;
+	
 	Arena arena;
 	GfxInput input;
 	

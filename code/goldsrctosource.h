@@ -221,5 +221,6 @@ enum StringToNumResult
 struct SrcHeader;
 inline void *BufferPushDataAndSetLumpSize(FileWritingBuffer *buffer, SrcHeader *header, s32 lumpIndex, void *data, s32 bytes);
 internal s32 GsrcContentsToSrcContents(s32 gsrcContents);
+void BSPMain(s32 argCount, char *arguments[]);
 
 #endif //GOLDSRCTOSOURCE_H
