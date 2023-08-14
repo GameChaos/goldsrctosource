@@ -9,6 +9,7 @@ Unfinished features:
 3. Visibility doesn't work in converted BSPs.
 4. Water doesn't work quite properly in converted BSPs.
 5. Skybox textures don't get converted.
+6. Command line output is a mess, mostly debug stuff right now.
 
 Some (mostly finished) features:
 1. Automatic texture conversion (including transparent textures). Source 1 also seems to support GoldSrc animated textures.
