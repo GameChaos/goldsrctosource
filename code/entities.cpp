@@ -122,8 +122,8 @@ internal b32 EntlumpParseEntity(EntProperties *ent, EntlumpTokeniser *tokeniser)
 				}
 				else
 				{
-					LOG_ERROR("ERROR: Entity lump: Unexpected token \"%.*s\".",
-							  valueToken.string.length, valueToken.string.data);
+					Error("Entity lump: Unexpected token \"%.*s\".",
+						  valueToken.string.length, valueToken.string.data);
 					goto end;
 				}
 			} break;
@@ -136,14 +136,14 @@ internal b32 EntlumpParseEntity(EntProperties *ent, EntlumpTokeniser *tokeniser)
 			
 			case ENTLUMPTOKEN_EOS:
 			{
-				LOG_ERROR("ERROR: Entity lump: Unexpected end of entity lump! Entity lump parsing failed.");
+				Error("Entity lump: Unexpected end of entity lump! Entity lump parsing failed.");
 				goto end;
 			} break;
 			
 			default:
 			{
-				LOG_ERROR("ERROR: Entity lump: Invalid token \"%.*s\". Entity lump parsing failed.",
-						  token.string.length,token.string.data);
+				Error("Entity lump: Invalid token \"%.*s\". Entity lump parsing failed.",
+					  token.string.length,token.string.data);
 				goto end;
 			} break;
 		}
@@ -163,13 +163,13 @@ internal EntList GsrcParseEntities(Arena *arena, str entLump)
 		result.ents[result.entCount++] = ent;
 #if 0
 		// print entity properties for debugging
-		Print("{\n");
+		PrintString("{\n");
 		for (s32 i = 0; i < ent.propertyCount; i++)
 		{
 			Print("\t\"%.*s\" \"%.*s\"\n", ent.properties[i].key.length, ent.properties[i].key.data,
 				  ent.properties[i].value.length, ent.properties[i].value.data);
 		}
-		Print("}\n");
+		PrintString("}\n");
 #endif
 	}
 	return result;

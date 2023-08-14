@@ -6,8 +6,6 @@
 #define MAX_WADS 128
 #define FOURCC_TO_INT(a, b, c, d) (((d) << 24) | ((c) << 16) | ((b) << 8) | (a))
 
-#define LOG_ERROR(...) Print(__VA_ARGS__)
-
 #define CMDARG_GET_STRING(cmdarg) ((cmdarg).type == CMDARG_STRING ? (cmdarg).stringValue : NULL)
 #define CMDARG_GET_INT(cmdarg) ((cmdarg).type == CMDARG_INTEGER ? (cmdarg).intValue : NULL)
 
@@ -219,6 +217,10 @@ enum StringToNumResult
 };
 
 struct SrcHeader;
+
+internal void FatalError(char *error);
+internal void Error(char *format, ...);
+internal void Warning(char *format, ...);
 inline void *BufferPushDataAndSetLumpSize(FileWritingBuffer *buffer, SrcHeader *header, s32 lumpIndex, void *data, s32 bytes);
 internal s32 GsrcContentsToSrcContents(s32 gsrcContents);
 void BSPMain(s32 argCount, char *arguments[]);

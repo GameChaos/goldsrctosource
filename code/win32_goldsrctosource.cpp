@@ -58,28 +58,28 @@ internal ReadFileResult ReadEntireFile(Arena *arena, char *filePath)
 							VirtualFree(result.contents, 0, MEM_RELEASE);
 						}
 						result.contents = 0;
-						LOG_ERROR("ReadEntireFile(): Couldn't read contents of file %s", filePath);
+						Error("ReadEntireFile(): Couldn't read contents of file %s", filePath);
 					}
 				}
 				else
 				{
-					LOG_ERROR("ReadEntireFile(): Couldn't allocate memory for file %s", filePath);
+					Error("ReadEntireFile(): Couldn't allocate memory for file %s", filePath);
 				}
 			}
 			else
 			{
-				LOG_ERROR("ReadEntireFile(): Couldn't get filesize of %s", filePath);
+				Error("ReadEntireFile(): Couldn't get filesize of %s", filePath);
 			}
 			CloseHandle(fileHandle);
 		}
 		else
 		{
-			LOG_ERROR("ReadEntireFile(): Couldn't open file %s for reading", filePath);
+			Error("ReadEntireFile(): Couldn't open file %s for reading", filePath);
 		}
 	}
 	else
 	{
-		LOG_ERROR("ReadEntireFile(): Invalid path provided.");
+		Error("ReadEntireFile(): Invalid path provided.");
 	}
 	
 	return result;
@@ -489,7 +489,7 @@ internal void Mem_SetToZero(void *destination, u64 bytes)
 	__stosb((u8 *)destination, 0, bytes);
 }
 
-internal void Win32WriteToStdoutLen(const char *str, s32 len)
+internal void PrintToStdoutLen(const char *str, s32 len)
 {
 	HANDLE stdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (stdOut != NULL && stdOut != INVALID_HANDLE_VALUE)
@@ -499,11 +499,19 @@ internal void Win32WriteToStdoutLen(const char *str, s32 len)
 	}
 }
 
+internal void PrintString(const char *str)
+{
+	ASSERT(str);
+	u64 len = strlen(str);
+	ASSERT(len <= S32_MAX);
+	PrintToStdoutLen(str, (s32)len);
+}
+
 internal char *PrintCb_(const char *buf, void *user, int len)
 {
 	ASSERT(buf);
 	ASSERT(user);
-	Win32WriteToStdoutLen(buf, len);
+	PrintToStdoutLen(buf, len);
 	return (char *)user;
 }
 
@@ -516,6 +524,12 @@ internal void Print(char *format, ...)
 	stbsp_vsprintfcb(PrintCb_, buffer, buffer, format, args);
 	
 	va_end(args);
+}
+
+internal void Vprint(char *format, va_list args)
+{
+	char buffer[STB_SPRINTF_MIN];
+	stbsp_vsprintfcb(PrintCb_, buffer, buffer, format, args);
 }
 
 internal s32 Format(char *buffer, size_t maxlen, char *format, ...)
@@ -562,13 +576,6 @@ internal b32 StringEquals(char *a, char *b, b32 caseSensitive)
 		}
 	}
 	return result;
-}
-
-internal void FatalError(char *error)
-{
-	Print("FATAL ERROR: %s\n", error);
-	ASSERT(0);
-	ExitProcess(1);
 }
 
 int main(int argc, char **argv)

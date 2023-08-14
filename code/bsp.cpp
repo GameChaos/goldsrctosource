@@ -256,7 +256,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	ASSERT(srcMapData);
 	if (!outputPath)
 	{
-		Print("ERROR: Invalid output path provided to converter!\n");
+		Error("Invalid output path provided to converter!\n");
 		return result;
 	}
 	
@@ -269,7 +269,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	ASSERT(buffer.size > 0);
 	if (!buffer.memory || buffer.size <= 0)
 	{
-		Print("ERROR: Couldn't allocate memory for file buffer!\n");
+		Error("Couldn't allocate memory for file buffer!\n");
 		return result;
 	}
 	
@@ -326,7 +326,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			}
 			else
 			{
-				Print("Couldn't find texture %s from wad files :(\n", mipTexture.name);
+				Warning("Couldn't find texture %s from wad files :(\n", mipTexture.name);
 				continue;
 			}
 		}
@@ -571,8 +571,8 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 				}
 				else
 				{
-					Print("Too large lightmap size on face %i. Size is %i, max is %i\n",
-						  i, size[j], SRC_MAX_BRUSH_LIGHTMAP_DIM_INCLUDING_BORDER);
+					Warning("Too large lightmap size on face %i. Size is %i, max is %i\n",
+							i, size[j], SRC_MAX_BRUSH_LIGHTMAP_DIM_INCLUDING_BORDER);
 				}
 			}
 		}
@@ -839,7 +839,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 						else
 						{
 							state->brushSideCount = brush.firstSide;
-							LOG_ERROR("ERROR: Invalid brush with <4 sides! Leaf index %i\n", gsrcLeafIndex);
+							Error("Invalid brush with <4 sides! Leaf index %i\n", gsrcLeafIndex);
 						}
 					}
 					

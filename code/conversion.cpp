@@ -347,7 +347,7 @@ internal EntList GsrcEntitiesToSrcEntities(Arena *arena, EntList gsrcEnts, b32 *
 			// NOTE(GameChaos): for testing
 			//EntConvertOneToOne(gsrcEnt, ent);
 			//ent->classname = gsrcEnt->classname;
-			Print("Unknown entity \"%.*s\"\n", gsrcEnt->classname.length, gsrcEnt->classname.data);
+			Warning("Unknown entity \"%.*s\"\n", gsrcEnt->classname.length, gsrcEnt->classname.data);
 		}
 		if (ent->classname.data)
 		{

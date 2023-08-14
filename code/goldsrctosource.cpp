@@ -29,6 +29,36 @@
 #include "vmf.cpp"
 #include "bsp.cpp"
 
+internal void FatalError(char *error)
+{
+	Print("FATAL ERROR: %s\n", error);
+	ASSERT(0);
+	exit(EXIT_FAILURE);
+}
+
+internal void Error(char *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	
+	PrintString("Error: ");
+	Vprint(format, args);
+	
+	va_end(args);
+	ASSERT(0);
+}
+
+internal void Warning(char *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	
+	PrintString("Warning: ");
+	Vprint(format, args);
+	
+	va_end(args);
+}
+
 inline void *BufferPushDataAndSetLumpSize(FileWritingBuffer *buffer, SrcHeader *header, s32 lumpIndex, void *data, s32 bytes)
 {
 	void *result = buffer->memory + buffer->usedBytes;
@@ -84,7 +114,7 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 				found = true;
 				if (cmdArgs->args[j].isInCmdLine)
 				{
-					Print("ERROR: %s is used twice in the command line!\n", arguments[i]);
+					Error("%s is used twice in the command line!\n", arguments[i]);
 					result = false;
 					break;
 				}
@@ -101,7 +131,7 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 								s64 argLen = StringLength(arguments[i + 1]);
 								if (argLen >= sizeof(cmdArgs->args[j].stringValue))
 								{
-									Print("ERROR: String is too long for argument %s! Maximum length is %lli characters.\n\n",
+									Error("String is too long for argument %s! Maximum length is %lli characters.\n\n",
 										  arguments[i], (s64)sizeof(MEMBER(CmdArg, stringValue)) - 1);
 									result = false;
 									break;
@@ -114,7 +144,7 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 							{
 								if (!StringToS32(arguments[i + 1], &cmdArgs->args[j].intValue))
 								{
-									Print("ERROR: Couldn't convert command \"%s\"'s argument \"%s\" to an integer!\n\n",
+									Error("Couldn't convert command \"%s\"'s argument \"%s\" to an integer!\n\n",
 										  arguments[i], arguments[i + 1]);
 									result = false;
 									break;
@@ -122,7 +152,7 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 							}
 							else
 							{
-								Print("ERROR: Dumbass programmer configured the command line options incorrectly. Shame on them!\n\n");
+								Error("Dumbass programmer configured the command line options incorrectly. Shame on them!\n\n");
 							}
 							
 							i++;
@@ -130,7 +160,7 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 						else
 						{
 							// oh no sad sad :(
-							Print("ERROR: Argument missing for command %s\n\n", arguments[i]);
+							Error("Argument missing for command %s\n\n", arguments[i]);
 							result = false;
 							break;
 						}
@@ -138,7 +168,7 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 					else
 					{
 						// oh no sad sad :(
-						Print("ERROR: Argument missing for command %s\n\n", arguments[i]);
+						Error("Argument missing for command %s\n\n", arguments[i]);
 						result = false;
 						break;
 					}
@@ -154,7 +184,7 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 		
 		if (!found)
 		{
-			Print("Invalid command \"%s\"\n\n", arguments[i]);
+			Error("Invalid command \"%s\"\n\n", arguments[i]);
 			result = false;
 			break;
 		}
@@ -170,7 +200,7 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 
 internal void PrintCmdLineHelp(CmdArgs *cmdArgs)
 {
-	Print("Available commands:\n");
+	PrintString("Available commands:\n");
 	for (s32 i = 0; i < ARRAYCOUNT(cmdArgs->args); i++)
 	{
 		if (cmdArgs->args[i].type == CMDARG_NONE)
@@ -187,7 +217,7 @@ internal void PrintCmdLineHelp(CmdArgs *cmdArgs)
 				  cmdArgs->args[i].description);
 		}
 	}
-	Print("\n");
+	PrintString("\n");
 }
 
 void BSPMain(s32 argCount, char *arguments[])
@@ -209,7 +239,7 @@ void BSPMain(s32 argCount, char *arguments[])
 	
 	if (!ParseCmdArgs(&cmdArgs, argCount, arguments))
 	{
-		Print("Command line parsing failed!\n\n");
+		Error("Command line parsing failed!\n\n");
 		PrintCmdLineHelp(&cmdArgs);
 		return;
 	}
@@ -217,28 +247,28 @@ void BSPMain(s32 argCount, char *arguments[])
 	// TODO: check if all the paths are valid
 	if (!cmdArgs.input.isInCmdLine)
 	{
-		Print("ERROR: Please provide an input bsp file with -input.\n\n");
+		Error("Please provide an input bsp file with -input.\n\n");
 		PrintCmdLineHelp(&cmdArgs);
 		return;
 	}
 	
 	if (!cmdArgs.outputbsp.isInCmdLine && !cmdArgs.outputvmf.isInCmdLine)
 	{
-		Print("ERROR: Please provide an output path with -outputbsp or -outputvmf.\n\n");
+		Error("Please provide an output path with -outputbsp or -outputvmf.\n\n");
 		PrintCmdLineHelp(&cmdArgs);
 		return;
 	}
 	
 	if (!cmdArgs.enginePath.isInCmdLine)
 	{
-		Print("ERROR: Please provide a path for the Half-Life folder with -enginepath.\n\n");
+		Error("Please provide a path for the Half-Life folder with -enginepath.\n\n");
 		PrintCmdLineHelp(&cmdArgs);
 		return;
 	}
 	
 	if (!cmdArgs.mod.isInCmdLine)
 	{
-		Print("ERROR: Please provide a name for the mod folder with -mod.\n\n");
+		Error("Please provide a name for the mod folder with -mod.\n\n");
 		PrintCmdLineHelp(&cmdArgs);
 		return;
 	}
@@ -314,7 +344,7 @@ void BSPMain(s32 argCount, char *arguments[])
 			if (BspFromGoldsource(&arena, &tempArena, &mapData, &srcMapData, CMDARG_GET_STRING(cmdArgs.outputbsp),
 								  modPath, valvePath))
 			{		
-				Print("\n");
+				PrintString("\n");
 				for (int i = 0; i < SRC_HEADER_LUMPS; i++)
 				{
 					// pad string nicely

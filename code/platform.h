@@ -61,12 +61,13 @@ internal void Mem_Copy(void *source, void *destination, size_t bytes);
 internal b32 Mem_Compare(void *a, void *b, s64 bytes);
 internal void Mem_SetToZero(void *destination, u64 bytes);
 
+internal void PrintToStdoutLen(const char *str, s32 len);
+internal void PrintString(const char *str);
 internal void Print(char *format, ...);
+internal void Vprint(char *format, va_list args);
 internal s32 Format(char *buffer, size_t maxlen, char *format, ...);
 internal s32 Vformat(char *buffer, size_t maxlen, char *format, va_list va);
 internal size_t StringLength(char *string);
 internal b32 StringEquals(char *a, char *b, b32 caseSensitive = true);
-
-internal void FatalError(char *error);
 
 #endif //PLATFORM_H

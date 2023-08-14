@@ -19,7 +19,7 @@ internal b32 GsrcImportBsp(Arena *arena, GsrcMapData *mapData)
 	if (mapData->header->version != 30)
 	{
 		// TODO: add a command line switch to try and convert anyway even if version doesn't match?
-		Print("GoldSrc bsp version %i is not supported. Only version 30 is supported.\n", mapData->header->version);
+		Error("GoldSrc bsp version %i is not supported. Only version 30 is supported.\n", mapData->header->version);
 		ASSERT(0);
 		return result;
 	}
@@ -33,7 +33,7 @@ internal b32 GsrcImportBsp(Arena *arena, GsrcMapData *mapData)
 		GsrcLump lump = mapData->header->lump[i];
 		if (lump.offset + lump.length > mapData->fileDataSize)
 		{
-			Print("ERROR: %s is out of bounds! Lump offset: %i, length: %i. BSP file size: %lli\n", g_gsrcLumpNames[i], lump.offset, lump.length, mapData->fileDataSize);
+			Error("%s is out of bounds! Lump offset: %i, length: %i. BSP file size: %lli\n", g_gsrcLumpNames[i], lump.offset, lump.length, mapData->fileDataSize);
 			return result;
 		}
 	}
@@ -58,7 +58,7 @@ internal b32 GsrcImportBsp(Arena *arena, GsrcMapData *mapData)
 	ASSERT(mapData->lumpTextures.mipTextures);
 	if (mapData->lumpTextures.mipTextures == NULL)
 	{
-		Print("mapData->lumpTextures.mipTextures is NULL.");
+		Warning("mapData->lumpTextures.mipTextures is NULL.");
 	}
 	else
 	{
@@ -68,7 +68,7 @@ internal b32 GsrcImportBsp(Arena *arena, GsrcMapData *mapData)
 		{
 			if (mapData->lumpTextures.mipTextureOffsets[i] <= 0)
 			{
-				Print("ERROR: Invalid mip texture offset %i for miptexture #%i\n",
+				Error("Invalid mip texture offset %i for miptexture #%i\n",
 					  mapData->lumpTextures.mipTextureOffsets[i], i);
 				return result;
 			}

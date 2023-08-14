@@ -243,7 +243,7 @@ internal b32 MakePolygon(SrcPlane *planes, s32 planeCount, s32 planeIndex, Verts
 	if (normalLen < 0.9 || normalLen > 1.1)
 	{
 		// TODO: normalise the normal ourselves instead of just up and failing?
-		Print("Warning: Plane %i normal isn't a unit vector!\n", planeIndex);
+		Warning("Plane %i normal isn't a unit vector!\n", planeIndex);
 		return result;
 	}
 	// make a vector that isn't parallel to the plane's normal

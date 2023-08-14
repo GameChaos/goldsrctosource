@@ -54,6 +54,13 @@ internal b32 StrEquals(str a, str b, b32 caseSensitive = true)
 	return result;
 }
 
+internal void StrPrint(str string)
+{
+	ASSERT(string.length <= S32_MAX);
+	// TODO: don't cast u64 to s32?
+	PrintToStdoutLen(string.data, (s32)string.length);
+}
+
 internal str_builder StrbuilderCreate(Arena *arena, s64 bytes)
 {
 	str_builder result = {};

@@ -199,7 +199,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	ASSERT(mapData);
 	if (!outputPath)
 	{
-		Print("ERROR: Invalid output path provided to converter!\n");
+		Error("Invalid output path provided to converter!\n");
 		return result;
 	}
 	
@@ -243,7 +243,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 				}
 				else
 				{
-					Print("Couldn't find texture %s from wad files :(\n", mipTexture.name);
+					Warning("Couldn't find texture %s from wad files :(\n", mipTexture.name);
 					continue;
 				}
 			}
@@ -574,7 +574,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 						}
 						else
 						{
-							LOG_ERROR("ERROR: Invalid brush with <4 sides! Leaf index %i\n", gsrcLeafIndex);
+							Warning("Invalid brush with <4 sides! Leaf index %i\n", gsrcLeafIndex);
 						}
 					}
 					
@@ -825,7 +825,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	
 	if (WriteEntireFile(outputPath, vmf.data, (u32)vmf.length))
 	{
-		Print("VMF export finished!\n");
+		PrintString("VMF export finished!\n");
 	}
 	ArenaEndTemp(arenaTemp);
 	return result;

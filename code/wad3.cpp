@@ -30,7 +30,7 @@ internal Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *path)
 					}
 					else
 					{
-						LOG_ERROR("Wad3 texture offset is out of bounds! %s\n", path ? path : "");
+						Error("Wad3 texture offset is out of bounds! %s\n", path ? path : "");
 						ArenaResetTo(arena, originalArenaPos);
 						result = {};
 						ASSERT(0);
@@ -52,13 +52,13 @@ internal Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *path)
 			else
 			{
 				ASSERT(0);
-				LOG_ERROR("Wad3 first directory entry is out of bounds! %s\n", path ? path : "");
+				Error("Wad3 first directory entry is out of bounds! %s\n", path ? path : "");
 			}
 		}
 		else
 		{
 			ASSERT(0);
-			LOG_ERROR("Wad3 magic number is invalid! %s\n", path ? path : "");
+			Error("Wad3 magic number is invalid! %s\n", path ? path : "");
 		}
 	}
 	return result;
