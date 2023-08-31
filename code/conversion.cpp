@@ -1,4 +1,13 @@
 
+global char g_skySides[SKY_SIDE_COUNT][3] = {
+	"up",
+	"dn",
+	"lf",
+	"rt",
+	"bk",
+	"ft",
+};
+
 internal s32 LoadWads(Arena *arena, char *modPath, char *valvePath, Wad3 out[MAX_WADS])
 {
 	FileInfo wadFileInfo[MAX_WADS] = {};
@@ -48,25 +57,34 @@ internal s32 VtfGetMipCount(v2i textureSize)
 	return result;
 }
 
+internal VtfHeader VtfDefaultHeader(void)
+{
+	VtfHeader result = {};
+	
+	result.signature = VTF_SIGNATURE;
+	result.version[0] = 7;
+	result.version[1] = 1;
+	result.headerSize = sizeof(result);
+	result.frames = 1;
+	result.reflectivity = {0.5f, 0.5f, 0.5f};
+	// no low res (dxt1) image.
+	result.lowResImageFormat = U32_MAX;
+	result.lowResImageWidth = 0;
+	result.lowResImageHeight = 0;
+	
+	return result;
+}
+
 internal void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *out, GsrcMipTexture mipTexture, u8 *mipTextureData)
 {
 	b32 result = false;
 	
 	b32 transparent = mipTexture.name[0] == '{';
 	
-	VtfHeader vtfHeader = {};
-	vtfHeader.signature = VTF_SIGNATURE;
-	vtfHeader.version[0] = 7;
-	vtfHeader.version[1] = 1;
-	vtfHeader.headerSize = sizeof(vtfHeader);
+	VtfHeader vtfHeader = VtfDefaultHeader();
 	vtfHeader.frames = 1;
 	vtfHeader.width = (u16)mipTexture.width;
 	vtfHeader.height = (u16)mipTexture.height;
-	vtfHeader.reflectivity = {0.5f, 0.5f, 0.5f}; // TODO: correct reflectivity
-	// no low res (dxt1) image.
-	vtfHeader.lowResImageFormat = U32_MAX;
-	vtfHeader.lowResImageWidth = 0;
-	vtfHeader.lowResImageHeight = 0;
 	
 	s32 pixels = (s32)mipTexture.width * (s32)mipTexture.height;
 	u8 *palette = mipTextureData + 2 + mipTexture.offsets[0] + pixels + (pixels >> 2) + (pixels >> 4) + (pixels >> 6);
@@ -122,6 +140,7 @@ internal void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *out, Gsrc
 		largestMip[pix * channels + 2] = r;
 	}
 	
+	// TODO: mip 0 is correct reflectivity
 	u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, pixels * channels);
 	for (s32 mip = vtfHeader.mipmapCount - 1;
 		 mip >= 0;
@@ -574,5 +593,72 @@ internal s32 MakeVmt(char *buffer, s32 bufferSize, char *textureName, b32 transp
 						"\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
 						"}\r\n", textureName);
 	}
+	return result;
+}
+
+internal s32 MakeSkyTextureVmt(char *buffer, s32 bufferSize, char *texturePath)
+{
+	s32 result = 0; // length of vmt file
+	
+	result = Format(buffer, bufferSize, "UnlitGeneric\r\n"
+					"{\r\n"
+					"\t$basetexture \"%s\"\r\n"
+					"\t$ignorez 1\r\n"
+					"\t$nofog 1\r\n"
+					"}\r\n", texturePath);
+	
+	return result;
+}
+
+internal b32 GsrcGetSkyTexture(Arena *tempArena,
+							   FileWritingBuffer *out,
+							   str skyname,
+							   char *modPath,
+							   char *valvePath,
+							   SkySide side)
+{
+	b32 result = false;
+	
+	char *basePaths[2] = {
+		modPath,
+		valvePath
+	};
+	
+	char skyfacePath[512];
+	char relativeSkyfacePath[128];
+	Format(skyfacePath, sizeof(skyfacePath), "%s", modPath);
+	Format(relativeSkyfacePath, sizeof(relativeSkyfacePath), "gfx/env/%.*s%s.tga",
+		   skyname.length, skyname.data, g_skySides[side]);
+	AppendToPath(skyfacePath, sizeof(skyfacePath), relativeSkyfacePath);
+	
+	v2i textureSize = {};
+	u8 *texture = stbi_load(skyfacePath, &textureSize.x, &textureSize.y, NULL, 3);
+	if (texture
+		&& textureSize.x <= U16_MAX && textureSize.y <= U16_MAX
+		&& textureSize.x > 0 && textureSize.y > 0)
+	{
+		VtfHeader vtfHeader = VtfDefaultHeader();
+		vtfHeader.frames = 1;
+		vtfHeader.width = (u16)textureSize.x;
+		vtfHeader.height = (u16)textureSize.y;
+		vtfHeader.highResImageFormat = VTF_FORMAT_RGB888;
+		vtfHeader.mipmapCount = 1;
+		
+		vtfHeader.flags |= (TEXTUREFLAGS_CLAMPS
+							| TEXTUREFLAGS_CLAMPT
+							| TEXTUREFLAGS_NOMIP
+							| TEXTUREFLAGS_NOLOD);
+		
+		s32 pixels = textureSize.x * textureSize.y;
+		
+		BufferPushData(out, &vtfHeader, sizeof(vtfHeader), false);
+		
+		// no mipmaps
+		BufferPushData(out, texture, pixels * 3, false);
+		
+		result = true;
+	}
+	stbi_image_free(texture);
+	
 	return result;
 }

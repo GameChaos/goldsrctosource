@@ -213,6 +213,58 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	local_persist Wad3 wads[MAX_WADS] = {};
 	s32 wadCount = LoadWads(arena, modPath, valvePath, wads);
 	
+	EntList gsrcEnts = GsrcParseEntities(arena, mapData->lumpEntities);
+	// NOTE(GameChaos): don't convert to source entities for now. vmfs don't require conversion anyway.
+	EntList srcEnts = gsrcEnts;
+	
+	// convert skybox textures
+	FileWritingBuffer texBuffer = BufferCreate(tempArena, 8192 * 8192 * 3);
+	if (assetPath)
+	{
+		EntProperties *worldspawn = EntListGetEnt(gsrcEnts, STR("worldspawn"));
+		EntProperty *skyname = EntGetProperty(worldspawn, STR("skyname"));
+		ASSERT(skyname);
+		if (skyname)
+		{
+			for (s32 side = 0; side < SKY_SIDE_COUNT; side++)
+			{
+				BufferReset(&texBuffer);
+				
+				b32 gotTexture = GsrcGetSkyTexture(tempArena, &texBuffer, skyname->value, modPath, valvePath, (SkySide)side);
+				if (gotTexture)
+				{
+					char vtfFileName[128];
+					Format(vtfFileName, sizeof(vtfFileName), "materials/skybox/%.*s%s.vtf",
+						   skyname->value.length, skyname->value.data, g_skySides[side]);
+					
+					char pathBuffer[512];
+					Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
+					AppendToPath(pathBuffer, sizeof(pathBuffer), vtfFileName);
+					WriteEntireFile(pathBuffer, texBuffer.memory, (u32)texBuffer.usedBytes);
+					
+					char texturePath[128];
+					s32 texturePathLen = Format(texturePath, sizeof(texturePath), "skybox/%.*s%s",
+												skyname->value.length, skyname->value.data, g_skySides[side]);
+					
+					char vmt[512];
+					s32 vmtFileLength = MakeSkyTextureVmt(vmt, sizeof(vmt), texturePath);
+					
+					char vmtFileName[128];
+					Format(vmtFileName, sizeof(vmtFileName), "materials/%s.vmt", texturePath);
+					Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
+					AppendToPath(pathBuffer, sizeof(pathBuffer), vmtFileName);
+					
+					WriteEntireFile(pathBuffer, vmt, vmtFileLength);
+				}
+				else
+				{
+					// TODO: make blank vmt when loading fails?
+					ASSERT(0);
+				}
+			}
+		}
+	}
+	
 	// convert GSRC_LUMP_TEXTURES into files
 	// TODO: this should be merged with bsp.cpp somehow
 #ifdef DEBUG_GRAPHICS
@@ -221,7 +273,6 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	if (assetPath)
 #endif
 	{
-		FileWritingBuffer texBuffer = BufferCreate(tempArena, 8192 * 8192 * 3);
 		for (u32 i = 0; i < mapData->lumpTextures.mipTextureCount; i++)
 		{
 			if (mapData->lumpTextures.mipTextureOffsets[i] <= 0)
@@ -248,6 +299,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 				}
 			}
 			
+			BufferReset(&texBuffer);
 			GsrcMipTextureToVtf(tempArena, &texBuffer, mipTexture, textureData);
 #ifdef DEBUG_GRAPHICS
 			// TODO: both bsp.cpp and this can double texture count cos they both convert textures separately.
@@ -256,15 +308,16 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 #endif
 			
 			char pathBuffer[512];
+#ifdef DEBUG_GRAPHICS
 			if (assetPath)
+#endif
 			{
-				Format(pathBuffer, sizeof(pathBuffer), assetPath);
+				Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
 				char vtfFileName[64];
 				Format(vtfFileName, sizeof(vtfFileName), CONVERTED_MATERIAL_PATH "%s.vtf", mipTexture.name);
 				AppendToPath(pathBuffer, sizeof(pathBuffer), vtfFileName);
 				WriteEntireFile(pathBuffer, texBuffer.memory, (u32)texBuffer.usedBytes);
 			}
-			BufferReset(&texBuffer);
 			
 			char vmt[512];
 			// NOTE(GameChaos): { means transparent
@@ -377,14 +430,6 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	s32 modelCount = 0;
 	aabb mapAabb = GsrcModelsToSrcModels(mapData, g_models, &modelCount, mapBboxPlanes);
 	
-	//
-	// LUMP_ENTITIES                       = 0 # Required PROBABLY
-	//
-	
-	
-	EntList gsrcEnts = GsrcParseEntities(arena, mapData->lumpEntities);
-	// NOTE(GameChaos): don't convert to source entities for now. vmfs don't require conversion anyway.
-	EntList srcEnts = gsrcEnts;
 	//EntList srcEnts = GsrcEntitiesToSrcEntities(arena, gsrcEnts, NULL);
 	
 	// ====================================================================

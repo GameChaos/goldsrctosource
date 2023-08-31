@@ -175,6 +175,34 @@ internal EntList GsrcParseEntities(Arena *arena, str entLump)
 	return result;
 }
 
+internal EntProperties *EntListGetEnt(EntList list, str classname)
+{
+	EntProperties *result = NULL;
+	for (s32 i = 0; i < list.entCount; i++)
+	{
+		if (StrEquals(list.ents[i].classname, classname))
+		{
+			result = &list.ents[i];
+			break;
+		}
+	}
+	return result;
+}
+
+internal EntProperty *EntGetProperty(EntProperties *ent, str key)
+{
+	EntProperty *result = NULL;
+	for (s32 i = 0; i < ent->propertyCount; i++)
+	{
+		if (StrEquals(ent->properties[i].key, key, false))
+		{
+			result = &ent->properties[i];
+			break;
+		}
+	}
+	return result;
+}
+
 internal void EntPushProp(EntProperties *out, str key, str value)
 {
 	out->properties[out->propertyCount++] = {key, value};

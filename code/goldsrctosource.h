@@ -32,6 +32,18 @@ enum CmdArgType
 	CMDARGTYPE_COUNT,
 };
 
+enum SkySide
+{
+	SKY_SIDE_UP = 0,
+	SKY_SIDE_DOWN,
+	SKY_SIDE_LEFT,
+	SKY_SIDE_RIGHT,
+	SKY_SIDE_BACK,
+	SKY_SIDE_FRONT,
+	
+	SKY_SIDE_COUNT,
+};
+
 struct ModelInfo
 {
 	s32 model;

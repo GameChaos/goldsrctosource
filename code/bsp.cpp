@@ -296,15 +296,55 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	// load WADs
 	local_persist Wad3 wads[MAX_WADS] = {};
 	s32 wadCount = LoadWads(arena, modPath, valvePath, wads);
+	EntList gsrcEnts = GsrcParseEntities(arena, mapData->lumpEntities);
 	
 	//
 	// LUMP_PAKFILE
-	// convert GSRC_LUMP_TEXTURES into "files" in LUMP_PAKFILE
-	ZipBuilder zipBuilder = ZipBuilderCreate(arena,
-											 mapData->lumpTextures.mipTextureCount * 1024 * 1024 * 3,
-											 mapData->lumpTextures.mipTextureCount * 2);
+	s64 maxZipBytes = mapData->lumpTextures.mipTextureCount * 2048 * 2048 * 3;
+	// 1 vmt and 1 vtf for every miptexture + 6 sky vmts and 6 sky vtfs
+	s64 maxZipFiles = mapData->lumpTextures.mipTextureCount * 2 + 6 + 6;
+	ZipBuilder zipBuilder = ZipBuilderCreate(arena, maxZipBytes, maxZipFiles);
 	
 	FileWritingBuffer texBuffer = BufferCreate(tempArena, 8192 * 8192 * 3);
+	
+	// convert skybox textures
+	EntProperties *worldspawn = EntListGetEnt(gsrcEnts, STR("worldspawn"));
+	EntProperty *skyname = EntGetProperty(worldspawn, STR("skyname"));
+	ASSERT(skyname);
+	if (skyname)
+	{
+		for (s32 side = 0; side < SKY_SIDE_COUNT; side++)
+		{
+			BufferReset(&texBuffer);
+			
+			b32 gotTexture = GsrcGetSkyTexture(tempArena, &texBuffer, skyname->value, modPath, valvePath, (SkySide)side);
+			if (gotTexture)
+			{
+				char vtfFileName[256];
+				s32 vtfFileNameLen = Format(vtfFileName, sizeof(vtfFileName), "materials/skybox/%.*s%s.vtf",
+											skyname->value.length, skyname->value.data, g_skySides[side]);
+				ZipBuilderAddFile(&zipBuilder, vtfFileName, vtfFileNameLen, texBuffer.memory, texBuffer.usedBytes);
+				
+				char texturePath[128];
+				Format(texturePath, sizeof(texturePath), "skybox/%.*s%s",
+					   skyname->value.length, skyname->value.data, g_skySides[side]);
+				
+				char vmt[512];
+				s32 vmtFileLength = MakeSkyTextureVmt(vmt, sizeof(vmt), texturePath);
+				
+				char vmtFileName[128];
+				s32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), "%s.vmt", texturePath);
+				ZipBuilderAddFile(&zipBuilder, vmtFileName, vmtFileNameLen, vmt, vmtFileLength);
+			}
+			else
+			{
+				// TODO: make blank vmt when loading fails?
+				ASSERT(0);
+			}
+		}
+	}
+	
+	// convert GSRC_LUMP_TEXTURES into "files" in LUMP_PAKFILE
 	for (u32 i = 0; i < mapData->lumpTextures.mipTextureCount; i++)
 	{
 		if (mapData->lumpTextures.mipTextureOffsets[i] <= 0)
@@ -335,6 +375,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		
 		char vtfFileName[256];
 		s32 vtfFileNameLen = Format(vtfFileName, sizeof(vtfFileName), CONVERTED_MATERIAL_PATH "%s.vtf", mipTexture.name);
+		BufferReset(&texBuffer);
 		GsrcMipTextureToVtf(tempArena, &texBuffer, mipTexture, textureData);
 #ifdef DEBUG_GRAPHICS
 		// TODO: both vmf.cpp and this can double texture count cos they both convert textures separately.
@@ -342,7 +383,6 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		DebugGfxAddMiptexture(tempArena, mipTexture, textureData);
 #endif
 		ZipBuilderAddFile(&zipBuilder, vtfFileName, vtfFileNameLen, texBuffer.memory, texBuffer.usedBytes);
-		BufferReset(&texBuffer);
 		
 		char vmtFileName[256];
 		s32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), CONVERTED_MATERIAL_PATH "%s.vmt", mipTexture.name);
@@ -567,7 +607,6 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	
 	{
 		ArenaTemp arenaTemp2 = ArenaBeginTemp(tempArena);
-		EntList gsrcEnts = GsrcParseEntities(tempArena, mapData->lumpEntities);
 		EntList srcEnts = GsrcEntitiesToSrcEntities(tempArena, gsrcEnts, state->modelIsLadder);
 		
 		// NOTE(GameChaos): now, convert the new entities to a big string!

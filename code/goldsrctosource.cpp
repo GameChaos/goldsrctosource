@@ -8,6 +8,8 @@
 #define HMM_PREFIX
 #include "handmade_math.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
 #define STBIR_DEFAULT_FILTER_DOWNSAMPLE STBIR_FILTER_TRIANGLE
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb/stb_image_resize.h"
