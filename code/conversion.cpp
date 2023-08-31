@@ -553,3 +553,26 @@ internal s32 GetLeafClipPlanes(GsrcMapData *mapData, SrcPlane bboxPlanes[6], s32
 	
 	return result;
 }
+
+internal s32 MakeVmt(char *buffer, s32 bufferSize, char *textureName, b32 transparent)
+{
+	s32 result = 0; // length of vmt file
+	if (transparent)
+	{
+		// NOTE(GameChaos): $alphatestreference 0.3 mitigates dilation of transparent areas on smaller mips.
+		result = Format(buffer, bufferSize, "LightmappedGeneric\r\n"
+						"{\r\n"
+						"\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
+						"\t$alphatest 1\r\n"
+						"\t$alphatestreference 0.3\r\n"
+						"}\r\n", textureName);
+	}
+	else
+	{
+		result = Format(buffer, bufferSize, "LightmappedGeneric\r\n"
+						"{\r\n"
+						"\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
+						"}\r\n", textureName);
+	}
+	return result;
+}

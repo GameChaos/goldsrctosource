@@ -347,25 +347,9 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		char vmtFileName[256];
 		s32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), CONVERTED_MATERIAL_PATH "%s.vmt", mipTexture.name);
 		
-		char vmt[256];
-		s32 vmtFileLength = 0;
-		if (transparent)
-		{
-			// NOTE(GameChaos): $alphatestreference 0.3 mitigates dilation of transparent areas on smaller mips.
-			vmtFileLength = Format(vmt, sizeof(vmt), "LightmappedGeneric\r\n"
-								   "{\r\n"
-								   "\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
-								   "\t$alphatest \"1\"\r\n"
-								   "\t$alphatestreference 0.3\r\n"
-								   "}\r\n", mipTexture.name);
-		}
-		else
-		{
-			vmtFileLength = Format(vmt, sizeof(vmt), "LightmappedGeneric\r\n"
-								   "{\r\n"
-								   "\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
-								   "}\r\n", mipTexture.name);
-		}
+		char vmt[512];
+		s32 vmtFileLength = MakeVmt(vmt, sizeof(vmt), mipTexture.name, transparent);
+		
 		ZipBuilderAddFile(&zipBuilder, vmtFileName, vmtFileNameLen, vmt, vmtFileLength);
 	}
 	// write zip directory

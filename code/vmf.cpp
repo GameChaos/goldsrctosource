@@ -266,24 +266,10 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			}
 			BufferReset(&texBuffer);
 			
-			char vmt[256];
-			s32 vmtFileLength = 0;
+			char vmt[512];
 			// NOTE(GameChaos): { means transparent
-			if (mipTexture.name[0] == '{')
-			{
-				vmtFileLength = Format(vmt, sizeof(vmt), "LightmappedGeneric\r\n"
-									   "{\r\n"
-									   "\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
-									   "\t$alphatest \"1\"\r\n"
-									   "}\r\n", mipTexture.name);
-			}
-			else
-			{
-				vmtFileLength = Format(vmt, sizeof(vmt), "LightmappedGeneric\r\n"
-									   "{\r\n"
-									   "\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
-									   "}\r\n", mipTexture.name);
-			}
+			b32 transparent = mipTexture.name[0] == '{';
+			s32 vmtFileLength = MakeVmt(vmt, sizeof(vmt), mipTexture.name, transparent);
 			
 			if (assetPath)
 			{
