@@ -1,5 +1,5 @@
 
-internal void EatWhiteSpace(EntlumpTokeniser *tokeniser)
+internal void EatWhiteSpace_(EntlumpTokeniser *tokeniser)
 {
 	while (IsWhiteSpace(tokeniser->at[0]))
 	{
@@ -7,7 +7,7 @@ internal void EatWhiteSpace(EntlumpTokeniser *tokeniser)
 	}
 }
 
-internal str EntlumpGetString(EntlumpTokeniser *tokeniser, s32 length)
+internal str EntlumpGetString_(EntlumpTokeniser *tokeniser, s32 length)
 {
 	str result = {};
 	result.length = length;
@@ -20,21 +20,21 @@ internal EntlumpToken EntlumpGetToken(EntlumpTokeniser *tokeniser)
 {
 	EntlumpToken result = {};
 	
-	EatWhiteSpace(tokeniser);
+	EatWhiteSpace_(tokeniser);
 	
 	switch (*tokeniser->at)
 	{
 		case '{':
 		{
 			result.type = ENTLUMPTOKEN_OPEN_BRACE;
-			result.string = EntlumpGetString(tokeniser, 1);
+			result.string = EntlumpGetString_(tokeniser, 1);
 			tokeniser->at++;
 		} break;
 		
 		case '}':
 		{
 			result.type = ENTLUMPTOKEN_CLOSE_BRACE;
-			result.string = EntlumpGetString(tokeniser, 1);
+			result.string = EntlumpGetString_(tokeniser, 1);
 			tokeniser->at++;
 		} break;
 		
@@ -71,7 +71,7 @@ internal EntlumpToken EntlumpGetToken(EntlumpTokeniser *tokeniser)
 		default:
 		{
 			result.type = ENTLUMPTOKEN_UNKNOWN;
-			result.string = EntlumpGetString(tokeniser, 1);
+			result.string = EntlumpGetString_(tokeniser, 1);
 		} break;
 	}
 	
@@ -79,7 +79,7 @@ internal EntlumpToken EntlumpGetToken(EntlumpTokeniser *tokeniser)
 }
 
 // TODO: DON'T ASSUME NULL TERMINATED!!!!!!!!!!!!!!!!
-internal b32 EntlumpParseEntity(EntProperties *ent, EntlumpTokeniser *tokeniser)
+internal b32 EntlumpParseEntity_(EntProperties *ent, EntlumpTokeniser *tokeniser)
 {
 	b32 result = false;
 	*ent = {};
@@ -158,7 +158,7 @@ internal EntList GsrcParseEntities(Arena *arena, str entLump)
 	EntList result = {};
 	EntlumpTokeniser tokeniser = {entLump.data};
 	result.ents = (EntProperties *)ArenaAlloc(arena, sizeof(*result.ents) * MAX_ENTITIES);
-	while (EntlumpParseEntity(&ent, &tokeniser) && result.entCount <= MAX_ENTITIES)
+	while (EntlumpParseEntity_(&ent, &tokeniser) && result.entCount <= MAX_ENTITIES)
 	{
 		result.ents[result.entCount++] = ent;
 #if 0
