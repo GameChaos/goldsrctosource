@@ -8,11 +8,10 @@ Unfinished features:
 2. Automatic entity conversion is unfinished and in a testing state (this is most needed for direct bsp to bsp conversion, entities are converted as is for VMFs right now).
 3. Visibility doesn't work in converted BSPs.
 4. Water doesn't work quite properly in converted BSPs.
-5. Skybox textures don't get converted.
-6. Command line output is a mess, mostly debug stuff right now.
+5. Command line output is a mess, mostly debug stuff right now.
 
 Some (mostly finished) features:
-1. Automatic texture conversion (including transparent textures). Source 1 also seems to support GoldSrc animated textures.
+1. Automatic texture conversion (including transparent textures and the skybox). Source 1 (CS:GO) also seems to support GoldSrc animated textures to some extent.
 2. Lighting conversion from GoldSrc to Source 1 BSP. (1:1 lighting!)
 3. Conversion to BSP and VMF (as mentioned before).
 4. Loads of jank and bugs.
