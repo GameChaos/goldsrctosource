@@ -339,21 +339,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 #ifdef DEBUG_GRAPHICS
 		// TODO: both vmf.cpp and this can double texture count cos they both convert textures separately.
 		// do something about this!
-		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-		u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * 3);
-		u32 pixels = mipTexture.width * mipTexture.height;
-		u8 *palette = textureData + 2 + mipTexture.offsets[0] + pixels + (pixels >> 2) + (pixels >> 4) + (pixels >> 6);
-		for (u32 pix = 0; pix < pixels; pix++)
-		{
-			// NOTE(GameChaos): nonsense data for now
-			// TODO: downscale properly!
-			u32 indexOffset = mipTexture.offsets[0] + pix;
-			tempImgDataRgb888[pix * 3 + 0] = palette[textureData[indexOffset] * 3 + 2];
-			tempImgDataRgb888[pix * 3 + 1] = palette[textureData[indexOffset] * 3 + 1];
-			tempImgDataRgb888[pix * 3 + 2] = palette[textureData[indexOffset] * 3 + 0];
-		}
-		DebugGfxAddTexture(tempImgDataRgb888, mipTexture.width, mipTexture.height, true);
-		ArenaEndTemp(arenaTmp);
+		DebugGfxAddMiptexture(tempArena, mipTexture, textureData);
 #endif
 		ZipBuilderAddFile(&zipBuilder, vtfFileName, vtfFileNameLen, texBuffer.memory, texBuffer.usedBytes);
 		BufferReset(&texBuffer);
@@ -365,10 +351,12 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		s32 vmtFileLength = 0;
 		if (transparent)
 		{
+			// NOTE(GameChaos): $alphatestreference 0.3 mitigates dilation of transparent areas on smaller mips.
 			vmtFileLength = Format(vmt, sizeof(vmt), "LightmappedGeneric\r\n"
 								   "{\r\n"
 								   "\t$basetexture \"" CONVERTED_MATERIAL_FOLDER "%s\"\r\n"
 								   "\t$alphatest \"1\"\r\n"
+								   "\t$alphatestreference 0.3\r\n"
 								   "}\r\n", mipTexture.name);
 		}
 		else

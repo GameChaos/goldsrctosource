@@ -38,6 +38,15 @@ struct ModelInfo
 	s32 rendermode;
 };
 
+union v2i
+{
+	struct
+	{
+		s32 x, y;
+	};
+	s32 e[2];
+};
+
 union v3i
 {
 	struct 

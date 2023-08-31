@@ -245,6 +245,23 @@ internal void DebugGfxAddTexture(u8 *data, s32 width, s32 height, b32 rgb888 = f
 	}
 }
 
+internal void DebugGfxAddMiptexture(Arena *tempArena, GsrcMipTexture mipTexture, u8 *textureData)
+{
+	ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
+	u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * 3);
+	u32 pixels = mipTexture.width * mipTexture.height;
+	u8 *palette = textureData + 2 + mipTexture.offsets[0] + pixels + (pixels >> 2) + (pixels >> 4) + (pixels >> 6);
+	for (u32 pix = 0; pix < pixels; pix++)
+	{
+		u32 indexOffset = mipTexture.offsets[0] + pix;
+		tempImgDataRgb888[pix * 3 + 0] = palette[textureData[indexOffset] * 3 + 2];
+		tempImgDataRgb888[pix * 3 + 1] = palette[textureData[indexOffset] * 3 + 1];
+		tempImgDataRgb888[pix * 3 + 2] = palette[textureData[indexOffset] * 3 + 0];
+	}
+	DebugGfxAddTexture(tempImgDataRgb888, mipTexture.width, mipTexture.height, true);
+	ArenaEndTemp(arenaTmp);
+}
+
 internal GfxVertData *VertsToGfxVertData(Arena *arena, Verts *poly, v3 normal, v4 s, v4 t)
 {
 	GfxVertData *result = (GfxVertData *)ArenaAlloc(arena, poly->vertCount * sizeof(*result));

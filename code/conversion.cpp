@@ -20,6 +20,34 @@ internal s32 LoadWads(Arena *arena, char *modPath, char *valvePath, Wad3 out[MAX
 	return result;
 }
 
+// TODO: check if correct
+internal v2i VtfGetMipDimensions(v2i textureSize, s32 mipLevel)
+{
+	v2i result = {0};
+	result.x = textureSize.x >> mipLevel;
+	result.y = textureSize.y >> mipLevel;
+	return result;
+}
+
+// TODO: check if correct
+internal s32 VtfGetMipCount(v2i textureSize)
+{
+	s32 result = 0;
+	
+	s32 width = textureSize.x;
+	s32 height = textureSize.y;
+	while (width >= 1 && height >= 1)
+	{
+		width = HMM_MAX(width, 1);
+		height = HMM_MAX(height, 1);
+		result++;
+		width >>= 1;
+		height >>= 1;
+	}
+	
+	return result;
+}
+
 internal void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *out, GsrcMipTexture mipTexture, u8 *mipTextureData)
 {
 	b32 result = false;
@@ -34,70 +62,82 @@ internal void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *out, Gsrc
 	vtfHeader.frames = 1;
 	vtfHeader.width = (u16)mipTexture.width;
 	vtfHeader.height = (u16)mipTexture.height;
-	vtfHeader.reflectivity = {0.5f, 0.5f, 0.5f};
-	vtfHeader.mipmapCount = 4;
+	vtfHeader.reflectivity = {0.5f, 0.5f, 0.5f}; // TODO: correct reflectivity
+	// no low res (dxt1) image.
 	vtfHeader.lowResImageFormat = U32_MAX;
 	vtfHeader.lowResImageWidth = 0;
 	vtfHeader.lowResImageHeight = 0;
 	
-	u32 pixels = mipTexture.width * mipTexture.height;
+	s32 pixels = (s32)mipTexture.width * (s32)mipTexture.height;
 	u8 *palette = mipTextureData + 2 + mipTexture.offsets[0] + pixels + (pixels >> 2) + (pixels >> 4) + (pixels >> 6);
 	
-	vtfHeader.highResImageFormat = VTF_FORMAT_BGR888_BLUESCREEN;
-	vtfHeader.flags |= TEXTUREFLAGS_ONEBITALPHA;
-	// generate mipmaps
-	s32 mipX[16];
-	s32 mipY[16];
-	s32 mipCount = 0;
-	s32 width = mipTexture.width / 16;
-	s32 height = mipTexture.height / 16;
-	
-	while (width >= 1 && height >= 1)
+	if (transparent)
 	{
-		width = HMM_MAX(width, 1);
-		height = HMM_MAX(height, 1);
-		mipX[mipCount] = width;
-		mipY[mipCount] = height;
-		mipCount++;
-		width >>= 1;
-		height >>= 1;
+		vtfHeader.highResImageFormat = VTF_FORMAT_BGRA8888;
+		vtfHeader.flags |= TEXTUREFLAGS_EIGHTBITALPHA;
+	}
+	else
+	{
+		vtfHeader.highResImageFormat = VTF_FORMAT_BGR888;
 	}
 	
-	vtfHeader.mipmapCount += (u8)mipCount;
+	v2i textureSize = {
+		(s32)mipTexture.width,
+		(s32)mipTexture.height
+	};
+	
+	vtfHeader.mipmapCount = VtfGetMipCount(textureSize);
 	BufferPushData(out, &vtfHeader, sizeof(vtfHeader), false);
-	for (s32 mip = mipCount - 1; mip >= 0; mip--)
+	
+	s32 channels = 3;
+	if (transparent)
 	{
-		u32 mipPixels = mipX[mip] * mipY[mip];
-		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-		u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * 3);
-		for (u32 pix = 0; pix < mipPixels; pix++)
-		{
-			// NOTE(GameChaos): nonsense data for now
-			// TODO: downscale properly!
-			u32 indexOffset = mipTexture.offsets[3] + pix;
-			tempImgDataRgb888[pix * 3 + 0] = palette[mipTextureData[indexOffset] * 3 + 2];
-			tempImgDataRgb888[pix * 3 + 1] = palette[mipTextureData[indexOffset] * 3 + 1];
-			tempImgDataRgb888[pix * 3 + 2] = palette[mipTextureData[indexOffset] * 3 + 0];
-		}
-		BufferPushData(out, tempImgDataRgb888, mipPixels * 3, false);
-		ArenaEndTemp(arenaTmp);
+		channels = 4;
 	}
-	// NOTE(GameChaos): convert paletted mipmaps to BGR888
-	for (s32 mip = 3; mip >= 0; mip--)
+	// generate mipmaps
+	// NOTE(GameChaos): mipmaps are stored smallest (1x1) to largest
+	ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
+	u8 *largestMip = (u8 *)ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * channels);
+	for (s32 pix = 0; pix < pixels; pix++)
 	{
-		u32 mipPixels = pixels / ((1 << mip) * (1 << mip));
-		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-		u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * 3);
-		for (u32 pix = 0; pix < mipPixels; pix++)
+		s32 indexOffset = mipTexture.offsets[0] + pix;
+		u8 r = palette[mipTextureData[indexOffset] * 3 + 0];
+		u8 g = palette[mipTextureData[indexOffset] * 3 + 1];
+		u8 b = palette[mipTextureData[indexOffset] * 3 + 2];
+		
+		if (transparent)
 		{
-			u32 indexOffset = mipTexture.offsets[mip] + pix;
-			tempImgDataRgb888[pix * 3 + 0] = palette[mipTextureData[indexOffset] * 3 + 2];
-			tempImgDataRgb888[pix * 3 + 1] = palette[mipTextureData[indexOffset] * 3 + 1];
-			tempImgDataRgb888[pix * 3 + 2] = palette[mipTextureData[indexOffset] * 3 + 0];
+			if (r == 0 && g == 0 && b == 255)
+			{
+				largestMip[pix * channels + 3] = 0;
+				b = 0;
+			}
+			else
+			{
+				largestMip[pix * channels + 3] = 255;
+			}
 		}
-		BufferPushData(out, tempImgDataRgb888, mipPixels * 3, false);
-		ArenaEndTemp(arenaTmp);
+		largestMip[pix * channels + 0] = b;
+		largestMip[pix * channels + 1] = g;
+		largestMip[pix * channels + 2] = r;
 	}
+	
+	u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, pixels * channels);
+	for (s32 mip = vtfHeader.mipmapCount - 1;
+		 mip >= 0;
+		 mip--)
+	{
+		v2i mipSize = VtfGetMipDimensions(textureSize, mip);
+		u32 mipPixels = mipSize.x * mipSize.y;
+		
+		s32 alphaChannel = transparent ? 3 : STBIR_ALPHA_CHANNEL_NONE;
+		
+		stbir_resize_uint8_srgb(largestMip, (s32)mipTexture.width, (s32)mipTexture.height, 0,
+								tempImgDataRgb888, mipSize.x, mipSize.y, 0,
+								channels, alphaChannel, 0);
+		BufferPushData(out, tempImgDataRgb888, mipPixels * channels, false);
+	}
+	ArenaEndTemp(arenaTmp);
 }
 
 internal aabb GsrcModelsToSrcModels(GsrcMapData *mapData, SrcModel *outModels, s32 *outModelCount, SrcPlane outBboxPlanes[6])

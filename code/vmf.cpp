@@ -252,21 +252,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 #ifdef DEBUG_GRAPHICS
 			// TODO: both bsp.cpp and this can double texture count cos they both convert textures separately.
 			// do something about this!
-			ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-			u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * 3);
-			u32 pixels = mipTexture.width * mipTexture.height;
-			u8 *palette = textureData + 2 + mipTexture.offsets[0] + pixels + (pixels >> 2) + (pixels >> 4) + (pixels >> 6);
-			for (u32 pix = 0; pix < pixels; pix++)
-			{
-				// NOTE(GameChaos): nonsense data for now
-				// TODO: downscale properly!
-				u32 indexOffset = mipTexture.offsets[0] + pix;
-				tempImgDataRgb888[pix * 3 + 0] = palette[textureData[indexOffset] * 3 + 2];
-				tempImgDataRgb888[pix * 3 + 1] = palette[textureData[indexOffset] * 3 + 1];
-				tempImgDataRgb888[pix * 3 + 2] = palette[textureData[indexOffset] * 3 + 0];
-			}
-			DebugGfxAddTexture(tempImgDataRgb888, mipTexture.width, mipTexture.height, true);
-			ArenaEndTemp(arenaTmp);
+			DebugGfxAddMiptexture(tempArena, mipTexture, textureData);
 #endif
 			
 			char pathBuffer[512];
