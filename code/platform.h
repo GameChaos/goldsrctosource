@@ -6,7 +6,7 @@
 struct ReadFileResult
 {
 	void *contents;
-	u32 size;
+	s64 size;
 };
 
 struct FileInfo
