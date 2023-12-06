@@ -223,7 +223,13 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	{
 		EntProperties *worldspawn = EntListGetEnt(gsrcEnts, STR("worldspawn"));
 		EntProperty *skyname = EntGetProperty(worldspawn, STR("skyname"));
-		ASSERT(skyname);
+		// TODO: is this the default sky?
+		EntProperty defaultSky = {STR("skyname"), STR("desert")};
+		if (!skyname)
+		{
+			skyname = &defaultSky;
+		}
+		//ASSERT(skyname);
 		if (skyname)
 		{
 			for (s32 side = 0; side < SKY_SIDE_COUNT; side++)
