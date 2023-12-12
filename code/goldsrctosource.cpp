@@ -35,6 +35,8 @@
 #include "vmf.cpp"
 #include "bsp.cpp"
 
+#include "pcg/pcg_basic.c"
+
 #include "dmx.cpp"
 
 internal void FatalError(char *error)
@@ -233,7 +235,7 @@ void BSPMain(s32 argCount, char *arguments[])
 	Arena tempArena = ArenaCreate(GIGABYTES(2));
 	Arena arena = ArenaCreate(GIGABYTES(4));
 	
-	DmxTest(&arena);
+	DmxTest(&arena, &tempArena);
 	
 	// NOTE(GameChaos): TODO: negative values for floats/integers on the cmd line don't work right
 	// now cos it thinks it's another parameter because of the - character.

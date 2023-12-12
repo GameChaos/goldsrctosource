@@ -1,6 +1,8 @@
 
 #include "dmx.h"
 
+// NOTE(GameChaos): Parts taken from: https://github.com/kristiker/Datamodel.NET
+
 struct ReadBuffer
 {
 	u8 *data;
@@ -58,6 +60,7 @@ DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadU64, u64);
 DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadV3, v3);
 DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadV4, v4);
 DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadMat4, mat4);
+DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadGuid, Guid);
 
 internal char *ReadBufferGetString(ReadBuffer *buffer)
 {
@@ -88,7 +91,7 @@ internal char *ReadBufferGetString(ReadBuffer *buffer)
 
 global s32 g_attrValueContainerSize[] = {
 	0, // DMX_ATTR_UNKNOWN
-	sizeof(DmxElement), // DMX_ATTR_ELEMENT
+	sizeof(DmxElementId), // DMX_ATTR_ELEMENT
 	sizeof(s32), // DMX_ATTR_INT32
 	sizeof(f32), // DMX_ATTR_F32
 	sizeof(bool), // DMX_ATTR_BOOL
@@ -110,14 +113,17 @@ internal void ReadBufferReadDmxAttributeValue_(ReadBuffer *buffer, void *out, Dm
 {
 	switch (type)
 	{
-		case DMX_ATTR_UNKNOWN: break;
+		case DMX_ATTR_UNKNOWN:
+		{
+			ASSERT(0);
+		} break;
 		case DMX_ATTR_ELEMENT:
 		{
-			DmxElement *element = (DmxElement *)out;
+			DmxElementId *element = (DmxElementId *)out;
 			ReadBufferReadS32(buffer, &element->index);
 			if (element->index == -2)
 			{
-				element->guid = ReadBufferGetString(buffer);
+				ReadBufferReadGuid(buffer, &element->guid);
 			}
 		} break;
 		
@@ -197,13 +203,17 @@ internal b32 ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute *attr, 
 		s32 index = 0;
 		if (ReadBufferReadS32(buffer, &index) && index >= 0 && index < stringTable->stringCount)
 		{
-			attr->name = stringTable->strings[index];
+			char *string = stringTable->strings[index];
+			ASSERT(strlen(string) < sizeof(attr->name));
+			Format(attr->name, sizeof(attr->name), "%s", string);
 		}
 		ASSERT(index >= 0 && index < stringTable->stringCount);
 	}
 	else
 	{
-		attr->name = ReadBufferGetString(buffer);
+		char *string = ReadBufferGetString(buffer);
+		ASSERT(strlen(string) < sizeof(attr->name));
+		Format(attr->name, sizeof(attr->name), "%s", string);
 	}
 	ReadBufferReadU8(buffer, (u8 *)&attr->value.type);
 	if (attr->value.type <= DMX_ATTR_COUNT)
@@ -213,6 +223,7 @@ internal b32 ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute *attr, 
 	else
 	{
 		DmxAttrType valueType = (DmxAttrType)(attr->value.type - DMX_ATTR_COUNT);
+		ASSERT(attr->value.type <= DMX_ATTR_COUNT || attr->value.type > DMX_ATTR_COUNT * 2);
 		if (attr->value.type > DMX_ATTR_COUNT)
 		{
 			valueType = (DmxAttrType)(valueType - DMX_ATTR_COUNT);
@@ -235,9 +246,9 @@ internal b32 ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute *attr, 
 	return result;
 }
 
-internal DmxBinary_v9 DmxImportBinary(char *path, Arena *arena)
+internal DmxReadBinary_v9 DmxImportBinary(char *path, Arena *arena)
 {
-	DmxBinary_v9 result = {};
+	DmxReadBinary_v9 result = {};
 	result.file = ReadEntireFile(arena, path);
 	
 	if (result.file.contents)
@@ -247,10 +258,10 @@ internal DmxBinary_v9 DmxImportBinary(char *path, Arena *arena)
 		
 		// prefix elements and attributes
 		ReadBufferReadS32(&buf, &result.prefixElementCount);
-		result.prefixElements = (DmxPrefixElement *)ArenaAlloc(arena, sizeof(*result.prefixElements) * result.prefixElementCount);
+		result.prefixElements = (DmxReadElemBody *)ArenaAlloc(arena, sizeof(*result.prefixElements) * result.prefixElementCount);
 		for (s32 prefixElem = 0; prefixElem < result.prefixElementCount; prefixElem++)
 		{
-			DmxPrefixElement *element = &result.prefixElements[prefixElem];
+			DmxReadElemBody *element = &result.prefixElements[prefixElem];
 			ReadBufferReadS32(&buf, &element->attributeCount);
 			element->attributes = (DmxAttribute *)ArenaAlloc(arena, sizeof(*element->attributes) * element->attributeCount);
 			for (s32 attr = 0; attr < element->attributeCount; attr++)
@@ -269,24 +280,24 @@ internal DmxBinary_v9 DmxImportBinary(char *path, Arena *arena)
 		
 		// element headers
 		ReadBufferReadS32(&buf, &result.elementCount);
-		result.elementHeaders = (DmxElementHeader *)ArenaAlloc(arena, sizeof(*result.elementHeaders) * result.elementCount);
+		result.elementHeaders = (DmxReadElemHeader *)ArenaAlloc(arena, sizeof(*result.elementHeaders) * result.elementCount);
 		for (s32 elem = 0; elem < result.elementCount; elem++)
 		{
-			DmxElementHeader *elemHeader = &result.elementHeaders[elem];
+			DmxReadElemHeader *elemHeader = &result.elementHeaders[elem];
 			s32 typeIndex = 0;
 			s32 nameIndex = 0;
 			ReadBufferReadS32(&buf, &typeIndex);
 			ReadBufferReadS32(&buf, &nameIndex);
-			ReadBufferRead(&buf, elemHeader->guid, sizeof(elemHeader->guid));
+			ReadBufferReadGuid(&buf, &elemHeader->guid);
 			elemHeader->type = result.stringTable.strings[typeIndex];
 			elemHeader->name = result.stringTable.strings[nameIndex];
 		}
 		
 		// element bodies
-		result.elements = (DmxElementBody *)ArenaAlloc(arena, sizeof(*result.elements) * result.elementCount);
+		result.elements = (DmxReadElemBody *)ArenaAlloc(arena, sizeof(*result.elements) * result.elementCount);
 		for (s32 elem = 0; elem < result.elementCount; elem++)
 		{
-			DmxElementBody *element = &result.elements[elem];
+			DmxReadElemBody *element = &result.elements[elem];
 			ReadBufferReadS32(&buf, &element->attributeCount);
 			element->attributes = (DmxAttribute *)ArenaAlloc(arena, sizeof(*element->attributes) * element->attributeCount);
 			for (s32 attr = 0; attr < element->attributeCount; attr++)
@@ -299,16 +310,280 @@ internal DmxBinary_v9 DmxImportBinary(char *path, Arena *arena)
 	return result;
 }
 
-internal void DmxTest(Arena *arena)
+#if 0
+internal void DmxExportBinary(char *path, Arena *arena, DmxReadBinary_v9 dmx)
 {
-	DmxBinary_v9 dmxTest = DmxImportBinary("debug/square.vmap", arena);
+	FileWritingBuffer buf = BufferCreate(arena, GIGABYTES(1));
 	
-	for (s32 elem = 0; elem < dmxTest.elementCount; elem++)
+	BufferPushData(&buf, DMX_V9_BIN_HEADER, sizeof(DMX_V9_BIN_HEADER), false);
+	BufferPushData(&buf, &dmx.prefixElementCount, sizeof(dmx.prefixElementCount), false);
+	for (s32 elemInd = 0; elemInd < dmx.prefixElementCount; elemInd++)
 	{
-		DmxElementHeader *elemHeader = &dmxTest.elementHeaders[elem];
-		DmxElementBody *elemBody = &dmxTest.elements[elem];
-		Print("%s %s;\n", elemHeader->type, elemHeader->name);
+		DmxReadElemBody *elem = &dmx.prefixElements[elemInd];
+		BufferPushData(&buf, &elem->attributeCount, sizeof(elem->attributeCount), false);
+		
+		for (s32 attrInd = 0; attrInd < elem->attributeCount; attrInd++)
+		{
+			DmxAttribute *attr = &elem->attributes[attrInd];
+			BufferPushData(&buf, &attr->name, strlen(attr->name) + 1, false);
+			BufferPushData(&buf, &attr->value.type, sizeof(attr->value.type), false);
+			
+		}
+	}
+}
+#endif
+
+internal Dmx DmxCreate(Arena *arena)
+{
+	Dmx result = {};
+	
+	result.prefix.attributes = (DmxAttribute *)ArenaAlloc(arena, DMX_DEFAULT_MAX_ATTRIBUTES * sizeof(*result.prefix.attributes));
+	//result.maxStrings = 1024;
+	//result.maxStringBytes = 1024 * 64;
+	//result.stringTable.strings = (char **)ArenaAlloc(arena, result.maxStrings * sizeof(*result.stringTable.strings));
+	//result.stringMemory = (char *)ArenaAlloc(arena, result.maxStringBytes);
+	
+	result.maxElements = 1024;
+	result.elements = (DmxElement *)ArenaAlloc(arena, result.maxElements * sizeof(*result.elements));
+	
+	result.prefix = *DmxAddElement(&result, NULL, STR(""), STR(""), arena);
+	result.elementCount = 0;
+	
+	return result;
+}
+
+internal DmxElement *DmxGetPrefix(Dmx *dmx)
+{
+	DmxElement *result = &dmx->prefix;
+	return result;
+}
+
+// NOTE(GameChaos): i hope source 2 doesn't care that my guids don't conform to the standard.
+internal Guid GenerateGuid()
+{
+	Guid result = {};
+	for (s32 i = 0; i < 4; i++)
+	{
+		result.uints[i] = pcg32_random();
+	}
+	return result;
+}
+
+internal DmxAttribute *DmxAddAttribute(Dmx *dmx, DmxElement *parent, str name, DmxAttrType type)
+{
+	ASSERT(parent && name.data);
+	DmxAttribute *result = NULL;
+	if (parent->attributeCount < parent->maxAttributes)
+	{
+		result = &parent->attributes[parent->attributeCount++];
+		*result = {};
+		result->value.type = type;
+		Format(result->name, sizeof(result->name), "%.*s", name.length, name.data);
+	}
+	ASSERT(result);
+	
+	return result;
+}
+
+internal void DmxAttrSetData(Dmx *dmx, DmxAttribute *attr, void *data, s64 bytes)
+{
+	ASSERT(data && bytes);
+	
+	switch (attr->value.type)
+	{
+		case DMX_ATTR_ELEMENT:
+		case DMX_ATTR_INT32:
+		case DMX_ATTR_F32:
+		case DMX_ATTR_BOOL:
+		case DMX_ATTR_TIMESPAN:
+		case DMX_ATTR_RGBA8:
+		case DMX_ATTR_VECTOR2D:
+		case DMX_ATTR_VECTOR3D:
+		case DMX_ATTR_VECTOR4D:
+		case DMX_ATTR_QANGLE:
+		case DMX_ATTR_QUATERNION:
+		case DMX_ATTR_MATRIX4X4:
+		case DMX_ATTR_UINT64:
+		case DMX_ATTR_BYTE:
+		{
+			Mem_Copy(data, &attr->value.startOfValueData, bytes);
+		} break;
+		
+		case DMX_ATTR_STRING:
+		{
+			attr->value.string = (char *)data;
+		} break;
+		
+		case DMX_ATTR_BINARYBLOB:
+		{
+			attr->value.binaryBlob.bytes = (u8 *)data;
+			attr->value.binaryBlob.byteCount = bytes;
+		} break;
+		
+		default:
+		{
+			ASSERT(0);
+		};
+	}
+}
+
+#define DEFINE_DMXADDATTRIBUTE_TYPE(functionName, dataType, attrType)\
+DEFINE_DMXADDATTRIBUTE_FUNC_SIG(functionName, dataType)\
+{\
+    DmxAttribute *result = DmxAddAttribute(dmx, parent, name, attrType);\
+    if (result)\
+    {\
+        DmxAttrSetData(dmx, result, &(value), sizeof(value));\
+    }\
+    return result;\
+}\
+
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeElementId, DmxElementId, DMX_ATTR_ELEMENT)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeInt, s32, DMX_ATTR_INT32)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeBool, bool, DMX_ATTR_BOOL)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeTimespan, s32, DMX_ATTR_TIMESPAN)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeRgba8, u32, DMX_ATTR_RGBA8)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeV2, v2, DMX_ATTR_VECTOR2D)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeV3, v3, DMX_ATTR_VECTOR3D)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeV4, v4, DMX_ATTR_VECTOR4D)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeQAngle, v3, DMX_ATTR_QANGLE)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeQuaternion, v4, DMX_ATTR_QUATERNION)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeMat4, mat4, DMX_ATTR_MATRIX4X4)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeU64, u64, DMX_ATTR_UINT64)
+DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeU8, u8, DMX_ATTR_BYTE)
+
+#undef DEFINE_DMXADDATTRIBUTE_TYPE
+
+internal DmxAttribute *DmxAddAttributeBinary(Dmx *dmx, DmxElement *parent, str name, void *binaryBlob, s64 bytes)
+{
+	DmxAttribute *result = DmxAddAttribute(dmx, parent, name, DMX_ATTR_BINARYBLOB);
+    if (result)
+    {
+        DmxAttrSetData(dmx, result, binaryBlob, bytes);
+    }
+    return result;
+}
+
+internal DmxAttribute *DmxAddAttributeString(Dmx *dmx, DmxElement *parent, str name, str value)
+{
+	DmxAttribute *result = DmxAddAttribute(dmx, parent, name, DMX_ATTR_STRING);
+    if (result)
+    {
+        DmxAttrSetData(dmx, result, value.data, 1);
+    }
+    return result;
+}
+
+internal DmxElement *DmxCreateElement(Dmx *dmx, str name, str type, Arena *arena)
+{
+	ASSERT(name.data && type.data);
+	DmxElement *result = NULL;
+	if (dmx->elementCount < dmx->maxElements)
+	{
+		result = &dmx->elements[dmx->elementCount++];
+		*result = {};
+		result->maxAttributes = 1024;
+		result->attributes = (DmxAttribute *)ArenaAlloc(arena, result->maxAttributes * sizeof(*result->attributes));
+		Format(result->type, sizeof(result->type), "%.*s", type.length, type.data);
+		Format(result->name, sizeof(result->name), "%.*s", name.length, name.data);
+		result->guid = GenerateGuid();
+	}
+	ASSERT(result);
+	return result;
+}
+
+internal DmxElement *DmxAddElement(Dmx *dmx, DmxElement *parent, str name, str type, Arena *arena)
+{
+	DmxElement *result = DmxCreateElement(dmx, name, type, arena);
+	if (result)
+	{
+		DmxElementId id = {
+			dmx->elementCount - 1,
+			result->guid
+		};
+		if (parent)
+		{
+			DmxAttribute *attr = DmxAddAttributeElementId(dmx, parent, name, id);
+			ASSERT(attr);
+		}
+	}
+	ASSERT(result);
+	return result;
+}
+
+internal void DmxTest(Arena *arena, Arena *tempArena)
+{
+	// load test
+	{
+		DmxReadBinary_v9 dmxTest = DmxImportBinary("debug/empty.vmap", arena);
+		
+#if 1
+		for (s32 elem = 0; elem < dmxTest.prefixElementCount; elem++)
+		{
+			DmxReadElemBody *elemBody = &dmxTest.prefixElements[elem];
+			Print("{\n");
+			for (s32 attrInd = 0; attrInd < elemBody->attributeCount; attrInd++)
+			{
+				DmxAttribute *attr = &elemBody->attributes[attrInd];
+				Print("\t\"%s\" \"%i\" \"\"\n", attr->name, attr->value.type);
+			}
+			Print("%s", "}\n");
+		}
+		
+		for (s32 elem = 0; elem < dmxTest.elementCount; elem++)
+		{
+			DmxReadElemHeader *elemHeader = &dmxTest.elementHeaders[elem];
+			DmxReadElemBody *elemBody = &dmxTest.elements[elem];
+			Print("\"%s\" \"%s\"\n{\n", elemHeader->type, elemHeader->name);
+			for (s32 attrInd = 0; attrInd < elemBody->attributeCount; attrInd++)
+			{
+				DmxAttribute *attr = &elemBody->attributes[attrInd];
+				Print("\t\"%s\" \"%i\" \"\"\n", attr->name, attr->value.type);
+			}
+			Print("%s", "}\n");
+		}
+#endif
+		
+		dmxTest = dmxTest;
 	}
 	
+#if 1
+	// write test
+	{
+		Dmx dmx = DmxCreate(arena);
+		
+		// prefix attributes
+		{
+			char *imgData = "P3\n2 2\n0 0 0\n0 0 0\n0 0 0\n0 0 0";
+			s64 imgBytes = strlen(imgData);
+			DmxAddAttributeBinary(&dmx, DmxGetPrefix(&dmx), STR("asset_preview_thumbnail"), imgData, imgBytes);
+			DmxAddAttributeString(&dmx, DmxGetPrefix(&dmx), STR("asset_preview_thumbnail_format"), STR("ppm"));
+			DmxAddAttribute(&dmx, DmxGetPrefix(&dmx), STR("map_asset_references"), DMX_ATTR_STRING_ARRAY);
+		}
+		
+		// CMapRootElement
+		{
+			DmxElement *mapRootElement = DmxAddElement(&dmx, NULL, STR(""), STR("CMapRootElement"), arena);
+			DmxAddAttributeBool(&dmx, mapRootElement, STR("isprefab"), false);
+			DmxAddAttributeInt(&dmx, mapRootElement, STR("editorbuild"), 9820);
+			DmxAddAttributeInt(&dmx, mapRootElement, STR("editorversion"), 400);
+			DmxAddAttributeString(&dmx, mapRootElement, STR("itemFile"), STR(""));
+			
+			// defaultcamera
+			{
+				DmxElement *defaultCamera = DmxAddElement(&dmx, mapRootElement, STR("defaultcamera"), STR("CStoredCamera"), arena);
+				DmxAddAttributeInt(&dmx, defaultCamera, STR("activecamera"), -1);
+				DmxAddAttributeV3(&dmx, defaultCamera, STR("position"), Vec3(0, -1000, -1000));
+				DmxAddAttributeV3(&dmx, defaultCamera, STR("lookat"), Vec3(-0.0000000618f, -999.2929077148f, 999.2929077148f));
+			}
+			
+			// 3dcameras
+			{
+				DmxElement *cameras = DmxAddElement(&dmx, mapRootElement, STR("3dcameras"), STR("CStoredCameras"), arena);
+				//DmxAddAttributeElementArray2(&dmx, cameras, STR("cameras"), -1)3;
+			}
+		}
+	}
+#endif
 	return;
 }
