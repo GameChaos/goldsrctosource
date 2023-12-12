@@ -40,6 +40,8 @@ struct GfxPoly
 {
 	s32 texture;
 	s32 vertCount;
+	v4 s;
+	v4 t;
 	GfxVertData *verts;
 };
 

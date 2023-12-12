@@ -321,6 +321,8 @@ internal void DebugGfxAddFace(Verts *poly, v3 normal, s32 textureIndex = -1, v4 
 		&& poly->vertCount < SRC_MAX_SIDE_VERTS)
 	{
 		GfxPoly face = {};
+		face.s = s;
+		face.t = t;
 		if (textureIndex < 0)
 		{
 			DebugGfxTextureVecsFromNormal(normal, &s, &t);
@@ -951,6 +953,15 @@ internal void DebugGfxFrame(void *userData)
 	{
 		state->specificBrushIndex = -1;
 		state->pickBrush = true;
+	}
+	
+	if (state->specificFaceIndex >= 0)
+	{
+		GfxPoly *face = &state->faces[state->specificFaceIndex];
+		ImGui::Text("Face %i\ns: %f %f %f %f\nt: %f %f %f %f",
+					state->specificFaceIndex,
+					face->s.x, face->s.y, face->s.z, face->s.w,
+					face->t.x, face->t.y, face->t.z, face->s.w);
 	}
 	
 	if (state->specificBrushIndex >= 0)
