@@ -462,7 +462,7 @@ internal void DebugGfxInit(void *userData)
 	pipelineDesc.layout.attrs[ATTR_world_vs_iNormal].format = SG_VERTEXFORMAT_FLOAT3;
 	pipelineDesc.layout.attrs[ATTR_world_vs_iUv].format = SG_VERTEXFORMAT_FLOAT2;
 	pipelineDesc.shader = sg_make_shader(world_shader_desc(sg_query_backend()));
-	pipelineDesc.index_type = SG_INDEXTYPE_UINT16;
+	pipelineDesc.index_type = SG_INDEXTYPE_UINT32;
 	pipelineDesc.cull_mode = SG_CULLMODE_BACK;
 	pipelineDesc.depth.compare = SG_COMPAREFUNC_LESS_EQUAL;
 	pipelineDesc.depth.write_enabled = true;
@@ -474,7 +474,7 @@ internal void DebugGfxInit(void *userData)
 	wirePipelineDesc.layout.attrs[ATTR_world_vs_iUv].format = SG_VERTEXFORMAT_FLOAT2;
 	wirePipelineDesc.shader = sg_make_shader(wire_shader_desc(sg_query_backend()));
 	wirePipelineDesc.primitive_type = SG_PRIMITIVETYPE_LINES;
-	wirePipelineDesc.index_type = SG_INDEXTYPE_UINT16;
+	wirePipelineDesc.index_type = SG_INDEXTYPE_UINT32;
 	wirePipelineDesc.cull_mode = SG_CULLMODE_BACK;
 	wirePipelineDesc.depth.compare = SG_COMPAREFUNC_LESS_EQUAL;
 	wirePipelineDesc.depth.write_enabled = true;
@@ -489,8 +489,8 @@ internal void DebugGfxInit(void *userData)
 	
 	ArenaTemp arenaTemp = ArenaBeginTemp(&state->arena);
 	s32 maxIndices = 512 * SRC_MAX_SIDE_VERTS; // SRC_MAX_MAP_BRUSHSIDES * SRC_MAX_SIDE_VERTS;
-	u16 *indices = (u16 *)ArenaAlloc(&state->arena, maxIndices * sizeof(*indices));
-	for (u16 i = 0; i < maxIndices - 2; i += 3)
+	u32 *indices = (u32 *)ArenaAlloc(&state->arena, maxIndices * sizeof(*indices));
+	for (u32 i = 0; (s64)i < maxIndices - 2; i += 3)
 	{
 		indices[i + 0] = 0;
 		indices[i + 1] = i / 3 + 1;
@@ -501,11 +501,11 @@ internal void DebugGfxInit(void *userData)
 	indexDesc.data.ptr = indices;
 	indexDesc.data.size = sizeof(*indices) * maxIndices;
 	
-	u16 *wireIndices = (u16 *)ArenaAlloc(&state->arena, maxIndices * sizeof(*wireIndices));
+	u32 *wireIndices = (u32 *)ArenaAlloc(&state->arena, maxIndices * sizeof(*wireIndices));
 	s32 wireIndexCount = 0;
 	wireIndices[wireIndexCount++] = 0;
 	wireIndices[wireIndexCount++] = 1;
-	for (u16 i = 2; i < maxIndices - 1; i += 4)
+	for (u32 i = 2; (s64)i < maxIndices - 1; i += 4)
 	{
 		wireIndices[i + 0] = (i + 2) / 4 + 0;
 		wireIndices[i + 1] = (i + 2) / 4 + 1;
@@ -727,8 +727,8 @@ internal void DebugGfxFrame(void *userData)
 		ArenaTemp arenaTmp = ArenaBeginTemp(&state->arena);
 		s64 maxVerts = SRC_MAX_MAP_FACES * SRC_MAX_SIDE_VERTS;
 		GfxVertData *tempVerts = (GfxVertData *)ArenaAlloc(&state->arena, maxVerts * sizeof(*tempVerts));
-		u16 *indices = (u16 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*indices));
-		u16 *wireIndices = (u16 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*wireIndices));
+		u32 *indices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*indices));
+		u32 *wireIndices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*wireIndices));
 		for (s32 tex = 0; tex < state->textureCount; tex++)
 		{
 			s32 indexCount = 0;
@@ -739,21 +739,21 @@ internal void DebugGfxFrame(void *userData)
 				GfxPoly *face = &state->faces[faceInd];
 				if (face->texture == tex)
 				{
-					for (u16 i = (u16)vertCount;
-						 i < vertCount + face->vertCount - 2;
+					for (u32 i = (u32)vertCount;
+						 (s64)i < vertCount + face->vertCount - 2;
 						 i++)
 					{
-						indices[indexCount++] = (u16)vertCount;
+						indices[indexCount++] = (u32)vertCount;
 						indices[indexCount++] = i + 1;
 						indices[indexCount++] = i + 2;
 					}
 					
-					for (u16 i = 0;
-						 i < face->vertCount;
+					for (u32 i = 0;
+						 (s64)i < face->vertCount;
 						 i++)
 					{
-						wireIndices[wireIndexCount++] = i + (u16)vertCount;
-						wireIndices[wireIndexCount++] = (i + 1) % (u16)face->vertCount + (u16)vertCount;
+						wireIndices[wireIndexCount++] = i + (u32)vertCount;
+						wireIndices[wireIndexCount++] = (i + 1) % (u32)face->vertCount + (u32)vertCount;
 					}
 					
 					Mem_Copy(face->verts, &tempVerts[vertCount], face->vertCount * sizeof(*face->verts));
@@ -799,10 +799,10 @@ internal void DebugGfxFrame(void *userData)
 	{
 		// make brush meshes!
 		ArenaTemp arenaTmp = ArenaBeginTemp(&state->arena);
-		s64 maxVerts = SRC_MAX_MAP_FACES * SRC_MAX_SIDE_VERTS;
+		s64 maxVerts = SRC_MAX_MAP_FACES * SRC_MAX_SIDE_VERTS * 10;
 		GfxVertData *tempVerts = (GfxVertData *)ArenaAlloc(&state->arena, maxVerts * sizeof(*tempVerts));
-		u16 *indices = (u16 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*indices));
-		u16 *wireIndices = (u16 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*wireIndices));
+		u32 *indices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*indices));
+		u32 *wireIndices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*wireIndices));
 		for (s32 tex = 0; tex < state->textureCount; tex++)
 		{
 			s32 indexCount = 0;
@@ -813,21 +813,21 @@ internal void DebugGfxFrame(void *userData)
 				GfxPoly *side = &state->brushSides[sideInd];
 				if (side->texture == tex)
 				{
-					for (u16 i = (u16)vertCount;
-						 i < vertCount + side->vertCount - 2;
+					for (u32 i = (u32)vertCount;
+						 (s64)i < vertCount + side->vertCount - 2;
 						 i++)
 					{
-						indices[indexCount++] = (u16)vertCount;
+						indices[indexCount++] = (u32)vertCount;
 						indices[indexCount++] = i + 1;
 						indices[indexCount++] = i + 2;
 					}
 					
-					for (u16 i = 0;
-						 i < side->vertCount;
+					for (u32 i = 0;
+						 (s64)i < side->vertCount;
 						 i++)
 					{
-						wireIndices[wireIndexCount++] = i + (u16)vertCount;
-						wireIndices[wireIndexCount++] = (i + 1) % (u16)side->vertCount + (u16)vertCount;
+						wireIndices[wireIndexCount++] = i + (u32)vertCount;
+						wireIndices[wireIndexCount++] = (i + 1) % (u32)side->vertCount + (u32)vertCount;
 					}
 					
 					Mem_Copy(side->verts, &tempVerts[vertCount], side->vertCount * sizeof(*side->verts));

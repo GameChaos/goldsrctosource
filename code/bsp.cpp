@@ -373,6 +373,16 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			else
 			{
 				Warning("Couldn't find texture %s from wad files :(\n", mipTexture.name);
+#ifdef DEBUG_GRAPHICS
+				// use an error texture as a placeholder
+				u8 errorTexture[] = {
+					255,0,255, 255,0,255, 0,0,0, 0,0,0,
+					255,0,255, 255,0,255, 0,0,0, 0,0,0,
+					0,0,0, 0,0,0, 255,0,255, 255,0,255,
+					0,0,0, 0,0,0, 255,0,255, 255,0,255,
+				};
+				DebugGfxAddTexture(errorTexture, 4, 4, true);
+#endif
 				continue;
 			}
 		}

@@ -117,7 +117,7 @@ struct GfxState
 	s32 brushMeshCount;
 	GfxPoly brushSides[SRC_MAX_MAP_BRUSHSIDES];
 	s32 brushSideCount;
-	GfxBrush brushes[SRC_MAX_MAP_BRUSHES]; // contains which brush sides belong to a brush
+	GfxBrush brushes[SRC_MAX_MAP_BRUSHES * 2]; // contains which brush sides belong to a brush
 	s32 brushCount;
 	
 	s32 solidDrawType; // 0 = textured, 1 = solid, 2 = don't draw

@@ -118,6 +118,12 @@ internal b32 EntlumpParseEntity_(EntProperties *ent, EntlumpTokeniser *tokeniser
 						ent->properties[ent->propertyCount].key = token.string;
 						ent->properties[ent->propertyCount].value = valueToken.string;
 						ent->propertyCount++;
+						ASSERT(ent->propertyCount < MAX_ENT_PROPERTIES);
+						if (ent->propertyCount >= MAX_ENT_PROPERTIES)
+						{
+							Error("Entity lump: Too many entity properties for %.*s!",
+								  ent->classname.length, ent->classname.data);
+						}
 					}
 				}
 				else

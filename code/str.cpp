@@ -3,18 +3,18 @@
 
 struct str
 {
-	u64 length;
+	s64 length;
 	char *data;
 };
 
 struct str_builder
 {
-	u64 length;
-	u64 storage;
+	s64 length;
+	s64 storage;
 	char *data;
 };
 
-internal str StrFromSize(char *cstring, u64 length)
+internal str StrFromSize(char *cstring, s64 length)
 {
 	str result = {length, cstring};
 	return result;

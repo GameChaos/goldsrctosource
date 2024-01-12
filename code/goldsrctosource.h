@@ -20,7 +20,9 @@
 
 typedef hmm_vec2 v2;
 typedef hmm_vec3 v3;
+typedef hmm_vec3 QAngle;
 typedef hmm_vec4 v4;
+typedef hmm_vec4 quaternion;
 typedef hmm_mat4 mat4;
 
 enum CmdArgType
@@ -194,7 +196,7 @@ struct Face
 	aabb size;
 };
 
-#define MAX_ENT_PROPERTIES 64
+#define MAX_ENT_PROPERTIES 256
 #define MAX_ENTITIES 4096
 struct EntProperties
 {
