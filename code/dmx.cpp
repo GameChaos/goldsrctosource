@@ -427,7 +427,7 @@ internal void DmxAttrSetData(Dmx *dmx, DmxAttribute *attr, void *data, s64 bytes
 	}
 }
 
-#define DEFINE_DMXADDATTRIBUTE_TYPE(functionName, dataType, attrType)\
+#define DEFINE_DMXADDATTRIBUTE_FUNC(functionName, dataType, attrType)\
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(functionName, dataType)\
 {\
     DmxAttribute *result = DmxAddAttribute(dmx, parent, name, attrType);\
@@ -438,21 +438,22 @@ DEFINE_DMXADDATTRIBUTE_FUNC_SIG(functionName, dataType)\
     return result;\
 }\
 
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeElementId, DmxElementId, DMX_ATTR_ELEMENT)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeInt, s32, DMX_ATTR_INT32)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeBool, bool, DMX_ATTR_BOOL)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeTimespan, s32, DMX_ATTR_TIMESPAN)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeRgba8, u32, DMX_ATTR_RGBA8)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeV2, v2, DMX_ATTR_VECTOR2D)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeV3, v3, DMX_ATTR_VECTOR3D)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeV4, v4, DMX_ATTR_VECTOR4D)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeQAngle, v3, DMX_ATTR_QANGLE)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeQuaternion, v4, DMX_ATTR_QUATERNION)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeMat4, mat4, DMX_ATTR_MATRIX4X4)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeU64, u64, DMX_ATTR_UINT64)
-DEFINE_DMXADDATTRIBUTE_TYPE(DmxAddAttributeU8, u8, DMX_ATTR_BYTE)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeElementId, DmxElementId, DMX_ATTR_ELEMENT)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeInt, s32, DMX_ATTR_INT32)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeF32, s32, DMX_ATTR_F32)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeBool, bool, DMX_ATTR_BOOL)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeTimespan, s32, DMX_ATTR_TIMESPAN)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeRgba8, u32, DMX_ATTR_RGBA8)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeV2, v2, DMX_ATTR_VECTOR2D)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeV3, v3, DMX_ATTR_VECTOR3D)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeV4, v4, DMX_ATTR_VECTOR4D)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeQAngle, v3, DMX_ATTR_QANGLE)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeQuaternion, v4, DMX_ATTR_QUATERNION)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeMat4, mat4, DMX_ATTR_MATRIX4X4)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeU64, u64, DMX_ATTR_UINT64)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeU8, u8, DMX_ATTR_BYTE)
 
-#undef DEFINE_DMXADDATTRIBUTE_TYPE
+#undef DEFINE_DMXADDATTRIBUTE_FUNC
 
 internal DmxAttribute *DmxAddAttributeBinary(Dmx *dmx, DmxElement *parent, str name, void *binaryBlob, s64 bytes)
 {
@@ -473,6 +474,34 @@ internal DmxAttribute *DmxAddAttributeString(Dmx *dmx, DmxElement *parent, str n
     }
     return result;
 }
+
+#define DEFINE_DMXADDATTRIBUTEARRAY_FUNC(functionName, dataType, attrType)\
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(functionName, dataType)\
+{\
+    DmxAttribute *result = DmxAddAttribute(dmx, parent, name, attrType);\
+    if (result)\
+    {\
+        result->value.arrayCount = itemCount;\
+        result->value.array = items;\
+    }\
+    return result;\
+}\
+
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayElementId, DmxElementId, DMX_ATTR_ELEMENT_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayInt, s32, DMX_ATTR_INT32_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayBool, bool, DMX_ATTR_BOOL_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayTimespan, s32, DMX_ATTR_TIMESPAN_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayRgba8, u32, DMX_ATTR_RGBA8_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayV2, v2, DMX_ATTR_VECTOR2D_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayV3, v3, DMX_ATTR_VECTOR3D_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayV4, v4, DMX_ATTR_VECTOR4D_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayQAngle, v3, DMX_ATTR_QANGLE_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayQuaternion, v4, DMX_ATTR_QUATERNION_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayMat4, mat4, DMX_ATTR_MATRIX4X4_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayU64, u64, DMX_ATTR_UINT64_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayU8, u8, DMX_ATTR_BYTE_ARRAY)
+
+#undef DEFINE_DMXADDATTRIBUTEARRAY_FUNC
 
 internal DmxElement *DmxCreateElement(Dmx *dmx, str name, str type, Arena *arena)
 {
@@ -580,7 +609,18 @@ internal void DmxTest(Arena *arena, Arena *tempArena)
 			// 3dcameras
 			{
 				DmxElement *cameras = DmxAddElement(&dmx, mapRootElement, STR("3dcameras"), STR("CStoredCameras"), arena);
-				//DmxAddAttributeElementArray2(&dmx, cameras, STR("cameras"), -1)3;
+				DmxAddAttributeArrayElementId(&dmx, cameras, STR("cameras"), NULL, 0);
+			}
+			
+			// world
+			{
+				DmxElement *world = DmxAddElement(&dmx, mapRootElement, STR("world"), STR("CMapWorld"), arena);
+				// TODO: correct nodeid
+				DmxAddAttributeInt(&dmx, mapRootElement, STR("nodeID"), 1);
+				DmxAddAttributeU64(&dmx, mapRootElement, STR("referenceID"), 0);
+				DmxAddAttributeArrayElementId(&dmx, mapRootElement, STR("children"), NULL, 0);
+				//DmxAddAttributeArrayString(&dmx, mapRootElement, STR("variableTargetKeys"), NULL, 0);
+				//DmxAddAttributeArrayString(&dmx, mapRootElement, STR("variableNames"), NULL, 0);
 			}
 		}
 	}

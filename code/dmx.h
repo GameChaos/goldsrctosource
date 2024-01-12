@@ -119,7 +119,7 @@ struct DmxAttrValue
 			s32 arrayCount;
 			union
 			{
-				void *array;
+				void *array; // for custom types
 				
 				DmxElementId *elementArray;
 				s32 *int32Array;
@@ -210,6 +210,8 @@ struct DmxReadBinary_v9
 
 #define DEFINE_DMXADDATTRIBUTE_FUNC_SIG(functionName, dataType)\
 internal DmxAttribute *functionName(Dmx *dmx, DmxElement *parent, str name, dataType value)
+#define DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(functionName, dataType)\
+internal DmxAttribute *functionName(Dmx *dmx, DmxElement *parent, str name, dataType *items, s32 itemCount)
 
 internal Dmx DmxCreate(Arena *arena);
 internal DmxElement *DmxGetPrefix(Dmx *dmx);
@@ -222,6 +224,7 @@ internal void DmxAttrSetData(Dmx *dmx, DmxAttribute *attr, void *data, s64 bytes
 
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeElementId, DmxElementId);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeInt, s32);
+DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeF32, f32);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeBool, bool);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeTimespan, s32);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeRgba8, u32);
@@ -236,5 +239,21 @@ DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeU8, u8);
 
 internal DmxAttribute *DmxAddAttributeBinary(Dmx *dmx, DmxElement *parent, str name, void *binaryBlob, s64 bytes);
 internal DmxAttribute *DmxAddAttributeString(Dmx *dmx, DmxElement *parent, str name, str value);
+
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayElementId, DmxElementId);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayInt, s32);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayBool, bool);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayString, char *);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayBinary, DmxBinaryBlob);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayTimespan, s32);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayRgba8, u32);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayV2, v2);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayV3, v3);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayV4, v4);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayQAngle, v3);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayQuaternion, v4);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayMat4, mat4);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayU64, u64);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayU8, u8);
 
 #endif //DMX_H
