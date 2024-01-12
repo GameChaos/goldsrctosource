@@ -318,7 +318,7 @@ internal u32 GetDirectoryFiles(char *path, FileInfo *out, u32 maxFileCount, char
 	Format(wildcardPath, sizeof(wildcardPath), "%s", path);
 	AppendToPath(wildcardPath, sizeof(wildcardPath), "*");
 	
-	Win32Utf8ToUtf16(path, g_wcharBuffer, ARRAYCOUNT(g_wcharBuffer));
+	Win32Utf8ToUtf16(wildcardPath, g_wcharBuffer, ARRAYCOUNT(g_wcharBuffer));
 	Win32Utf8ToUtf16(fileExtFilter, fileExtFilterW, ARRAYCOUNT(fileExtFilterW));
 	
 	HANDLE findFile = FindFirstFile(g_wcharBuffer, &findFileData);

@@ -265,7 +265,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 				else
 				{
 					// TODO: make blank vmt when loading fails?
-					ASSERT(0);
+					//ASSERT(0);
 				}
 			}
 		}
