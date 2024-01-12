@@ -20,6 +20,12 @@ struct BspState
 	v3 vertices[SRC_MAX_MAP_VERTS];
 	s32 vertexCount;
 	
+	v3 vertNormals[SRC_MAX_MAP_VERTNORMALS];
+	s32 vertNormalCount;
+	
+	u32 vertNormalIndices[SRC_MAX_MAP_VERTNORMALINDICES];
+	s32 vertNormalIndexCount;
+	
 	SrcEdge edges[SRC_MAX_MAP_EDGES];
 	s32 edgeCount;
 	
@@ -509,9 +515,12 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	// LUMP_FACES                          = 7
 	// LUMP_MODELS                         = 14 # ERROR: Map with no models
 	// LUMP_VERTICES                       = 3 # Map loads, but renders incorrectly]
+	// LUMP_VERTNORMALS
+	// LUMP_VERTNORMALINDICES
 	//
 	// NOTE(GameChaos): csgo uses face lump v1 :)
 	fileHeader->lump[SRC_LUMP_FACES].version = 1;
+	fileHeader->lump[SRC_LUMP_VERTNORMALINDICES].version = 1; // v0 = u16 indices, v1 = u32 indices
 	state->vertexCount = mapData->vertexCount;
 	Mem_Copy(mapData->lumpVertices, state->vertices, sizeof(*mapData->lumpVertices) * mapData->vertexCount,
 			 sizeof(*state->vertices) * SRC_MAX_MAP_VERTS);
@@ -604,6 +613,29 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 				}
 			}
 		}
+		
+		// vertex normals
+		if (state->vertNormalCount < SRC_MAX_MAP_VERTNORMALS)
+		{
+			state->vertNormals[state->vertNormalCount++] = mapData->lumpPlanes[mapData->lumpFaces[i].plane].normal;
+		}
+		else
+		{
+			Warning("Ran out of vertex normals!\n");
+			ASSERT(0);
+		}
+		for (s32 surfEdge = 0; surfEdge < face.edges; surfEdge++)
+		{
+			if (state->vertNormalIndexCount < SRC_MAX_MAP_VERTNORMALS)
+			{
+				state->vertNormalIndices[state->vertNormalIndexCount++] = state->vertNormalCount - 1;
+			}
+			else
+			{
+				Warning("Ran out of vertex normal indices!\n");
+				ASSERT(0);
+			}
+		}
 		face.numPrims = 0;
 		face.firstPrimID = 0;
 		face.smoothingGroups = 0;
@@ -615,6 +647,8 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_FACES, state->faces, sizeof(*state->faces) * state->faceCount);
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_VERTEXES, state->vertices, sizeof(*state->vertices) * state->vertexCount);
+	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_VERTNORMALS, state->vertNormals, sizeof(*state->vertNormals) * state->vertNormalCount);
+	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_VERTNORMALINDICES, state->vertNormalIndices, sizeof(*state->vertNormalIndices) * state->vertNormalIndexCount);
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_EDGES, state->edges, sizeof(*state->edges) * state->edgeCount);
 	
 	//
@@ -721,7 +755,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		worldLight.intensity = Vec3(255, 255, 255);
 		worldLight.type = SRC_EMIT_SURFACE;
 		worldLight.normal = Normalize(Vec3(1, 2, -3));
-		fileHeader->lump[SRC_LUMP_LIGHTING].version = 1;
+		fileHeader->lump[SRC_LUMP_WORLDLIGHTS].version = 1;
 		BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_WORLDLIGHTS, &worldLight, sizeof(worldLight));
 	}
 	
