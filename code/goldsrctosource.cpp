@@ -14,6 +14,11 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb/stb_image_resize.h"
 
+#define dmx_serialise
+#define dmx_name_override(name)
+#define dmx_function(function)
+#define dmx_serialise_array(type, name) s32 TOKENPASTE(name, Count); type *names
+
 #include "str.cpp"
 #include "goldsrctosource.h"
 #include "vtf.h"
