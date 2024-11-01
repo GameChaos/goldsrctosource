@@ -350,7 +350,7 @@ extern "C"
 		
 		struct
 		{
-			float Ignored6_;
+			float Ignored7_;
 			hmm_vec2 vw;
 		};
 		

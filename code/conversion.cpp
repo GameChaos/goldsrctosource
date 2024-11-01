@@ -115,7 +115,7 @@ internal void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *out, Gsrc
 	// generate mipmaps
 	// NOTE(GameChaos): mipmaps are stored smallest (1x1) to largest
 	ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-	u8 *largestMip = (u8 *)ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * channels);
+	u8 *largestMip = (u8 *)ArenaAlloc(tempArena, (s64)mipTexture.width * mipTexture.height * channels);
 	for (s32 pix = 0; pix < pixels; pix++)
 	{
 		s32 indexOffset = mipTexture.offsets[0] + pix;
@@ -149,7 +149,7 @@ internal void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *out, Gsrc
 	}
 	
 	// TODO: mip 0 is correct reflectivity
-	u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, pixels * channels);
+	u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, (s64)pixels * channels);
 	for (s32 mip = vtfHeader.mipmapCount - 1;
 		 mip >= 0;
 		 mip--)
@@ -311,7 +311,7 @@ internal EntList GsrcEntitiesToSrcEntities(Arena *arena, EntList gsrcEnts, b32 *
 			{
 				if (StrEquals(gsrcEnt->properties[prop].key, STR("density"), false))
 				{
-					char *start = gsrcEnt->properties[prop].value.data;
+					const char *start = gsrcEnt->properties[prop].value.data;
 					while (IsWhiteSpace(*start))
 					{
 						start++;
@@ -636,7 +636,7 @@ internal b32 GsrcGetSkyTexture(Arena *tempArena,
 	char relativeSkyfacePath[128];
 	Format(skyfacePath, sizeof(skyfacePath), "%s", modPath);
 	Format(relativeSkyfacePath, sizeof(relativeSkyfacePath), "gfx/env/%.*s%s.tga",
-		   skyname.length, skyname.data, g_skySides[side]);
+		   (s32)skyname.length, skyname.data, g_skySides[side]);
 	AppendToPath(skyfacePath, sizeof(skyfacePath), relativeSkyfacePath);
 	
 	v2i textureSize = {};

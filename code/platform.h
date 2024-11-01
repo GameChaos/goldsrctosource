@@ -15,59 +15,27 @@ struct FileInfo
 	char path[260];
 };
 
-typedef struct Arena
-{
-	void *data;
-	s64 allocPos;
-	s64 bytes;
-} Arena;
-
-typedef struct ArenaTemp
-{
-	Arena *arena;
-	s64 originalAllocPos;
-} ArenaTemp;
-
-#ifdef GC_DEBUG
-struct File
-{
-	u64 handle;
-};
-
-internal File DebugFopen(char *path);
-internal s32 DebugFprintf(File file, char *format, ...);
-internal s32 DebugFwrite(File file, void *data, s32 bytes);
-internal void DebugFclose(File *file);
-#endif
-
+struct Arena;
 inline f32 f32floor(f32 value);
 inline f32 f32ceil(f32 value);
 
-internal ReadFileResult ReadEntireFile(Arena *arena, char *filePath);
-internal b32 WriteEntireFile(char *filename, void *memory, u32 bytes);
-internal void AppendToPath(char *path, s64 pathLength, char *file);
-internal u32 GetDirectoryFiles(char *path, FileInfo *out, u32 maxFileCount, char *fileExtFilter = NULL);
+internal ReadFileResult ReadEntireFile(Arena *arena, const char *filePath);
+internal b32 WriteEntireFile(const char *filename, const void *memory, s64 bytes);
+internal void AppendToPath(char *path, s64 pathLength, const char *file);
+internal s32 GetDirectoryFiles(char *path, FileInfo *out, s32 maxFileCount, const char *fileExtFilter = NULL);
 
-internal Arena ArenaCreate(s64 bytes);
-internal void *ArenaAlloc(Arena *arena, s64 bytes);
-internal void ArenaReset(Arena *arena);
-internal void ArenaResetTo(Arena *arena, s64 pos);
-internal void ArenaFree(Arena *arena);
-internal ArenaTemp ArenaBeginTemp(Arena *arena);
-internal void ArenaEndTemp(ArenaTemp temp);
+internal void *Plat_MemReserve(s64 bytes);
+internal void Plat_MemCommit(void *address, s64 bytes);
+internal void Plat_MemDecommit(void *address, s64 bytes);
+internal void Plat_MemFree(void *address, s64 bytes);
+internal s64 Plat_GetPageSize(void);
 
-internal void Mem_Copy(void *source, void *destination, size_t bytes, size_t destSize);
-internal void Mem_Copy(void *source, void *destination, size_t bytes);
-internal b32 Mem_Compare(void *a, void *b, s64 bytes);
-internal void Mem_SetToZero(void *destination, u64 bytes);
+internal void Mem_Copy(const void *source, void *destination, size_t bytes);
+internal b32 Mem_Compare(const void *a, const void *b, s64 bytes);
+internal void Plat_MemSetToZero(void *destination, s64 bytes);
 
-internal void PrintToStdoutLen(const char *str, s32 len);
-internal void PrintString(const char *str);
-internal void Print(char *format, ...);
-internal void Vprint(char *format, va_list args);
-internal s32 Format(char *buffer, size_t maxlen, char *format, ...);
-internal s32 Vformat(char *buffer, size_t maxlen, char *format, va_list va);
-internal size_t StringLength(char *string);
-internal b32 StringEquals(char *a, char *b, b32 caseSensitive = true);
+internal size_t StringLength(const char *string);
+internal b32 StringEquals(const char *a, const char *b, b32 caseSensitive = true);
+internal void Plat_WriteToStdout(const char *str, s64 len);
 
 #endif //PLATFORM_H

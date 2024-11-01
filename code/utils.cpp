@@ -54,7 +54,7 @@ inline void *BufferPushData(FileWritingBuffer *buffer, void *data, s64 dataSize,
 	void *result = BufferPushSize(buffer, dataSize, align);
 	if (result != NULL)
 	{
-		Mem_Copy(data, result, dataSize, BufferGetFreeSpace(*buffer));
+		Mem_Copy(data, result, MIN(dataSize, BufferGetFreeSpace(*buffer)));
 		result = buffer->memory + buffer->usedBytes;
 	}
 	return result;
@@ -179,9 +179,9 @@ internal b32 ClipPolygon(Verts *poly, SrcPlane plane)
 		}
 	}
 	// check if we managed to clip anything
-	if (newPoly.verts && result)
+	if (result)
 	{
-		Mem_Copy(&newPoly, poly, sizeof(newPoly), sizeof(*poly));
+		Mem_Copy(&newPoly, poly, sizeof(*poly));
 	}
 	
 	return result;
@@ -304,7 +304,7 @@ internal b32 MakePolygon(SrcPlane *planes, s32 planeCount, s32 planeIndex, Verts
 	return result;
 }
 
-internal s32 Add_(u8 *array, s32 *count, void *data, s32 elementSize, s32 maxElements, char *arrayName)
+internal s32 Add_(u8 *array, s32 *count, void *data, s32 elementSize, s32 maxElements, const char *arrayName)
 {
 	s32 result = 0;
 	if (*count < maxElements)
@@ -330,7 +330,7 @@ internal s32 Add_(u8 *array, s32 *count, void *data, s32 elementSize, s32 maxEle
 	return result;
 }
 
-internal s32 AddSimple_(u8 *array, s32 *count, void *data, s32 elementSize, s32 maxElements, char *arrayName)
+internal s32 AddSimple_(u8 *array, s32 *count, void *data, s32 elementSize, s32 maxElements, const char *arrayName)
 {
 	s32 result = 0;
 	if (*count < maxElements)
@@ -456,7 +456,7 @@ internal f32 StrToF32(str str)
 	return result;  // result = 12345 /10
 }
 
-inline StringToNumResult StringToS32(char *string, s32 *out)
+inline StringToNumResult StringToS32(const char *string, s32 *out)
 {
 	StringToNumResult result = STRINGTONUM_ERR_FAILED;
 	if (string)
@@ -475,12 +475,12 @@ inline StringToNumResult StringToS32(char *string, s32 *out)
 		if (*string == '-')
 		{
 			negative = true;
-			*string++;
+			string++;
 		}
 		
 		s64 value = 0;
 		s64 magnitude = 1;
-		for (char *c = string;
+		for (const char *c = string;
 			 *c >= '0' && *c <= '9';
 			 c++)
 		{

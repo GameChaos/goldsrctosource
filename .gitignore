@@ -11,6 +11,8 @@ allthelumps.bsp
 *.log
 *.vmx
 .vscode/
+.zig-cache/
+zig-out/
 materials/
 
 sokol-shdc.exe

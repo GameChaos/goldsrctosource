@@ -25,7 +25,7 @@ internal b32 ReadBufferRead(ReadBuffer *buffer, void *out, s64 outSize)
 	{
 		if (buffer->readBytes + outSize <= buffer->size)
 		{
-			Mem_Copy(buffer->data + buffer->readBytes, out, outSize, outSize);
+			Mem_Copy(buffer->data + buffer->readBytes, out, outSize);
 			buffer->readBytes += outSize;
 			result = true;
 		}
@@ -246,7 +246,7 @@ internal b32 ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute *attr, 
 	return result;
 }
 
-internal DmxReadBinary_v9 DmxImportBinary(char *path, Arena *arena)
+internal DmxReadBinary_v9 DmxImportBinary(const char *path, Arena *arena)
 {
 	DmxReadBinary_v9 result = {};
 	result.file = ReadEntireFile(arena, path);
@@ -378,7 +378,7 @@ internal DmxAttribute *DmxAddAttribute(Dmx *dmx, DmxElement *parent, str name, D
 		result = &parent->attributes[parent->attributeCount++];
 		*result = {};
 		result->value.type = type;
-		Format(result->name, sizeof(result->name), "%.*s", name.length, name.data);
+		Format(result->name, sizeof(result->name), "%.*s", (s32)name.length, name.data);
 	}
 	ASSERT(result);
 	
@@ -433,7 +433,7 @@ DEFINE_DMXADDATTRIBUTE_FUNC_SIG(functionName, dataType)\
     DmxAttribute *result = DmxAddAttribute(dmx, parent, name, attrType);\
     if (result)\
     {\
-        DmxAttrSetData(dmx, result, &(value), sizeof(value));\
+        DmxAttrSetData(dmx, result, &(value), (s64)sizeof(value));\
     }\
     return result;\
 }\
@@ -469,7 +469,7 @@ internal DmxAttribute *DmxAddAttributeString(Dmx *dmx, DmxElement *parent, str n
 	DmxAttribute *result = DmxAddAttribute(dmx, parent, name, DMX_ATTR_STRING);
     if (result)
     {
-        DmxAttrSetData(dmx, result, value.data, 1);
+        DmxAttrSetData(dmx, result, (void *)value.data, 1);
     }
     return result;
 }
@@ -484,8 +484,8 @@ internal DmxElement *DmxCreateElement(Dmx *dmx, str name, str type, Arena *arena
 		*result = {};
 		result->maxAttributes = 1024;
 		result->attributes = (DmxAttribute *)ArenaAlloc(arena, result->maxAttributes * sizeof(*result->attributes));
-		Format(result->type, sizeof(result->type), "%.*s", type.length, type.data);
-		Format(result->name, sizeof(result->name), "%.*s", name.length, name.data);
+		Format(result->type, sizeof(result->type), "%.*s", (s32)type.length, type.data);
+		Format(result->name, sizeof(result->name), "%.*s", (s32)name.length, name.data);
 		result->guid = GenerateGuid();
 	}
 	ASSERT(result);
@@ -554,9 +554,9 @@ internal void DmxTest(Arena *arena, Arena *tempArena)
 		
 		// prefix attributes
 		{
-			char *imgData = "P3\n2 2\n0 0 0\n0 0 0\n0 0 0\n0 0 0";
+			const char *imgData = "P3\n2 2\n0 0 0\n0 0 0\n0 0 0\n0 0 0";
 			s64 imgBytes = strlen(imgData);
-			DmxAddAttributeBinary(&dmx, DmxGetPrefix(&dmx), STR("asset_preview_thumbnail"), imgData, imgBytes);
+			DmxAddAttributeBinary(&dmx, DmxGetPrefix(&dmx), STR("asset_preview_thumbnail"), (void *)imgData, imgBytes);
 			DmxAddAttributeString(&dmx, DmxGetPrefix(&dmx), STR("asset_preview_thumbnail_format"), STR("ppm"));
 			DmxAddAttribute(&dmx, DmxGetPrefix(&dmx), STR("map_asset_references"), DMX_ATTR_STRING_ARRAY);
 		}

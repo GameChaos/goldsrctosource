@@ -364,7 +364,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	// LUMP_ENTITIES
 	//
 	fileHeader->lump[GSRC_LUMP_ENTITIES].offset = (u32)BufferGetSize(buffer);
-	char *ch = mapData->lumpEntities.data;
+	const char *ch = mapData->lumpEntities.data;
 	
 	do
 	{

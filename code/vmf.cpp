@@ -241,7 +241,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 				{
 					char vtfFileName[128];
 					Format(vtfFileName, sizeof(vtfFileName), "materials/skybox/%.*s%s.vtf",
-						   skyname->value.length, skyname->value.data, g_skySides[side]);
+						   (s32)skyname->value.length, skyname->value.data, g_skySides[side]);
 					
 					char pathBuffer[512];
 					Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
@@ -250,7 +250,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 					
 					char texturePath[128];
 					s32 texturePathLen = Format(texturePath, sizeof(texturePath), "skybox/%.*s%s",
-												skyname->value.length, skyname->value.data, g_skySides[side]);
+												(s32)skyname->value.length, skyname->value.data, g_skySides[side]);
 					
 					char vmt[512];
 					s32 vmtFileLength = MakeSkyTextureVmt(vmt, sizeof(vmt), texturePath);
@@ -332,7 +332,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			
 			if (assetPath)
 			{
-				Format(pathBuffer, sizeof(pathBuffer), assetPath);
+				Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
 				char vmtFileName[64];
 				s32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), CONVERTED_MATERIAL_PATH "%s.vmt", mipTexture.name);
 				AppendToPath(pathBuffer, sizeof(pathBuffer), vmtFileName);
@@ -386,8 +386,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	
 	s32 planeCount = 0;
 	// NOTE: source and goldsrc plane structs are the same, that's why we can do this.
-	Mem_Copy(mapData->lumpPlanes, g_planes, sizeof(*mapData->lumpPlanes) * mapData->planeCount,
-			 sizeof(*g_planes) * SRC_MAX_MAP_PLANES);
+	Mem_Copy(mapData->lumpPlanes, g_planes, sizeof(*mapData->lumpPlanes) * mapData->planeCount);
 	planeCount = mapData->planeCount;
 	
 	s32 faceCount = 0;

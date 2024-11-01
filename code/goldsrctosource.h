@@ -107,7 +107,7 @@ union CmdArgs
 };
 static_assert(MEMBER_SIZE(CmdArgs, args) == sizeof(CmdArgs), "CmdArgs size and args array length are mismatched!");
 
-global char *g_cmdArgTypeStrings[CMDARGTYPE_COUNT] = {
+global const char *g_cmdArgTypeStrings[CMDARGTYPE_COUNT] = {
 	"None",
 	"String",
 	"Integer",
@@ -214,7 +214,7 @@ struct EntList
 
 struct EntlumpTokeniser
 {
-	char *at;
+	const char *at;
 };
 
 enum EntlumpTokenType
@@ -241,9 +241,9 @@ enum StringToNumResult
 
 struct SrcHeader;
 
-internal void FatalError(char *error);
-internal void Error(char *format, ...);
-internal void Warning(char *format, ...);
+internal void FatalError(const char *error);
+internal void Error(const char *format, ...);
+internal void Warning(const char *format, ...);
 inline void *BufferPushDataAndSetLumpSize(FileWritingBuffer *buffer, SrcHeader *header, s32 lumpIndex, void *data, s32 bytes);
 internal s32 GsrcContentsToSrcContents(s32 gsrcContents);
 void BSPMain(s32 argCount, char *arguments[]);

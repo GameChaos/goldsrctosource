@@ -274,7 +274,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	
 	ArenaTemp arenaTemp = ArenaBeginTemp(arena);
 	BspState *state = &g_bspConversionState;
-	Mem_SetToZero(state, sizeof(*state));
+	Plat_MemSetToZero(state, sizeof(*state));
 	
 	FileWritingBuffer buffer = BufferCreate(arena, GIGABYTES(1));
 	ASSERT(buffer.memory);
@@ -340,12 +340,12 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			{
 				char vtfFileName[256];
 				s32 vtfFileNameLen = Format(vtfFileName, sizeof(vtfFileName), "materials/skybox/%.*s%s.vtf",
-											skyname->value.length, skyname->value.data, g_skySides[side]);
+											(s32)skyname->value.length, skyname->value.data, g_skySides[side]);
 				ZipBuilderAddFile(&zipBuilder, vtfFileName, vtfFileNameLen, texBuffer.memory, texBuffer.usedBytes);
 				
 				char texturePath[128];
 				Format(texturePath, sizeof(texturePath), "skybox/%.*s%s",
-					   skyname->value.length, skyname->value.data, g_skySides[side]);
+					   (s32)skyname->value.length, skyname->value.data, g_skySides[side]);
 				
 				char vmt[512];
 				s32 vmtFileLength = MakeSkyTextureVmt(vmt, sizeof(vmt), texturePath);
@@ -528,17 +528,14 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	fileHeader->lump[SRC_LUMP_FACES].version = 1;
 	fileHeader->lump[SRC_LUMP_VERTNORMALINDICES].version = 1; // v0 = u16 indices, v1 = u32 indices
 	state->vertexCount = mapData->vertexCount;
-	Mem_Copy(mapData->lumpVertices, state->vertices, sizeof(*mapData->lumpVertices) * mapData->vertexCount,
-			 sizeof(*state->vertices) * SRC_MAX_MAP_VERTS);
+	Mem_Copy(mapData->lumpVertices, state->vertices, sizeof(*mapData->lumpVertices) * mapData->vertexCount);
 	
 	state->edgeCount = mapData->edgeCount;
-	Mem_Copy(mapData->lumpEdges, state->edges, sizeof(*mapData->lumpEdges) * mapData->edgeCount,
-			 sizeof(*state->edges) * SRC_MAX_MAP_EDGES);
+	Mem_Copy(mapData->lumpEdges, state->edges, sizeof(*mapData->lumpEdges) * mapData->edgeCount);
 	
 	
 	// NOTE: source and goldsrc plane structs are the same, that's why we can do this.
-	Mem_Copy(mapData->lumpPlanes, state->planes, sizeof(*mapData->lumpPlanes) * mapData->planeCount,
-			 sizeof(*state->planes) * SRC_MAX_MAP_PLANES);
+	Mem_Copy(mapData->lumpPlanes, state->planes, sizeof(*mapData->lumpPlanes) * mapData->planeCount);
 	state->planeCount = mapData->planeCount;
 	
 	for (s32 i = 0; i < mapData->faceCount; i++)
@@ -695,7 +692,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		// TODO: is lightmap exposure correct? does goldsrc encode lightmaps with the srgb oetf?
 		s32 srcLightCount = 0;
 		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-		Rgbe8888 *srcLight = (Rgbe8888 *)ArenaAlloc(arena, mapData->lightingLength / 3 * 4);
+		Rgbe8888 *srcLight = (Rgbe8888 *)ArenaAlloc(arena, (s64)mapData->lightingLength / 3 * 4);
 		for (u8 *c = mapData->lumpLighting;
 			 c < mapData->lumpLighting + mapData->lightingLength;
 			 c += 3)
@@ -852,7 +849,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 						brush.firstSide = state->brushSideCount;
 						brush.contents = leaf.contents;
 						s32 polyCount = 0;
-						Mem_SetToZero(polys, polysByteCount);
+						Plat_MemSetToZero(polys, polysByteCount);
 						
 						local_persist SrcPlane planes[256];
 						s32 maxClipPlanes = ARRAYCOUNT(planes);

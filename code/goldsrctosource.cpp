@@ -2,6 +2,7 @@
 #include "common.h"
 
 #include <stdarg.h>
+#include <stddef.h>
 
 #include "platform.h"
 #define HANDMADE_MATH_IMPLEMENTATION
@@ -14,6 +15,11 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb/stb_image_resize.h"
 
+#define STB_SPRINTF_IMPLEMENTATION
+#include "stb/stb_sprintf.h"
+
+#include "memory.c"
+#include "printing.c"
 #include "str.cpp"
 #include "goldsrctosource.h"
 #include "vtf.h"
@@ -39,32 +45,32 @@
 
 #include "dmx.cpp"
 
-internal void FatalError(char *error)
+internal void FatalError(const char *error)
 {
 	Print("FATAL ERROR: %s\n", error);
 	ASSERT(0);
 	exit(EXIT_FAILURE);
 }
 
-internal void Error(char *format, ...)
+internal void Error(const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
 	
 	PrintString("Error: ");
-	Vprint(format, args);
+	VPrint(format, args);
 	
 	va_end(args);
 	ASSERT(0);
 }
 
-internal void Warning(char *format, ...)
+internal void Warning(const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
 	
 	PrintString("Warning: ");
-	Vprint(format, args);
+	VPrint(format, args);
 	
 	va_end(args);
 }
@@ -147,7 +153,7 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 									break;
 								}
 								
-								Mem_Copy(arguments[i + 1], cmdArgs->args[j].stringValue, argLen, sizeof(cmdArgs->args[j].stringValue));
+								Mem_Copy(arguments[i + 1], cmdArgs->args[j].stringValue, argLen);
 								cmdArgs->args[j].stringValue[argLen] = '\0';
 							}
 							else if (cmdArgs->args[j].type == CMDARG_INTEGER)
