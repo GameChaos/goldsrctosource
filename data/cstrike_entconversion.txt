@@ -1,0 +1,95 @@
+
+// this is a template
+<brushentity>
+#movedir
+#wait
+#model
+#speed
+#lip
+#rendermode
+#renderamt
+// TODO: rendercolor is a little bit different in source?
+// rendercolor > rendercolor
+#health
+#targetname
+// TODO: input & output
+#target
+origin = "0 0 0"
+
+(light_environment)
+#*
+_ambient = _diffuse_light
+
+(light)
+#*
+
+(light_spot)
+#*
+_inner_cone = _cone
+_cone = _cone2
+
+(info_player_start)
+#*
+classname = info_player_counterterrorist
+enabled = 1
+
+(info_player_deathmatch)
+#*
+classname = info_player_terrorist
+enabled = 1
+
+(info_teleport_destination)
+#*
+
+(info_target)
+#*
+
+(env_fog)
+classname = env_fog_controller
+fogcolor = rendercolor
+fogenable = 1
+fogstart = 0
+// TODO:
+// fogend = 1.5 / density
+
+// NOTE(GameChaos): i'm tired of shitty cs 1.6 bhop blocks :)
+(func_door, func_door_rotating, func_conveyor, func_rotating)
+classname = func_brush
+insert(brushentity)
+spawnflags = 1024 // touch opens
+
+(func_button)
+insert(brushentity)
+spawnflags = 1025
+
+(func_wall, func_wall_toggle)
+classname = func_wall
+insert(brushentity)
+solidbsp = 1
+
+// TOOD: func_train?
+(func_illusionary, func_train)
+classname = func_illusionary
+insert(brushentity)
+
+// TODO: convert func_water into func_water_analog?
+(func_water)
+classname = func_brush
+insert(brushentity)
+
+(func_ladder)
+.makeLadder
+classname = func_brush
+insert(brushentity)
+solidbsp = 1
+
+(func_breakable)
+insert(brushentity)
+
+(trigger_teleport)
+insert(brushentity)
+spawnflags = 4097
+
+(trigger_once, trigger_multiple)
+classname = trigger_multiple
+insert(brushentity)

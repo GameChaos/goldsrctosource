@@ -100,3 +100,43 @@ internal s32 SrcGetPlaneType(v3 normal)
 	}
 	return type;
 }
+
+internal Rgbe8888 SrcLinearToRgbe8888(v3 colour)
+{
+	f32 max = MAX(MAX(colour.r, colour.g), colour.b);
+	s32 exponent = -128;
+	if (max > 0)
+	{
+		exponent = (s32)floorf(log2f(max)) + 1;
+		exponent = (s8)CLAMP(-128, exponent, 127);
+		f32 scale = powf(2.0f, -(f32)exponent);
+		colour *= scale;
+		colour *= 255.0f;
+	}
+	for (s32 i = 0; i < 3; i++)
+	{
+		colour[i] = CLAMP(0, colour[i], 255);
+	}
+	
+	Rgbe8888 result = {
+		(u8)colour[0],
+		(u8)colour[1],
+		(u8)colour[2],
+		(s8)exponent,
+	};
+	
+	return result;
+}
+
+internal v3 SrcRgbe8888ToLinear(Rgbe8888 colour)
+{
+	f32 mul = powf(2, colour.exponent);
+	v3 result = {
+		(f32)colour.r * mul,
+		(f32)colour.g * mul,
+		(f32)colour.b * mul,
+	};
+	result *= 1.0f / 255.0f;
+	
+	return result;
+}

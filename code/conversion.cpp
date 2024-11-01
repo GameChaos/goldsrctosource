@@ -119,25 +119,33 @@ internal void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *out, Gsrc
 	for (s32 pix = 0; pix < pixels; pix++)
 	{
 		s32 indexOffset = mipTexture.offsets[0] + pix;
-		u8 r = palette[mipTextureData[indexOffset] * 3 + 0];
-		u8 g = palette[mipTextureData[indexOffset] * 3 + 1];
-		u8 b = palette[mipTextureData[indexOffset] * 3 + 2];
-		
+		u8 rgb[] = {
+			palette[mipTextureData[indexOffset] * 3 + 0],
+			palette[mipTextureData[indexOffset] * 3 + 1],
+			palette[mipTextureData[indexOffset] * 3 + 2],
+		};
 		if (transparent)
 		{
-			if (r == 0 && g == 0 && b == 255)
+			if (rgb[0] == 0 && rgb[1] == 0 && rgb[2] == 255)
 			{
 				largestMip[pix * channels + 3] = 0;
-				b = 0;
+				rgb[2] = 0;
 			}
 			else
 			{
 				largestMip[pix * channels + 3] = 255;
 			}
 		}
-		largestMip[pix * channels + 0] = b;
-		largestMip[pix * channels + 1] = g;
-		largestMip[pix * channels + 2] = r;
+		
+		for (s32 i = 0; i < 3; i++)
+		{
+			// apply sRGB OETF. goldsrc rendering is weird....
+			//largestMip[pix * channels + i] = (u8)(powf(rgb[2 - i] / 255.0f, 1.0f / 2.2f) * 255.0f);
+			f32 f = rgb[2 - i] / 255.0f;
+			f = powf(f, 1.0f / 2.2f);
+			//f = sqrtf(f);
+			largestMip[pix * channels + i] = (u8)(f * 255.0f);
+		}
 	}
 	
 	// TODO: mip 0 is correct reflectivity

@@ -42,6 +42,12 @@ struct BspState
 	u16 leafFaces[SRC_MAX_MAP_LEAFFACES];
 	u16 leafFaceCount;
 	
+	SrcLeafWaterData leafWaterData[SRC_MAX_MAP_LEAFWATERDATA];
+	s32 leafWaterDataCount;
+	
+	s16 leafMinDistToWater[SRC_MAX_MAP_LEAFS];
+	s32 leafMinDistToWaterCount;
+	
 	SrcBrush brushes[SRC_MAX_MAP_BRUSHES];
 	s32 brushCount;
 	
@@ -695,7 +701,16 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			 c += 3)
 		{
 			Rgbe8888 colour = *(Rgbe8888 *)c;
-			colour.e = 0;
+			colour.exponent = 0;
+			v3 lin = SrcRgbe8888ToLinear(colour);
+			lin *= 1.5f;
+			for (s32 i = 0; i < 3; i++)
+			{
+				lin[i] = powf(lin[i], 2.2f);
+				//lin[i] = lin[i] * lin[i];
+				lin[i] = MIN(1, lin[i]);
+			}
+			colour = SrcLinearToRgbe8888(lin);
 			srcLight[srcLightCount++] = colour;
 		}
 		
@@ -769,6 +784,8 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	// LUMP_BRUSHES
 	// LUMP_LEAFBRUSHES
 	// LUMP_LEAFFACES
+	// LUMP_LEAFWATERDATA
+	// LUMP_LEAFMINDISTTOWATER
 	//
 	
 	// first convert nodes
@@ -833,7 +850,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 					{
 						// make a brush!
 						brush.firstSide = state->brushSideCount;
-						brush.contents = leaf.contents; // SRC_CONTENTS_SOLID;
+						brush.contents = leaf.contents;
 						s32 polyCount = 0;
 						Mem_SetToZero(polys, polysByteCount);
 						
@@ -875,7 +892,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 								}
 							}
 						}
-						
+#ifdef DEBUG_GRAPHICS
 						if (brush.sides >= 4)
 						{
 							for (s32 polyInd = 0; polyInd < polyCount; polyInd++)
@@ -885,6 +902,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 							}
 							DebugGfxAddBrush(brush.sides);
 						}
+#endif
 						
 						// NOTE(GameChaos): generate bevel planes based on polygons
 						AddBrushBevels(state, &brush, polys, polyCount, mins, maxs);
@@ -912,7 +930,18 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 						leaf.contents = SRC_CONTENTS_EMPTY;
 					}
 					
-					leaf.leafWaterDataIndex = -1;
+					if (leaf.contents & SRC_CONTENTS_WATER)
+					{
+						leaf.leafWaterDataIndex = state->leafWaterDataCount;
+						ASSERT(state->leafWaterDataCount < sizeof(state->leafWaterData));
+						SrcLeafWaterData waterData = {0};
+						// TODO: bounds check!!!
+						state->leafWaterData[state->leafWaterDataCount++] = waterData;
+					}
+					else
+					{
+						leaf.leafWaterDataIndex = -1;
+					}
 					
 					AddLeaf(state->leaves, &state->leafCount, leaf);
 				}
@@ -921,11 +950,16 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		state->models[model].origin = {};
 		ArenaEndTemp(arenaTmp);
 	}
-	
+	for (s32 i = 0; i < state->leafCount; i++)
+	{
+		state->leafMinDistToWater[state->leafMinDistToWaterCount++] = -1;
+	}
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_NODES, state->nodes, sizeof(*state->nodes) * state->nodeCount);
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_LEAFS, state->leaves, sizeof(*state->leaves) * state->leafCount);
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_LEAFBRUSHES, state->leafBrushes, sizeof(*state->leafBrushes) * state->leafBrushCount);
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_LEAFFACES, state->leafFaces, sizeof(*state->leafFaces) * state->leafFaceCount);
+	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_LEAFWATERDATA, state->leafWaterData, sizeof(*state->leafWaterData) * state->leafWaterDataCount);
+	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_LEAFMINDISTTOWATER, state->leafMinDistToWater, sizeof(*state->leafMinDistToWater) * state->leafMinDistToWaterCount);
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_MODELS, state->models, sizeof(*state->models) * state->modelCount);
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_TEXINFO, state->texinfo, sizeof(*state->texinfo) * state->texinfoCount);
 	

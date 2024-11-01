@@ -158,7 +158,7 @@ enum
 	SRC_SURF_LIGHT     = 0x1,
 	SRC_SURF_SKY2D     = 0x2,
 	SRC_SURF_SKY       = 0x4,
-	SRC_SURF_WARP      = 0x8,
+	SRC_SURF_WARP      = 0x8, // apparently indicates water
 	SRC_SURF_TRANS     = 0x10,
 	SRC_SURF_NOPORTAL  = 0x20,
 	SRC_SURF_TRIGGER   = 0x40,
@@ -250,10 +250,14 @@ enum SrcEmitType
 	SRC_EMIT_SKYAMBIENT,
 };
 
-struct Rgbe8888
+union Rgbe8888
 {
-	u8 r, g, b;
-	s8 e;
+	struct
+	{
+		u8 r, g, b;
+		s8 exponent;
+	};
+	u8 elements[3];
 };
 
 struct SrcLump
@@ -369,7 +373,7 @@ struct SrcTexinfo
 	// NOTE(GameChaos): NOT a v4 because that screws up packing!
 	f32 textureVecs[2][4];
 	f32 lightmapVecs[2][4];
-	s32 flags;
+	s32 flags; // SRC_SURF_ flags
 	s32 texdata;
 };
 
@@ -439,6 +443,13 @@ struct SrcNode
 	u16 faceCount;
 	s16 area;
 	s16 padding_;     // pad to 32 bytes length
+};
+
+struct SrcLeafWaterData
+{
+	f32 surfaceZ;
+	f32 minZ;
+	s16 surfaceTexinfo;
 };
 
 struct SrcLeaf

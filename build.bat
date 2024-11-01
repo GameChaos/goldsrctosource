@@ -18,10 +18,6 @@ sokol-shdc.exe --input code/shaders/wire.glsl --output code/shaders_compiled/wir
 
 pushd build
 
-del dmx_serialise.exe /Q
-cl -Od -DGC_DEBUG %CommonCompilerFlags% ..\code\metaprogram\dmx_serialise.cpp /link -subsystem:console %CommonLinkerFlags%
-REM dmx_serialise.exe
-
 set debug=1
 if %debug% == 1 (
 	cl -Od -GS -sdl -guard:cf -RTCu -DGC_DEBUG -DDEBUG_GRAPHICS -RTC1 -fsanitize=address -MTd %CommonCompilerFlags% ..\code\win32_goldsrctosource.cpp /link %CommonLinkerFlags% -OUT:goldsrctosource.exe -guard:cf imgui/imgui.lib libvcruntimed.lib libucrtd.lib

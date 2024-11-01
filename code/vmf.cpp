@@ -763,7 +763,8 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 					local_persist Verts a3d;
 					a3d.vertCount = 0;
 					for (s32 v = a.vertCount - 1;
-						 v >= 0; v--)
+						 v >= 0;
+						 v--)
 					{
 						a3d.verts[a3d.vertCount].xy = a.verts[v];
 						a3d.verts[a3d.vertCount].z = 0;
