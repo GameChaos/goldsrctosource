@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <errno.h>
+#include <stdio.h>
 
 global char g_charBuffer[2048];
 
@@ -154,7 +155,7 @@ int main(int argc, char **argv)
 	BSPMain(argc, argv);
 #ifdef GC_DEBUG
 	// pause
-	getc();
+	getc(stdin);
 #endif
 #endif
 }

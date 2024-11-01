@@ -8,14 +8,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <shellapi.h>
-#include <shlobj_core.h>
+#include <shlobj.h>
 
 typedef wchar_t wchar;
 
 global SYSTEM_INFO g_systemInfo = {0};
 global wchar g_wcharBuffer[2048];
 
-internal s32 Win32Utf8ToUtf16(char *utf8, wchar *utf16, s32 utf16Chars)
+internal s32 Win32Utf8ToUtf16(const char *utf8, wchar *utf16, s32 utf16Chars)
 {
 	if (utf16)
 	{
@@ -25,7 +25,7 @@ internal s32 Win32Utf8ToUtf16(char *utf8, wchar *utf16, s32 utf16Chars)
 	return result;
 }
 
-internal s32 Win32Utf16ToUtf8(wchar *utf16, char *utf8, s32 utf8Chars)
+internal s32 Win32Utf16ToUtf8(const wchar *utf16, char *utf8, s32 utf8Chars)
 {
 	if (utf8)
 	{
@@ -109,7 +109,7 @@ internal void AppendToPath(char *path, s64 pathLength, const char *file)
 	}
 }
 
-internal u32 GetDirectoryFiles(char *path, FileInfo *out, u32 maxFileCount, const char *fileExtFilter)
+internal s32 GetDirectoryFiles(char *path, FileInfo *out, s32 maxFileCount, const char *fileExtFilter)
 {
 	WIN32_FIND_DATA findFileData = {};
 	char wildcardPath[1024] = "";
@@ -224,7 +224,7 @@ int main(int argc, char **argv)
 	BSPMain(argc, argv);
 #ifdef GC_DEBUG
 	// pause
-	getc();
+	getc(stdin);
 #endif
 #endif
 	ExitProcess(0);

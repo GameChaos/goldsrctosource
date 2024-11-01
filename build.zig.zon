@@ -1,0 +1,31 @@
+.{
+    .name = "goldsrctosource",
+    // This is a [Semantic Version](https://semver.org/).
+    // In a future version of Zig it will be used for package deduplication.
+    .version = "0.0.0",
+
+    // This field is optional.
+    // This is currently advisory only; Zig does not yet do anything
+    // with this value.
+    //.minimum_zig_version = "0.14.0",
+
+    // This field is optional.
+    // Each dependency must either provide a `url` and `hash`, or a `path`.
+    // `zig build --fetch` can be used to fetch all dependencies of a package, recursively.
+    // Once all dependencies are fetched, `zig build` no longer requires
+    // internet connectivity.
+    .dependencies = .{
+        .sokol_shdc = .{
+            .url = "https://github.com/floooh/sokol-tools-bin/archive/f1af4529746b804d6c79d5a36c333aec489fab27.zip",
+            .hash = "122033a8fe9c0d8a298a3bbf2378e19a1938090b5ab808a03f73aef9ff09d03a9a16",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "code",
+        // For example...
+        //"LICENSE",
+        //"README.md",
+    },
+}
