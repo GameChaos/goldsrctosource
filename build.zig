@@ -40,12 +40,8 @@ pub fn build(b: *std.Build) !void
 		std.debug.print("Only x86_64 is supported as a build target.\n", .{});
 		std.process.exit(1);
 	}
-	
 	// TODO: ABI check?
-
-    // Standard optimization options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
-    // set a preferred release mode, allowing the user to decide how to optimize.
+	
     const optimise = b.standardOptimizeOption(.{});
     
 	_ = try b.default_step.addDirectoryWatchInput(.{.cwd_relative = "code/*"});
