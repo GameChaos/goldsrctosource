@@ -18,11 +18,17 @@ Some (mostly finished) features:
 
 ## Building
 
-This is currently an x64 Windows only program, though I think porting to other platforms isn't too hard.
+Install zig 0.14 to system path somewhere.
 
-Unfortunately I've never used build tools like cmake and such, so you'll have to spelunk through my build*.bat scripts! In theory you should just be able to build win32_goldsrcconvert.cpp and link kernel32.lib and shell32.lib.
+Open the terminal in the root directory and type `zig build`.
 
-For compiling debug shaders, you have to get sokol-shdc.exe. Dear ImGui and sokol are only used for debug visualisations, you can build without them!
+Boom, done.
+
+To do a release build run `zig build -Doptimize=ReleaseFast`.
+
+To cross-compile for linux add `-Dtarget=x86_64-linux-gnu`.
+
+To cross-compile for windows add `-Dtarget=x86_64-windows-gnu`.
 
 ## Example usage
 
