@@ -1,6 +1,24 @@
 
 #include "goldsrcbsp.h"
 
+global const char* g_gsrcLumpNames[] = {
+	"LUMP_ENTITIES",
+	"LUMP_PLANES",
+	"LUMP_TEXTURES",
+	"LUMP_VERTICES",
+	"LUMP_VISIBILITY",
+	"LUMP_NODES",
+	"LUMP_TEXINFO",
+	"LUMP_FACES",
+	"LUMP_LIGHTING",
+	"LUMP_CLIPNODES",
+	"LUMP_LEAVES",
+	"LUMP_MARKSURFACES",
+	"LUMP_EDGES",
+	"LUMP_SURFEDGES",
+	"LUMP_MODELS"
+};
+
 internal b32 GsrcImportBsp(Arena *arena, GsrcMapData *mapData)
 {
 	b32 result = false;
@@ -227,7 +245,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	GsrcHeader *fileHeader = (GsrcHeader *)buffer.memory;
 	
 	// write header
-	BufferPushData(&buffer, mapData->header, sizeof(GsrcHeader));
+	BufferPushData(&buffer, mapData->header, sizeof(GsrcHeader), true);
 	
 	// TODO: maybe make a big for loop for these.
 	// TODO: maybe even use memcpy or something...
@@ -238,7 +256,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_PLANES].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->planeCount; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpPlanes + i), sizeof(GsrcPlane));
+		BufferPushData(&buffer, (mapData->lumpPlanes + i), sizeof(GsrcPlane), true);
 	}
 	fileHeader->lump[GSRC_LUMP_PLANES].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_PLANES].offset;
 	
@@ -248,7 +266,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_LEAVES].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->leafCount; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpLeaves + i), sizeof(GsrcLeaf));
+		BufferPushData(&buffer, (mapData->lumpLeaves + i), sizeof(GsrcLeaf), true);
 	}
 	fileHeader->lump[GSRC_LUMP_LEAVES].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_LEAVES].offset;
 	
@@ -258,7 +276,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_VERTICES].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->vertexCount; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpVertices + i), sizeof(v3));
+		BufferPushData(&buffer, (mapData->lumpVertices + i), sizeof(v3), true);
 	}
 	fileHeader->lump[GSRC_LUMP_VERTICES].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_VERTICES].offset;
 	
@@ -268,7 +286,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_NODES].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->nodeCount; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpNodes + i), sizeof(GsrcNode));
+		BufferPushData(&buffer, (mapData->lumpNodes + i), sizeof(GsrcNode), true);
 	}
 	fileHeader->lump[GSRC_LUMP_NODES].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_NODES].offset;
 	
@@ -278,7 +296,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_TEXINFO].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->texinfoCount; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpTexinfo + i), sizeof(GsrcTexinfo));
+		BufferPushData(&buffer, (mapData->lumpTexinfo + i), sizeof(GsrcTexinfo), true);
 	}
 	fileHeader->lump[GSRC_LUMP_TEXINFO].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_TEXINFO].offset;
 	
@@ -288,7 +306,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_FACES].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->faceCount; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpFaces + i), sizeof(GsrcFace));
+		BufferPushData(&buffer, (mapData->lumpFaces + i), sizeof(GsrcFace), true);
 	}
 	fileHeader->lump[GSRC_LUMP_FACES].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_FACES].offset;
 	
@@ -298,7 +316,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_CLIPNODES].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->clipnodeCount; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpClipnodes + i), sizeof(GsrcClipnode));
+		BufferPushData(&buffer, (mapData->lumpClipnodes + i), sizeof(GsrcClipnode), true);
 	}
 	fileHeader->lump[GSRC_LUMP_CLIPNODES].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_CLIPNODES].offset;
 	
@@ -308,7 +326,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_MARKSURFACES].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->marksurfaceCount; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpMarksurfaces + i), sizeof(u16));
+		BufferPushData(&buffer, (mapData->lumpMarksurfaces + i), sizeof(u16), true);
 	}
 	fileHeader->lump[GSRC_LUMP_MARKSURFACES].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_MARKSURFACES].offset;
 	
@@ -318,7 +336,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_SURFEDGES].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->surfEdgeCount; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpSurfEdges + i), sizeof(s32));
+		BufferPushData(&buffer, (mapData->lumpSurfEdges + i), sizeof(s32), true);
 	}
 	fileHeader->lump[GSRC_LUMP_SURFEDGES].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_SURFEDGES].offset;
 	
@@ -328,7 +346,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_EDGES].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->edgeCount; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpEdges + i), sizeof(GsrcEdge));
+		BufferPushData(&buffer, (mapData->lumpEdges + i), sizeof(GsrcEdge), true);
 	}
 	fileHeader->lump[GSRC_LUMP_EDGES].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_EDGES].offset;
 	
@@ -338,7 +356,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_MODELS].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->modelCount; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpModels + i), sizeof(GsrcModel));
+		BufferPushData(&buffer, (mapData->lumpModels + i), sizeof(GsrcModel), true);
 	}
 	fileHeader->lump[GSRC_LUMP_MODELS].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_MODELS].offset;
 	//
@@ -347,7 +365,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_LIGHTING].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->lightingLength; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpLighting + i), sizeof(u8));
+		BufferPushData(&buffer, (mapData->lumpLighting + i), sizeof(u8), true);
 	}
 	fileHeader->lump[GSRC_LUMP_LIGHTING].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_LIGHTING].offset;
 	//
@@ -356,7 +374,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_VISIBILITY].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->visLength; i++)
 	{
-		BufferPushData(&buffer, (mapData->lumpVIS + i), sizeof(u8));
+		BufferPushData(&buffer, (mapData->lumpVIS + i), sizeof(u8), true);
 	}
 	fileHeader->lump[GSRC_LUMP_VISIBILITY].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_VISIBILITY].offset;
 	
@@ -379,7 +397,7 @@ internal b32 GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData *mapDat
 	fileHeader->lump[GSRC_LUMP_TEXTURES].offset = (u32)BufferGetSize(buffer);
 	for (s32 i = 0; i < mapData->textureLumpSize; i++)
 	{
-		BufferPushData(&buffer, ((u8 *)mapData->lumpTextureMemory + i), sizeof(u8));
+		BufferPushData(&buffer, ((u8 *)mapData->lumpTextureMemory + i), sizeof(u8), true);
 	}
 	fileHeader->lump[GSRC_LUMP_TEXTURES].length = (u32)BufferGetSize(buffer) - fileHeader->lump[GSRC_LUMP_TEXTURES].offset;
 	

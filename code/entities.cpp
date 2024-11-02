@@ -82,7 +82,7 @@ internal EntlumpToken EntlumpGetToken(EntlumpTokeniser *tokeniser)
 internal b32 EntlumpParseEntity_(EntProperties *ent, EntlumpTokeniser *tokeniser)
 {
 	b32 result = false;
-	*ent = {};
+	*ent = (EntProperties){};
 	EntlumpToken token;
 	token = EntlumpGetToken(tokeniser);
 	if (token.type == ENTLUMPTOKEN_EOS)
@@ -186,7 +186,7 @@ internal EntProperties *EntListGetEnt(EntList list, str classname)
 	EntProperties *result = NULL;
 	for (s32 i = 0; i < list.entCount; i++)
 	{
-		if (StrEquals(list.ents[i].classname, classname))
+		if (StrEquals(list.ents[i].classname, classname, false))
 		{
 			result = &list.ents[i];
 			break;
@@ -211,14 +211,14 @@ internal EntProperty *EntGetProperty(EntProperties *ent, str key)
 
 internal void EntPushProp(EntProperties *out, str key, str value)
 {
-	out->properties[out->propertyCount++] = {key, value};
+	out->properties[out->propertyCount++] = (EntProperty){key, value};
 }
 
 internal ModelInfo EntConvertCommonBrush(Arena *arena, EntProperties *gsrcEnt, EntProperties *out)
 {
-	ModelInfo result = {};
-	result.model = -1;
-	result.rendermode = -1;
+	ModelInfo result = {
+		.model = -1, .rendermode = -1
+	};
 	for (s32 prop = 0; prop < gsrcEnt->propertyCount; prop++)
 	{
 		if (StrEquals(gsrcEnt->properties[prop].key, STR("angles"), false))

@@ -2,6 +2,18 @@
 const std = @import("std");
 const assert = std.debug.assert;
 
+fn AddShaderBuildCommand(b: *std.Build, dep_sokol_shdc: *std.Build.Dependency, inputPath: []const u8, outputPath: []const u8) *std.Build.Step.Run
+{
+	const sokolShdc = b.addSystemCommand(&.{"bin/linux/sokol-shdc", "--input"});
+	sokolShdc.setCwd(dep_sokol_shdc.path(""));
+	sokolShdc.addFileArg(b.path(inputPath));
+	sokolShdc.addArg("--output");
+	sokolShdc.addFileArg(b.path(outputPath));
+	sokolShdc.addArgs(&.{"--slang", "glsl410:hlsl4:metal_macos", "-b"});
+	
+	return sokolShdc;
+}
+
 pub fn build(b: *std.Build) !void
 {
     const target = b.standardTargetOptions(.{});
@@ -37,17 +49,26 @@ pub fn build(b: *std.Build) !void
 				.root = b.path("code/imgui"),
 				.files = &.{
 					"imgui.cpp", "imgui_draw.cpp",
-					"imgui_tables.cpp", "imgui_widgets.cpp", "imgui_demo.cpp"
+					"imgui_tables.cpp", "imgui_widgets.cpp", "imgui_demo.cpp",
+					"cimgui.cpp"
 				},
 			});
 			
 			imgui.addIncludePath(b.path("code/imgui/"));
+			imgui.addIncludePath(b.path("code/"));
 			imgui.linkLibCpp();
 			
+			
 			const dep_sokol_shdc = b.dependency("sokol_shdc", .{});
-			const sokolShdc = b.addSystemCommand(&.{"bin/linux/sokol-shdc", "--help"});
-			sokolShdc.setCwd(dep_sokol_shdc.path(""));
-			b.default_step.dependOn(&sokolShdc.step);
+			
+			const worldShader = AddShaderBuildCommand(b, dep_sokol_shdc,
+													  "code/shaders/world.glsl",
+													  "code/shaders_compiled/world.h");
+			const wireShader = AddShaderBuildCommand(b, dep_sokol_shdc,
+													  "code/shaders/wire.glsl",
+													  "code/shaders_compiled/wire.h");
+			b.default_step.dependOn(&worldShader.step);
+			b.default_step.dependOn(&wireShader.step);
 			
 			exe.linkLibrary(imgui);
 			// TODO: sokol-shdc!!!!!!
@@ -62,6 +83,7 @@ pub fn build(b: *std.Build) !void
 				exe.linkSystemLibrary("xi");
 				exe.linkSystemLibrary("xcursor");
 				exe.linkSystemLibrary("gl");
+				exe.linkSystemLibrary("rt");
 			}
 		}
 		if (target.result.os.tag == .linux)
@@ -74,14 +96,15 @@ pub fn build(b: *std.Build) !void
 	if (target.result.os.tag == .windows)
 	{
 		exe.addCSourceFile(.{
-			.file = b.path("code/win32_goldsrctosource.cpp"),
+			.file = b.path("code/win32_goldsrctosource.c"),
+			.flags = &.{"-std=c23"},
 		});
     }
 	else if (target.result.os.tag == .linux)
 	{
 		exe.addCSourceFile(.{
-			.file = b.path("code/linux_goldsrctosource.cpp"),
-			.flags = &.{"-fno-sanitize-trap=undefined"}
+			.file = b.path("code/linux_goldsrctosource.c"),
+			.flags = &.{"-fno-sanitize-trap=undefined", "-std=c23"}
 		});
 	}
     b.installArtifact(exe);

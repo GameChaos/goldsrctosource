@@ -57,12 +57,12 @@ internal void *ArenaAlloc(Arena *arena, s64 bytes)
 		// NOTE(GameChaos): guarantee zeroed allocation
 		if (arena->allocPos < arena->maxAllocPos)
 		{
-			Plat_MemSetToZero(result, MIN(bytes, arena->maxAllocPos - arena->allocPos));
+			Plat_MemSetToZero(result, GCM_MIN(bytes, arena->maxAllocPos - arena->allocPos));
 		}
 		arena->allocPos += bytes;
 		// NOTE(GameChaos): Align allocPos to 8 bytes after allocation.
 		arena->allocPos = AlignUp_(arena->allocPos, 8);
-		arena->maxAllocPos = MAX(arena->maxAllocPos, arena->allocPos);
+		arena->maxAllocPos = GCM_MAX(arena->maxAllocPos, arena->allocPos);
 	}
 	
 	return result;

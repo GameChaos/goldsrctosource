@@ -74,7 +74,7 @@ enum CompiledVtfFlags
 
 // vtf version 7.1
 #pragma pack(push, 1)
-struct VtfHeader
+typedef struct
 {
 	u32 signature;
     u32 version[2];
@@ -95,7 +95,7 @@ struct VtfHeader
     u8 lowResImageHeight;
 	u8 padding2_; // pad to 64 bytes
 	//u8 padding2_[17]; // pad to 80 bytes
-};
+} VtfHeader;
 #pragma pack(pop)
 
 #endif //VTF_H

@@ -80,14 +80,6 @@ enum TokenType
 	TOKEN_EOS, // end of stream
 };
 
-#define STR(strLiteral) (str{sizeof(strLiteral) - 1, strLiteral})
-
-struct str
-{
-	s32 length;
-	char *data;
-};
-
 struct Token
 {
 	TokenType type;

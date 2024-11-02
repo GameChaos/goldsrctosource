@@ -10,14 +10,14 @@ enum
 	WAD3_IMAGE_TYPE_TEXTURE = 0x43,
 };
 
-struct Wad3Header
+typedef struct
 {
 	u32 magic; // WAD3_MAGIC, "WAD3"
 	u32 dirEntries;
 	u32 firstDirEntryOffset;
-};
+} Wad3Header;
 
-struct Wad3DirEntry
+typedef struct
 {
 	u32 offset;
 	u32 size;
@@ -26,17 +26,17 @@ struct Wad3DirEntry
 	u8 compressed;
 	u16 padding_;
 	char name[16];
-};
+} Wad3DirEntry;
 
-struct Wad3TextureHeader
+typedef struct
 {
 	char name[16];
 	u32 width;
 	u32 height;
 	u32 offsets[4];
-};
+} Wad3TextureHeader;
 
-struct Wad3
+typedef struct
 {
 	b32 valid;
 	u32 entryCount;
@@ -44,16 +44,16 @@ struct Wad3
 	u32 textureCount;
 	Wad3TextureHeader **textures;
 	u8 *fileData;
-};
+} Wad3;
 
-struct FindTextureResult
+typedef struct
 {
 	b32 found;
 	u32 wadIndex;
 	u32 textureIndex;
-};
+} FindTextureResult;
 
-internal Wad3 Wad3FromBuffer(Arena *arena, Arena *tempArena, u8 *data, u64 bytes, char *path = NULL);
+internal Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *path/* = NULL*/);
 internal Wad3 Wad3FromFile(Arena *arena, char *path);
 
 #endif //WAD3_H

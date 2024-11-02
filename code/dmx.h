@@ -9,7 +9,7 @@
 #define DMX_MAX_PREFIX_ELEMS 64
 #define DMX_DEFAULT_MAX_ATTRIBUTES 64
 
-enum DmxAttrType : u8
+typedef enum DmxAttrType_s : u8
 {
 	DMX_ATTR_COUNT = 16,
 	DMX_ATTR_UNKNOWN = 0,
@@ -68,27 +68,27 @@ enum DmxAttrType : u8
 	DMX_ATTR_MATRIX4X4_ARRAY  = 46,
 	DMX_ATTR_UINT64_ARRAY     = 47,
 	DMX_ATTR_BYTE_ARRAY       = 48,
-};
+} DmxAttrType;
 
-union Guid
+typedef union
 {
 	u8 bytes[16];
 	u32 uints[4];
-};
+} Guid;
 
-struct DmxElementId
+typedef struct
 {
 	s32 index;
 	Guid guid;
-};
+} DmxElementId;
 
-struct DmxBinaryBlob
+typedef struct
 {
 	s32 byteCount;
 	u8 *bytes;
-};
+} DmxBinaryBlob;
 
-struct DmxAttrValue
+typedef struct
 {
 	DmxAttrType type;
 	union
@@ -140,21 +140,21 @@ struct DmxAttrValue
 			};
 		};
 	};
-};
+} DmxAttrValue;
 
-struct DmxAttribute
+typedef struct
 {
 	char name[DMX_MAX_NAME_LEN];
 	DmxAttrValue value;
-};
+} DmxAttribute;
 
-struct DmxStringTable
+typedef struct
 {
 	s32 stringCount;
     char **strings;
-};
+} DmxStringTable;
 
-struct DmxElement
+typedef struct
 {
 	char type[DMX_MAX_NAME_LEN];
 	char name[DMX_MAX_NAME_LEN];
@@ -162,9 +162,9 @@ struct DmxElement
 	s32 maxAttributes;
 	s32 attributeCount;
 	DmxAttribute *attributes;
-};
+} DmxElement;
 
-struct Dmx
+typedef struct
 {
 	// NOTE: only 1 prefix element for now.
 	DmxElement prefix;
@@ -178,25 +178,25 @@ struct Dmx
 	s32 elementCount;
 	s32 maxElements;
 	DmxElement *elements;
-};
+} Dmx;
 
 
 
 
-struct DmxReadElemHeader
+typedef struct
 {
 	char *type;
 	char *name;
 	Guid guid;
-};
+} DmxReadElemHeader;
 
-struct DmxReadElemBody
+typedef struct
 {
 	s32 attributeCount;
 	DmxAttribute *attributes;
-};
+} DmxReadElemBody;
 
-struct DmxReadBinary_v9
+typedef struct
 {
 	ReadFileResult file;
 	char *header; // "<!-- dmx encoding binary 9 format %s %i -->\n"
@@ -206,7 +206,7 @@ struct DmxReadBinary_v9
 	s32 elementCount;
 	DmxReadElemHeader *elementHeaders;
 	DmxReadElemBody *elements;
-};
+} DmxReadBinary_v9;
 
 #define DEFINE_DMXADDATTRIBUTE_FUNC_SIG(functionName, dataType)\
 internal DmxAttribute *functionName(Dmx *dmx, DmxElement *parent, str name, dataType value)

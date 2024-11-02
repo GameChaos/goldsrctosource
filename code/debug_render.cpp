@@ -1,16 +1,4 @@
 
-#ifdef GC_DEBUG
-#define SOKOL_DEBUG
-#endif
-#define SOKOL_IMPL
-#define SOKOL_GLCORE33
-#define SOKOL_NO_ENTRY
-#include "sokol/sokol_app.h"
-#include "sokol/sokol_gfx.h"
-#include "sokol/sokol_glue.h"
-#include "imgui/imgui.h"
-#include "sokol/sokol_imgui.h"
-
 #include "shaders_compiled/world.h"
 #include "shaders_compiled/wire.h"
 
@@ -157,48 +145,8 @@ internal mat4 InvertMat4(mat4 in)
 	return result;
 }
 
-internal void AnglesToVectors(v3 angles, v3 *forwards, v3 *right, v3 *up)
-{
-	v3 radAngles = Vec3(ToRadians(angles.x),
-						ToRadians(angles.y),
-						ToRadians(angles.z));
-	
-	v3 cos;
-	v3 sin;
-	
-	cos.x = CosF(radAngles.x);
-	sin.x = SinF(radAngles.x);
-	
-	cos.y = CosF(radAngles.y);
-	sin.y = SinF(radAngles.y);
-	
-	cos.z = CosF(radAngles.z);
-	sin.z = SinF(radAngles.z);
-	
-	if (forwards)
-	{
-		forwards->x = cos.x * cos.y;
-		forwards->y = cos.x * sin.y;
-		forwards->z = -sin.x;
-	}
-	
-	if (right)
-	{
-		right->x = (-1 * sin.z * sin.x * cos.y) + (-1 * cos.z * -sin.y);
-		right->y = (-1 * sin.z * sin.x * sin.y) + (-1 * cos.z * cos.y);
-		right->z = -1 * sin.z * cos.x;
-	}
-	
-	if (up)
-	{
-		up->x = (cos.z * sin.x * cos.y + -sin.z * -sin.y);
-		up->y = (cos.z * sin.x * sin.y + -sin.z * cos.y);
-		up->z = cos.z * cos.x;
-	}
-}
-
 // NOTE(GameChaos): if rgb888 is true, then it converts to rgba8888, if rgb888 is false it expects rgba8888 data
-internal void DebugGfxAddTexture(u8 *data, s32 width, s32 height, b32 rgb888 = false)
+internal void DebugGfxAddTexture(u8 *data, s32 width, s32 height, b32 rgb888/* = false*/)
 {
 	GfxState *state = g_gfxState;
 	if (state->textureCount < DEBUG_GFX_MAX_TEXTURES)
@@ -225,8 +173,8 @@ internal void DebugGfxAddTexture(u8 *data, s32 width, s32 height, b32 rgb888 = f
 		}
 		desc.width = width;
 		desc.height = height;
-		desc.min_filter = SG_FILTER_LINEAR_MIPMAP_LINEAR;
-		desc.mag_filter = SG_FILTER_LINEAR;
+		//desc.min_filter = SG_FILTER_LINEAR_MIPMAP_LINEAR;
+		//desc.mag_filter = SG_FILTER_LINEAR;
 		sg_image img = sg_make_image(&desc);
 		if (img.id != SG_INVALID_ID)
 		{
@@ -272,8 +220,8 @@ internal GfxVertData *VertsToGfxVertData(Arena *arena, Verts *poly, v3 normal, v
 			GfxVertData vertData;
 			vertData.pos = poly->verts[v];
 			vertData.normal = normal;
-			vertData.uv.x = Dot(poly->verts[v], s.xyz) + s.w;
-			vertData.uv.y = Dot(poly->verts[v], t.xyz) + t.w;
+			vertData.uv.x = v3dot(poly->verts[v], s.xyz) + s.w;
+			vertData.uv.y = v3dot(poly->verts[v], t.xyz) + t.w;
 			result[v] = vertData;
 		}
 	}
@@ -281,7 +229,7 @@ internal GfxVertData *VertsToGfxVertData(Arena *arena, Verts *poly, v3 normal, v
 	return result;
 }
 
-internal GfxMesh DebugGfxCreateMesh(GfxVertData *verts, s32 vertCount, s32 textureIndex, v3 wireColour = {0, 0, 0})
+internal GfxMesh DebugGfxCreateMesh(GfxVertData *verts, s32 vertCount, s32 textureIndex, v3 wireColour/* = {0}*/)
 {
 	GfxMesh result = {};
 	sg_buffer_desc vertexDesc = {};
@@ -306,14 +254,14 @@ internal GfxMesh DebugGfxCreateMesh(GfxVertData *verts, s32 vertCount, s32 textu
 internal void DebugGfxTextureVecsFromNormal(v3 normal, v4 *sOut, v4 *tOut)
 {
 	v3 nonParallel = GetNonParallelVector(normal);
-	v3 i = Cross(normal, nonParallel);
-	v3 j = Cross(normal, i);
-	sOut->xyz = i * 0.25f;
-	tOut->xyz = j * 0.25f;
+	v3 i = v3cross(normal, nonParallel);
+	v3 j = v3cross(normal, i);
+	sOut->xyz = v3muls(i, 0.25f);
+	tOut->xyz = v3muls(j, 0.25f);
 	sOut->w = 0;
 	tOut->w = 0;
 }
-internal void DebugGfxAddFace(Verts *poly, v3 normal, s32 textureIndex = -1, v4 s = {}, v4 t = {})
+internal void DebugGfxAddFace(Verts *poly, v3 normal, s32 textureIndex/* = -1*/, v4 s/* = {}*/, v4 t/* = {}*/)
 {
 	GfxState *state = g_gfxState;
 	if (state->faceCount < SRC_MAX_MAP_FACES
@@ -342,7 +290,7 @@ internal void DebugGfxAddFace(Verts *poly, v3 normal, s32 textureIndex = -1, v4 
 	}
 }
 
-internal void DebugGfxAddBrushSide(Verts *poly, v3 normal, s32 textureIndex = -1, v4 s = {}, v4 t = {})
+internal void DebugGfxAddBrushSide(Verts *poly, v3 normal, s32 textureIndex/* = -1*/, v4 s/* = {}*/, v4 t/* = {}*/)
 {
 	GfxState *state = g_gfxState;
 	if (state->brushSideCount < SRC_MAX_MAP_BRUSHSIDES
@@ -396,7 +344,7 @@ internal void DebugGfxAddBrush(s32 sideCount)
 	}
 }
 
-internal void DebugGfxAddMesh(Verts *poly, v3 normal, v3 wireColour = {0, 0, 0}, s32 textureIndex = -1, v4 s = {}, v4 t = {})
+internal void DebugGfxAddMesh(Verts *poly, v3 normal, v3 wireColour/* = {}*/, s32 textureIndex/* = -1*/, v4 s/* = {}*/, v4 t/* = {}*/)
 {
 	GfxState *state = g_gfxState;
 	if (state->meshCount < DEBUG_GFX_MAX_MESHES
@@ -420,11 +368,6 @@ internal void DebugGfxAddMesh(Verts *poly, v3 normal, v3 wireColour = {0, 0, 0},
 	}
 }
 
-internal void DebugGfxLog(const char* message, void* user_data)
-{
-	Print("SOKOL: %s\n", message);
-}
-
 internal void DebugGfxInit(void *userData)
 {
 	GfxState *state = (GfxState *)userData;
@@ -433,11 +376,12 @@ internal void DebugGfxInit(void *userData)
 	state->specificBrushSideIndex = -1;
 	state->drawWorld = true;
 	state->drawBrushes = true;
-	sg_desc desc = {};
-	desc.context = sapp_sgcontext();
-	desc.buffer_pool_size = DEBUG_GFX_MAX_MESHES * 2;
-	desc.image_pool_size = DEBUG_GFX_MAX_TEXTURES;
-	desc.logger.log_cb = DebugGfxLog;
+	sg_desc desc = {
+		.environment = sglue_environment(),
+		.buffer_pool_size = DEBUG_GFX_MAX_MESHES * 2,
+		.image_pool_size = DEBUG_GFX_MAX_TEXTURES,
+		.logger.func = slog_func,
+	};
 	sg_setup(&desc);
 	
 	simgui_desc_t imguiDesc = {};
@@ -455,34 +399,36 @@ internal void DebugGfxInit(void *userData)
     };
 	
 	// NOTE(GameChaos): 0 texture.
-	DebugGfxAddTexture((u8 *)debugTexture, 8, 8);
+	DebugGfxAddTexture((u8 *)debugTexture, 8, 8, false);
 	
-	sg_pipeline_desc pipelineDesc = {};
-	pipelineDesc.layout.attrs[ATTR_world_vs_iPos].format = SG_VERTEXFORMAT_FLOAT3;
-	pipelineDesc.layout.attrs[ATTR_world_vs_iNormal].format = SG_VERTEXFORMAT_FLOAT3;
-	pipelineDesc.layout.attrs[ATTR_world_vs_iUv].format = SG_VERTEXFORMAT_FLOAT2;
-	pipelineDesc.shader = sg_make_shader(world_shader_desc(sg_query_backend()));
-	pipelineDesc.index_type = SG_INDEXTYPE_UINT32;
-	pipelineDesc.cull_mode = SG_CULLMODE_BACK;
-	pipelineDesc.depth.compare = SG_COMPAREFUNC_LESS_EQUAL;
-	pipelineDesc.depth.write_enabled = true;
-	pipelineDesc.label = "pipeline";
+	sg_pipeline_desc pipelineDesc = {
+		.layout.attrs[ATTR_world_vs_iPos].format = SG_VERTEXFORMAT_FLOAT3,
+		.layout.attrs[ATTR_world_vs_iNormal].format = SG_VERTEXFORMAT_FLOAT3,
+		.layout.attrs[ATTR_world_vs_iUv].format = SG_VERTEXFORMAT_FLOAT2,
+		.shader = sg_make_shader(world_shader_desc(sg_query_backend())),
+		.index_type = SG_INDEXTYPE_UINT32,
+		.cull_mode = SG_CULLMODE_BACK,
+		.depth.compare = SG_COMPAREFUNC_LESS_EQUAL,
+		.depth.write_enabled = true,
+		.label = "pipeline",
+	};
 	
-	sg_pipeline_desc wirePipelineDesc = {};
-	wirePipelineDesc.layout.attrs[ATTR_world_vs_iPos].format = SG_VERTEXFORMAT_FLOAT3;
-	wirePipelineDesc.layout.attrs[ATTR_world_vs_iNormal].format = SG_VERTEXFORMAT_FLOAT3;
-	wirePipelineDesc.layout.attrs[ATTR_world_vs_iUv].format = SG_VERTEXFORMAT_FLOAT2;
-	wirePipelineDesc.shader = sg_make_shader(wire_shader_desc(sg_query_backend()));
-	wirePipelineDesc.primitive_type = SG_PRIMITIVETYPE_LINES;
-	wirePipelineDesc.index_type = SG_INDEXTYPE_UINT32;
-	wirePipelineDesc.cull_mode = SG_CULLMODE_BACK;
-	wirePipelineDesc.depth.compare = SG_COMPAREFUNC_LESS_EQUAL;
-	wirePipelineDesc.depth.write_enabled = true;
-	wirePipelineDesc.label = "pipeline";
+	sg_pipeline_desc wirePipelineDesc = {
+		.layout.attrs[ATTR_world_vs_iPos].format = SG_VERTEXFORMAT_FLOAT3,
+		.layout.attrs[ATTR_world_vs_iNormal].format = SG_VERTEXFORMAT_FLOAT3,
+		.layout.attrs[ATTR_world_vs_iUv].format = SG_VERTEXFORMAT_FLOAT2,
+		.shader = sg_make_shader(wire_shader_desc(sg_query_backend())),
+		.primitive_type = SG_PRIMITIVETYPE_LINES,
+		.index_type = SG_INDEXTYPE_UINT32,
+		.cull_mode = SG_CULLMODE_BACK,
+		.depth.compare = SG_COMPAREFUNC_LESS_EQUAL,
+		.depth.write_enabled = true,
+		.label = "pipeline",
+	};
 	
-	state->passAction = {};
-	state->passAction.colors[0].action = SG_ACTION_CLEAR;
-	state->passAction.colors[0].value = {0, 0, 0, 1};
+	state->passAction = (sg_pass_action){
+		.colors[0].clear_value = {0, 0, 0, 1},
+	};
 	
 	state->pipeline = sg_make_pipeline(&pipelineDesc);
 	state->wirePipeline = sg_make_pipeline(&wirePipelineDesc);
@@ -541,11 +487,11 @@ internal void DrawMesh(GfxState *state, GfxMesh *mesh, mat4 mvp, b32 solid)
 	}
 	if (solid)
 	{
-		bindings.fs_images[SLOT_tex] = state->textures[0].img;
+		bindings.fs.images[SLOT_tex] = state->textures[0].img;
 	}
 	else
 	{
-		bindings.fs_images[SLOT_tex] = state->textures[mesh->texture].img;
+		bindings.fs.images[SLOT_tex] = state->textures[mesh->texture].img;
 	}
 	sg_apply_bindings(&bindings);
 	
@@ -587,51 +533,51 @@ internal void DrawMeshWire(GfxState *state, GfxMesh *mesh, mat4 mvp)
 
 internal b32 ImGuiCustomSlider(const char *label, s32 *value, s32 min, s32 max, s32 defaultValue)
 {
-	b32 result = ImGui::SliderInt(label, value, min, max);
-	ImGui::SameLine();
-	ImVec2 buttonSize = {ImGui::GetFrameHeight(), ImGui::GetFrameHeight()};
-	ImGui::PushButtonRepeat(true);
-	ImGui::PushID(label + 1);
-	if (ImGui::Button("-", buttonSize))
+	b32 result = igSliderInt(label, value, min, max, "%d", 0);
+	igSameLine(0, -1);
+	ImVec2 buttonSize = {igGetFrameHeight(), igGetFrameHeight()};
+	igPushItemFlag(ImGuiItemFlags_ButtonRepeat, true);
+	igPushID_Str(label + 1);
+	if (igButton("-", buttonSize))
 	{
 		(*value)--;
 		result = true;
 	}
-	ImGui::PopID();
-	ImGui::SameLine();
-	ImGui::PushID(label + 2);
-	if (ImGui::Button("+", buttonSize))
+	igPopID();
+	igSameLine(0, -1);
+	igPushID_Str(label + 2);
+	if (igButton("+", buttonSize))
 	{
 		(*value)++;
 		result = true;
 	}
-	ImGui::PopID();
-	ImGui::PopButtonRepeat();
-	ImGui::SameLine();
-	ImGui::PushID(label + 3);
-	if (ImGui::Button("Reset"))
+	igPopID();
+	igPopItemFlag();
+	igSameLine(0, -1);
+	igPushID_Str(label + 3);
+	if (igButton("Reset", (ImVec2){}))
 	{
 		(*value) = defaultValue;
 		result = true;
 	}
-	ImGui::PopID();
-	(*value) = CLAMP(min, (*value), max);
+	igPopID();
+	(*value) = GCM_CLAMP(min, (*value), max);
 	return result;
 }
 
-inline GfxRayHit RayPolygonIntersect(GfxPoly *polygon, v3 rayPos, v3 rayDir)
+internal inline GfxRayHit RayPolygonIntersect(GfxPoly *polygon, v3 rayPos, v3 rayDir)
 {
 	GfxRayHit result = {};
 	
 	// check if ray and plane are parallel
 	v3 normal = polygon->verts[0].normal;
-	f32 rayDirDotNormal = Dot(normal, rayDir); 
-    if (HMM_ABS(rayDirDotNormal) < 0.0001f) // almost 0 
+	f32 rayDirDotNormal = v3dot(normal, rayDir); 
+    if (GCM_ABS(rayDirDotNormal) < 0.0001f) // almost 0 
 	{
 		return result;
 	}
 	
-	result.distance = (Dot(normal, polygon->verts[0].pos) - Dot(normal, rayPos)) / rayDirDotNormal;
+	result.distance = (v3dot(normal, polygon->verts[0].pos) - v3dot(normal, rayPos)) / rayDirDotNormal;
 	
 	// check if the triangle is behind the ray
 	if (result.distance <= 0.0001f)
@@ -639,7 +585,7 @@ inline GfxRayHit RayPolygonIntersect(GfxPoly *polygon, v3 rayPos, v3 rayDir)
 		return result;
 	}
 	
-	result.endPosition = rayPos + result.distance * rayDir; 
+	result.endPosition = v3add(rayPos, v3muls(rayDir, result.distance)); 
 	result.hit = true; // assume that we're inside
 	
 	// check if end point is inside the polygon
@@ -647,10 +593,10 @@ inline GfxRayHit RayPolygonIntersect(GfxPoly *polygon, v3 rayPos, v3 rayDir)
 	{
 		v3 vert0 = polygon->verts[v].pos;
 		v3 vert1 = polygon->verts[(v + 1) % polygon->vertCount].pos;
-		v3 edge = vert1 - vert0;
-		v3 vp0 = result.endPosition - vert0;
-		v3 cross = Cross(vp0, edge);
-		f32 dot = Dot(normal, cross);
+		v3 edge = v3sub(vert1, vert0);
+		v3 vp0 = v3sub(result.endPosition, vert0);
+		v3 cross = v3cross(vp0, edge);
+		f32 dot = v3dot(normal, cross);
 		if (dot < 0.0f)
 		{
 			// ray doesn't hit the polygon
@@ -664,7 +610,7 @@ inline GfxRayHit RayPolygonIntersect(GfxPoly *polygon, v3 rayPos, v3 rayDir)
 
 internal void UpdateSpecificBrush(GfxState *state)
 {
-	//state->specificBrushIndex = CLAMP(-1, state->specificBrushIndex, state->brushCount - 1);
+	//state->specificBrushIndex = GCM_CLAMP(-1, state->specificBrushIndex, state->brushCount - 1);
 	if (state->specificBrushIndex >= 0)
 	{
 		// create specific brush mesh
@@ -681,16 +627,16 @@ internal void UpdateSpecificBrush(GfxState *state)
 		for (s32 i = 0; i < brush.sideCount; i++)
 		{
 			GfxMesh *mesh = &state->specificBrushMeshes[i];
-			*mesh = {};
+			*mesh = (GfxMesh){};
 			GfxPoly *side = &state->brushSides[brush.firstSide + i];
-			*mesh = DebugGfxCreateMesh(side->verts, side->vertCount, side->texture, {0, 1, 1});
+			*mesh = DebugGfxCreateMesh(side->verts, side->vertCount, side->texture, (v3){0, 1, 1});
 		}
 	}
 }
 
 internal void UpdateSpecificFace(GfxState *state)
 {
-	//state->specificFaceIndex = CLAMP(-1, state->specificFaceIndex, state->faceCount - 1);
+	//state->specificFaceIndex = GCM_CLAMP(-1, state->specificFaceIndex, state->faceCount - 1);
 	if (state->specificFaceIndex >= 0)
 	{
 		// create specific face mesh
@@ -698,10 +644,55 @@ internal void UpdateSpecificFace(GfxState *state)
 		sg_destroy_buffer(mesh->vertexBuffer);
 		sg_destroy_buffer(mesh->indexBuffer);
 		sg_destroy_buffer(mesh->wireIndexBuffer);
-		*mesh = {};
+		*mesh = (GfxMesh){};
 		GfxPoly *face = &state->faces[state->specificFaceIndex];
-		*mesh = DebugGfxCreateMesh(face->verts, face->vertCount, face->texture, {1, 1, 0});
+		*mesh = DebugGfxCreateMesh(face->verts, face->vertCount, face->texture, (v3){1, 1, 0});
 	}
+}
+
+// from HandmadeMath.h
+internal mat4 Perspective(f32 fov, f32 aspectRatio, f32 nearDist, f32 farDist)
+{
+	// See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/gluPerspective.xml
+	f32 cotangent = 1.0f / f32tan(fov * (GCM_PI / 360.0f));
+	
+	mat4 result = {
+		.e[0][0] = cotangent / aspectRatio,
+		.e[1][1] = cotangent,
+		.e[2][3] = -1,
+		.e[2][2] = (nearDist + farDist) / (nearDist - farDist),
+		.e[3][2] = (2.0f * nearDist * farDist) / (nearDist - farDist),
+		.e[3][3] = 0,
+	};
+	return result;
+}
+
+// from HandmadeMath.h
+mat4 LookAt(v3 eye, v3 centre, v3 up)
+{
+    v3 f = v3normalise(v3sub(centre, eye));
+    v3 s = v3normalise(v3cross(f, up));
+    v3 u = v3cross(s, f);
+	
+    mat4 result = {
+		.e[0][0] = s.x,
+		.e[0][1] = u.x,
+		.e[0][2] = -f.x,
+		
+		.e[1][0] = s.y,
+		.e[1][1] = u.y,
+		.e[1][2] = -f.y,
+		
+		.e[2][0] = s.z,
+		.e[2][1] = u.z,
+		.e[2][2] = -f.z,
+		
+		.e[3][0] = -v3dot(s, eye),
+		.e[3][1] = -v3dot(u, eye),
+		.e[3][2] = v3dot(f, eye),
+		.e[3][3] = 1,
+	};
+    return result;
 }
 
 internal void DebugGfxFrame(void *userData)
@@ -764,30 +755,34 @@ internal void DebugGfxFrame(void *userData)
 			
 			if (vertCount > 0)
 			{
-				sg_buffer_desc vertexDesc = {};
-				vertexDesc.type = SG_BUFFERTYPE_VERTEXBUFFER;
-				vertexDesc.data.ptr = tempVerts;
-				vertexDesc.data.size = vertCount * sizeof(*tempVerts);
+				sg_buffer_desc vertexDesc = {
+					.type = SG_BUFFERTYPE_VERTEXBUFFER,
+					.data.ptr = tempVerts,
+					.data.size = vertCount * sizeof(*tempVerts),
+				};
 				
-				sg_buffer_desc indexDesc = {};
-				indexDesc.type = SG_BUFFERTYPE_INDEXBUFFER;
-				indexDesc.data.ptr = indices;
-				indexDesc.data.size = sizeof(*indices) * indexCount;
+				sg_buffer_desc indexDesc = {
+					.type = SG_BUFFERTYPE_INDEXBUFFER,
+					.data.ptr = indices,
+					.data.size = sizeof(*indices) * indexCount,
+				};
 				
-				sg_buffer_desc wireIndexDesc = {};
-				wireIndexDesc.type = SG_BUFFERTYPE_INDEXBUFFER;
-				wireIndexDesc.data.ptr = wireIndices;
-				wireIndexDesc.data.size = sizeof(*wireIndices) * wireIndexCount;
+				sg_buffer_desc wireIndexDesc = {
+					.type = SG_BUFFERTYPE_INDEXBUFFER,
+					.data.ptr = wireIndices,
+					.data.size = sizeof(*wireIndices) * wireIndexCount,
+				};
 				
-				GfxMesh mesh = {};
-				mesh.vertexBuffer = sg_make_buffer(&vertexDesc);
-				mesh.indexBuffer = sg_make_buffer(&indexDesc);
-				mesh.wireIndexBuffer = sg_make_buffer(&wireIndexDesc);
-				mesh.vertCount = vertCount;
-				mesh.indexCount = indexCount;
-				mesh.wireIndexCount = wireIndexCount;
-				mesh.texture = tex;
-				mesh.wireColour = {1, 1, 0};
+				GfxMesh mesh = {
+					.vertexBuffer = sg_make_buffer(&vertexDesc),
+					.indexBuffer = sg_make_buffer(&indexDesc),
+					.wireIndexBuffer = sg_make_buffer(&wireIndexDesc),
+					.vertCount = vertCount,
+					.indexCount = indexCount,
+					.wireIndexCount = wireIndexCount,
+					.texture = tex,
+					.wireColour = {1, 1, 0},
+				};
 				state->worldMeshes[state->worldMeshCount++] = mesh;
 			}
 		}
@@ -838,30 +833,34 @@ internal void DebugGfxFrame(void *userData)
 			
 			if (vertCount > 0)
 			{
-				sg_buffer_desc vertexDesc = {};
-				vertexDesc.type = SG_BUFFERTYPE_VERTEXBUFFER;
-				vertexDesc.data.ptr = tempVerts;
-				vertexDesc.data.size = vertCount * sizeof(*tempVerts);
+				sg_buffer_desc vertexDesc = {
+					.type = SG_BUFFERTYPE_VERTEXBUFFER,
+					.data.ptr = tempVerts,
+					.data.size = vertCount * sizeof(*tempVerts),
+				};
 				
-				sg_buffer_desc indexDesc = {};
-				indexDesc.type = SG_BUFFERTYPE_INDEXBUFFER;
-				indexDesc.data.ptr = indices;
-				indexDesc.data.size = sizeof(*indices) * indexCount;
+				sg_buffer_desc indexDesc = {
+					.type = SG_BUFFERTYPE_INDEXBUFFER,
+					.data.ptr = indices,
+					.data.size = sizeof(*indices) * indexCount,
+				};
 				
-				sg_buffer_desc wireIndexDesc = {};
-				wireIndexDesc.type = SG_BUFFERTYPE_INDEXBUFFER;
-				wireIndexDesc.data.ptr = wireIndices;
-				wireIndexDesc.data.size = sizeof(*wireIndices) * wireIndexCount;
+				sg_buffer_desc wireIndexDesc = {
+					.type = SG_BUFFERTYPE_INDEXBUFFER,
+					.data.ptr = wireIndices,
+					.data.size = sizeof(*wireIndices) * wireIndexCount,
+				};
 				
-				GfxMesh mesh = {};
-				mesh.vertexBuffer = sg_make_buffer(&vertexDesc);
-				mesh.indexBuffer = sg_make_buffer(&indexDesc);
-				mesh.wireIndexBuffer = sg_make_buffer(&wireIndexDesc);
-				mesh.vertCount = vertCount;
-				mesh.indexCount = indexCount;
-				mesh.wireIndexCount = wireIndexCount;
-				mesh.texture = tex;
-				mesh.wireColour = {0, 1, 1};
+				GfxMesh mesh = {
+					.vertexBuffer = sg_make_buffer(&vertexDesc),
+					.indexBuffer = sg_make_buffer(&indexDesc),
+					.wireIndexBuffer = sg_make_buffer(&wireIndexDesc),
+					.vertCount = vertCount,
+					.indexCount = indexCount,
+					.wireIndexCount = wireIndexCount,
+					.texture = tex,
+					.wireColour = {0, 1, 1},
+				};
 				state->brushMeshes[state->brushMeshCount++] = mesh;
 			}
 		}
@@ -875,7 +874,7 @@ internal void DebugGfxFrame(void *userData)
 	{
 		state->angles.x += input->mouseDelta.y * 0.022f * 3.0f;
 		state->angles.y -= input->mouseDelta.x * 0.022f * 3.0f;
-		state->angles.x = CLAMP(-89, state->angles.x, 89);
+		state->angles.x = GCM_CLAMP(-89, state->angles.x, 89);
 	}
 	v3 forwards = {};
 	v3 right = {};
@@ -887,15 +886,15 @@ internal void DebugGfxFrame(void *userData)
 			(f32)!!input->moveRight.isDown - (f32)!!input->moveLeft.isDown
 		};
 		{
-			f32 len = Length(move);
+			f32 len = v2len(move);
 			if (len > 0)
 			{
-				move = move / len;
+				move = v2divs(move, len);
 			}
 		}
 		
-		v3 moveDir = (forwards * move.x) + (right * move.y);
-		float speed = 500.0f;
+		v3 moveDir = v3add(v3muls(forwards, move.x), v3muls(right, move.y));
+		f32 speed = 500.0f;
 		if (input->leftShift.isDown)
 		{
 			speed *= 0.25f;
@@ -904,30 +903,34 @@ internal void DebugGfxFrame(void *userData)
 		{
 			speed *= 4.0f;
 		}
-		state->origin += moveDir * ((f32)sapp_frame_duration() * speed);
+		state->origin = v3add(state->origin, v3muls(moveDir, (f32)sapp_frame_duration() * speed));
 	}
 	
 	mat4 proj = Perspective(DEBUG_GFX_FOV, sapp_widthf() / sapp_heightf(), DEBUG_GFX_NEARZ, DEBUG_GFX_FARZ);
-	mat4 view = LookAt(state->origin, state->origin + forwards, Vec3(0, 0, 1));
-	mat4 view_proj = MultiplyMat4(proj, view);
-	ImGui::BeginDisabled(state->pickBrush || state->pickFace);
-	sg_begin_default_pass(&state->passAction, sapp_width(), sapp_height());
-	ImGui::Text("Wireframe: %i\nSolid type: %i", state->wireframe, state->solidDrawType);
-	ImGui::Checkbox("Draw world faces", &state->drawWorld);
-	ImGui::Checkbox("Draw brushes", &state->drawBrushes);
-	ImGui::Text("Draw specific face");
+	mat4 view = LookAt(state->origin, v3add(state->origin, forwards), (v3){0, 0, 1});
+	mat4 viewProj = mat4mul(proj, view);
+	igBeginDisabled(state->pickBrush || state->pickFace);
+	//sg_begin_default_pass(&state->passAction, sapp_width(), sapp_height());
+	sg_begin_pass(&(sg_pass){
+		.action = state->passAction,
+		.swapchain = sglue_swapchain(),
+	});
+	igText("Wireframe: %i\nSolid type: %i", state->wireframe, state->solidDrawType);
+	igCheckbox("Draw world faces", &state->drawWorld);
+	igCheckbox("Draw brushes", &state->drawBrushes);
+	igText("Draw specific face");
 	if (ImGuiCustomSlider("##Draw specific face", &state->specificFaceIndex, -1, state->faceCount - 1, -1))
 	{
 		UpdateSpecificFace(state);
 	}
 	
-	ImGui::Text("Draw specific brush");
+	igText("Draw specific brush");
 	if (ImGuiCustomSlider("##Draw specific brush", &state->specificBrushIndex, -1, state->brushCount - 1, -1))
 	{
 		UpdateSpecificBrush(state);
 	}
 	
-	ImGui::Text("Draw specific brush side");
+	igText("Draw specific brush side");
 	if (ImGuiCustomSlider("##Draw specific brush side", &state->specificBrushSideIndex, -1, state->brushSideCount - 1, -1))
 	{
 		if (state->specificBrushSideIndex >= 0)
@@ -937,19 +940,19 @@ internal void DebugGfxFrame(void *userData)
 			sg_destroy_buffer(mesh->vertexBuffer);
 			sg_destroy_buffer(mesh->indexBuffer);
 			sg_destroy_buffer(mesh->wireIndexBuffer);
-			*mesh = {};
+			*mesh = (GfxMesh){};
 			GfxPoly *side = &state->brushSides[state->specificBrushSideIndex];
-			*mesh = DebugGfxCreateMesh(side->verts, side->vertCount, side->texture, {0, 1, 0});
+			*mesh = DebugGfxCreateMesh(side->verts, side->vertCount, side->texture, (v3){0, 1, 0});
 		}
 	}
 	
-	if (ImGui::Button("Pick face"))
+	if (igButton("Pick face", (ImVec2){}))
 	{
 		state->specificFaceIndex = -1;
 		state->pickFace = true;
 	}
 	
-	if (ImGui::Button("Pick brush"))
+	if (igButton("Pick brush", (ImVec2){}))
 	{
 		state->specificBrushIndex = -1;
 		state->pickBrush = true;
@@ -958,7 +961,7 @@ internal void DebugGfxFrame(void *userData)
 	if (state->specificFaceIndex >= 0)
 	{
 		GfxPoly *face = &state->faces[state->specificFaceIndex];
-		ImGui::Text("Face %i\ns: %f %f %f %f\nt: %f %f %f %f",
+		igText("Face %i\ns: %f %f %f %f\nt: %f %f %f %f",
 					state->specificFaceIndex,
 					face->s.x, face->s.y, face->s.z, face->s.w,
 					face->t.x, face->t.y, face->t.z, face->s.w);
@@ -967,32 +970,32 @@ internal void DebugGfxFrame(void *userData)
 	if (state->specificBrushIndex >= 0)
 	{
 		GfxBrush brush = state->brushes[state->specificBrushIndex];
-		ImGui::Text("Brush %i info:\nFirst side: %i\nSide count: %i",
+		igText("Brush %i info:\nFirst side: %i\nSide count: %i",
 					state->specificBrushIndex, brush.firstSide, brush.sideCount);
 	}
 	
 	if (state->specificBrushSideIndex >= 0)
 	{
 		GfxPoly *side = &state->brushSides[state->specificBrushSideIndex];
-		ImGui::Text("Brush side %i info:\nTexture: %i\nVert count: %i\nNormal: %f %f %f",
+		igText("Brush side %i info:\nTexture: %i\nVert count: %i\nNormal: %f %f %f",
 					state->specificBrushSideIndex, side->texture, side->vertCount,
 					side->verts->normal.x, side->verts->normal.y, side->verts->normal.z);
 	}
 	
-	ImGui::EndDisabled();
+	igEndDisabled();
 	
 	if (state->pickBrush || state->pickFace)
 	{
 		if (input->mouse1.isDown)
 		{
-			mat4 viewCentred = LookAt({}, forwards, {0, 0, 1});
-			mat4 inv = InvertMat4(proj * viewCentred);
+			mat4 viewCentred = LookAt((v3){}, forwards, (v3){0, 0, 1});
+			mat4 inv = mat4invert(mat4mul(proj, viewCentred));
 			v3 rayDir = {
 				(input->mousePos.x / sapp_widthf()) * 2 - 1,
 				1 - (input->mousePos.y / sapp_heightf()) * 2,
 				0
 			};
-			rayDir = (inv * Vec4(rayDir.x, rayDir.y, rayDir.z, 1)).xyz;
+			rayDir = mat4mulv4(inv, (v4){rayDir.x, rayDir.y, rayDir.z, 1}).xyz;
 			
 			if (state->pickBrush)
 			{
@@ -1051,7 +1054,7 @@ internal void DebugGfxFrame(void *userData)
 		GfxMesh *mesh = &state->meshes[i];
 		if (state->solidDrawType <= 1)
 		{
-			DrawMesh(state, mesh, view_proj, state->solidDrawType);
+			DrawMesh(state, mesh, viewProj, state->solidDrawType);
 		}
 	}
 	
@@ -1064,7 +1067,7 @@ internal void DebugGfxFrame(void *userData)
 				GfxMesh *mesh = &state->worldMeshes[i];
 				if (state->solidDrawType <= 1)
 				{
-					DrawMesh(state, mesh, view_proj, state->solidDrawType);
+					DrawMesh(state, mesh, viewProj, state->solidDrawType);
 				}
 			}
 		}
@@ -1074,7 +1077,7 @@ internal void DebugGfxFrame(void *userData)
 		GfxMesh *mesh = &state->specificFaceMesh;
 		if (state->solidDrawType <= 1)
 		{
-			DrawMesh(state, mesh, view_proj, state->solidDrawType);
+			DrawMesh(state, mesh, viewProj, state->solidDrawType);
 		}
 	}
 	
@@ -1087,7 +1090,7 @@ internal void DebugGfxFrame(void *userData)
 				GfxMesh *mesh = &state->brushMeshes[i];
 				if (state->solidDrawType <= 1)
 				{
-					DrawMesh(state, mesh, view_proj, state->solidDrawType);
+					DrawMesh(state, mesh, viewProj, state->solidDrawType);
 				}
 			}
 		}
@@ -1100,7 +1103,7 @@ internal void DebugGfxFrame(void *userData)
 			GfxMesh *mesh = &state->specificBrushMeshes[i];
 			if (state->solidDrawType <= 1)
 			{
-				DrawMesh(state, mesh, view_proj, state->solidDrawType);
+				DrawMesh(state, mesh, viewProj, state->solidDrawType);
 			}
 		}
 	}
@@ -1110,7 +1113,7 @@ internal void DebugGfxFrame(void *userData)
 		GfxMesh *mesh = &state->specificBrushSideMesh;
 		if (state->solidDrawType <= 1)
 		{
-			DrawMesh(state, mesh, view_proj, state->solidDrawType);
+			DrawMesh(state, mesh, viewProj, state->solidDrawType);
 		}
 	}
 	
@@ -1120,7 +1123,7 @@ internal void DebugGfxFrame(void *userData)
 		for (s32 i = 0; i < state->meshCount; i++)
 		{
 			GfxMesh *mesh = &state->meshes[i];
-			DrawMeshWire(state, mesh, view_proj);
+			DrawMeshWire(state, mesh, viewProj);
 		}
 		
 		if (state->specificFaceIndex < 0)
@@ -1130,14 +1133,14 @@ internal void DebugGfxFrame(void *userData)
 				for (s32 i = 0; i < state->worldMeshCount; i++)
 				{
 					GfxMesh *mesh = &state->worldMeshes[i];
-					DrawMeshWire(state, mesh, view_proj);
+					DrawMeshWire(state, mesh, viewProj);
 				}
 			}
 		}
 		else
 		{
 			GfxMesh *mesh = &state->specificFaceMesh;
-			DrawMeshWire(state, mesh, view_proj);
+			DrawMeshWire(state, mesh, viewProj);
 		}
 		
 		if (state->specificBrushIndex < 0)
@@ -1147,7 +1150,7 @@ internal void DebugGfxFrame(void *userData)
 				for (s32 i = 0; i < state->brushMeshCount; i++)
 				{
 					GfxMesh *mesh = &state->brushMeshes[i];
-					DrawMeshWire(state, mesh, view_proj);
+					DrawMeshWire(state, mesh, viewProj);
 				}
 			}
 		}
@@ -1157,14 +1160,14 @@ internal void DebugGfxFrame(void *userData)
 			for (s32 i = 0; i < brush.sideCount; i++)
 			{
 				GfxMesh *mesh = &state->specificBrushMeshes[i];
-				DrawMeshWire(state, mesh, view_proj);
+				DrawMeshWire(state, mesh, viewProj);
 			}
 		}
 		
 		if (state->specificBrushSideIndex >= 0)
 		{
 			GfxMesh *mesh = &state->specificBrushSideMesh;
-			DrawMeshWire(state, mesh, view_proj);
+			DrawMeshWire(state, mesh, viewProj);
 		}
 	}
 	simgui_render();
@@ -1282,16 +1285,17 @@ internal void DebugGfxMain(s32 argCount, char *arguments[])
 	g_gfxState->argCount = argCount;
 	g_gfxState->arguments = arguments;
 	
-	sapp_desc desc = {};
-	desc.user_data = g_gfxState;
-	desc.init_userdata_cb = DebugGfxInit;
-	desc.frame_userdata_cb = DebugGfxFrame;
-	desc.cleanup_cb = DebugGfxCleanup;
-	desc.event_cb = DebugGfxEvent;
-	desc.logger.log_cb = DebugGfxLog;
-	desc.width = 1366;
-	desc.height = 768;
-	desc.window_title = "Debug";
-	desc.icon.sokol_default = true;
+	sapp_desc desc = {
+		.user_data = g_gfxState,
+		.init_userdata_cb = DebugGfxInit,
+		.frame_userdata_cb = DebugGfxFrame,
+		.cleanup_cb = DebugGfxCleanup,
+		.event_cb = DebugGfxEvent,
+		.logger.func = slog_func,
+		.width = 1366,
+		.height = 768,
+		.window_title = "Debug",
+		.icon.sokol_default = true,
+	};
 	sapp_run(&desc);
 }

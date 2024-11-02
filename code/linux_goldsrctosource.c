@@ -1,6 +1,7 @@
 
-#include "goldsrctosource.cpp"
+#define _DEFAULT_SOURCE
 
+#include "goldsrctosource.cpp"
 #include <stdio.h>
 #include "cstdlib_goldsrctosource.cpp"
 
@@ -9,6 +10,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
+#include <strings.h>
 
 global char g_charBuffer[2048];
 
@@ -55,11 +57,11 @@ internal s32 GetDirectoryFiles(char *path, FileInfo *out, s32 maxFileCount, cons
 	if (directory && out)
 	{
 		errno = 0;
-		dirent *entry = NULL;
+		struct dirent *entry = NULL;
 		while ((entry = readdir(directory)) && count < maxFileCount)
 		{
-			if (StringEquals(entry->d_name, ".")
-				|| StringEquals(entry->d_name, ".."))
+			if (StringEquals(entry->d_name, ".", true)
+				|| StringEquals(entry->d_name, "..", true))
 			{
 				continue;
 			}

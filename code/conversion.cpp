@@ -47,8 +47,8 @@ internal s32 VtfGetMipCount(v2i textureSize)
 	s32 height = textureSize.y;
 	while (width >= 1 && height >= 1)
 	{
-		width = HMM_MAX(width, 1);
-		height = HMM_MAX(height, 1);
+		width = GCM_MAX(width, 1);
+		height = GCM_MAX(height, 1);
 		result++;
 		width >>= 1;
 		height >>= 1;
@@ -66,7 +66,7 @@ internal VtfHeader VtfDefaultHeader(void)
 	result.version[1] = 1;
 	result.headerSize = sizeof(result);
 	result.frames = 1;
-	result.reflectivity = {0.5f, 0.5f, 0.5f};
+	result.reflectivity = (v3){0.5f, 0.5f, 0.5f};
 	// no low res (dxt1) image.
 	result.lowResImageFormat = U32_MAX;
 	result.lowResImageWidth = 0;
@@ -180,24 +180,24 @@ internal aabb GsrcModelsToSrcModels(GsrcMapData *mapData, SrcModel *outModels, s
 		model.numFaces = mapData->lumpModels[i].faces;
 		if (i == 0)
 		{
-			mapAabb.mins = model.mins - Vec3(32, 32, 32);
-			mapAabb.maxs = model.maxs + Vec3(32, 32, 32);
+			mapAabb.mins = v3sub(model.mins, (v3){32, 32, 32});
+			mapAabb.maxs = v3add(model.maxs, (v3){32, 32, 32});
 		}
 		outModels[(*outModelCount)++] = model;
 	}
 	
 	// +x
-	outBboxPlanes[0] = {{1, 0, 0}, mapAabb.maxs.x, SRC_PLANE_X};
+	outBboxPlanes[0] = (SrcPlane){{1, 0, 0}, mapAabb.maxs.x, SRC_PLANE_X};
 	// -x
-	outBboxPlanes[1] = {{-1, 0, 0}, -mapAabb.mins.x, SRC_PLANE_X};
+	outBboxPlanes[1] = (SrcPlane){{-1, 0, 0}, -mapAabb.mins.x, SRC_PLANE_X};
 	// +y
-	outBboxPlanes[2] = {{0, 1, 0}, mapAabb.maxs.y, SRC_PLANE_Y};
+	outBboxPlanes[2] = (SrcPlane){{0, 1, 0}, mapAabb.maxs.y, SRC_PLANE_Y};
 	// -y
-	outBboxPlanes[3] = {{0, -1, 0}, -mapAabb.mins.y, SRC_PLANE_Y};
+	outBboxPlanes[3] = (SrcPlane){{0, -1, 0}, -mapAabb.mins.y, SRC_PLANE_Y};
 	// +z
-	outBboxPlanes[4] = {{0, 0, 1}, mapAabb.maxs.z, SRC_PLANE_Z};
+	outBboxPlanes[4] = (SrcPlane){{0, 0, 1}, mapAabb.maxs.z, SRC_PLANE_Z};
 	// -z
-	outBboxPlanes[5] = {{0, 0, -1}, -mapAabb.mins.z, SRC_PLANE_Z};
+	outBboxPlanes[5] = (SrcPlane){{0, 0, -1}, -mapAabb.mins.z, SRC_PLANE_Z};
 	
 	return mapAabb;
 }
@@ -212,7 +212,7 @@ internal EntList GsrcEntitiesToSrcEntities(Arena *arena, EntList gsrcEnts, b32 *
 	{
 		EntProperties *gsrcEnt = &gsrcEnts.ents[i];
 		EntProperties *ent = &srcEnts.ents[srcEnts.entCount];
-		*ent = {};
+		*ent = (EntProperties){};
 		// TODO: add hammerid to all entities?
 		if (StrEquals(gsrcEnt->classname, STR("worldspawn"), false))
 		{
@@ -425,12 +425,12 @@ internal EntList GsrcEntitiesToSrcEntities(Arena *arena, EntList gsrcEnts, b32 *
 	return srcEnts;
 }
 
-struct GsrcBspTreeIterator
+typedef struct
 {
 	s32 parents[GSRC_MAX_MAP_NODES];
 	TraverseBspTreeNode stack[GSRC_MAX_MAP_NODES];
 	s32 stackLength;
-};
+} GsrcBspTreeIterator;
 
 internal GsrcBspTreeIterator *GsrcBspTreeIteratorBegin(Arena *arena, GsrcMapData *mapData, s32 model)
 {
@@ -441,7 +441,9 @@ internal GsrcBspTreeIterator *GsrcBspTreeIteratorBegin(Arena *arena, GsrcMapData
 	}
 	result->stackLength = 0;
 	
-	result->stack[result->stackLength++] = {S32_MIN, mapData->lumpModels[model].headnodes[0]};
+	result->stack[result->stackLength++] = (TraverseBspTreeNode){
+		S32_MIN, mapData->lumpModels[model].headnodes[0]
+	};
 	return result;
 }
 
@@ -458,11 +460,15 @@ internal b32 GsrcBspTreeNext(GsrcBspTreeIterator *iter, GsrcMapData *mapData, s3
 		{
 			if (child == 0)
 			{
-				iter->stack[iter->stackLength++] = {-currentNode.index - 1, (s32)node.children[child]};
+				iter->stack[iter->stackLength++] = (TraverseBspTreeNode){
+					-currentNode.index - 1, (s32)node.children[child]
+				};
 			}
 			else
 			{
-				iter->stack[iter->stackLength++] = {currentNode.index, (s32)node.children[child]};
+				iter->stack[iter->stackLength++] = (TraverseBspTreeNode){
+					currentNode.index, (s32)node.children[child]
+				};
 			}
 			s32 gsrcLeafIndex = -(s32)node.children[child] - 1;
 			if (gsrcLeafIndex >= 0)
@@ -540,7 +546,7 @@ internal s32 GetLeafClipPlanes(GsrcMapData *mapData, SrcPlane bboxPlanes[6], s32
 		plane.type = mapData->lumpPlanes[node2.plane].type;
 		if (parent1 < 0)
 		{
-			plane.normal = -plane.normal;
+			plane.normal = v3negate(plane.normal);
 			plane.distance = -plane.distance;
 		}
 		

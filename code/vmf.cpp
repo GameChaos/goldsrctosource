@@ -46,7 +46,7 @@ internal s64 Id(void)
 	return result;
 }
 
-internal void WriteBrush(str_builder *out, Brush brush, Texture *textures, s32 textureCount, b32 vertsPlusplus = true)
+internal void WriteBrush(str_builder *out, Brush brush, Texture *textures, s32 textureCount, b32 vertsPlusplus/* = true*/)
 {
 	StrbuilderCat(out, STR("\tsolid\n\t{\n"));
 	StrbuilderPushFormat(out, "\t\t\"id\" \"%lli\"\n", Id());
@@ -86,12 +86,6 @@ internal void WriteBrush(str_builder *out, Brush brush, Texture *textures, s32 t
 	StrbuilderCat(out, STR("\t}\n"));
 }
 
-internal f32 CrossV2(v2 a, v2 b)
-{
-	f32 result = a.x * b.y - a.y * b.x;
-	return result;
-}
-
 // check if a point is on the LEFT side of an edge
 internal b32 Inside(v2 p, v2 p1, v2 p2)
 {
@@ -104,21 +98,21 @@ internal b32 Inside(v2 p, v2 p1, v2 p2)
 internal v2 Intersection(v2 cp1, v2 cp2,
 						 v2 s, v2 e)
 {
-	v2 dc = cp1 - cp2;
-	v2 dp = s - e;
+	v2 dc = v2sub(cp1, cp2);
+	v2 dp = v2sub(s, e);
 	
-	f32 n1 = CrossV2(cp1, cp2);
-	f32 n2 = CrossV2(s, e);
-	f32 n3 = CrossV2(dc, dp);
+	f32 n1 = v2cross(cp1, cp2);
+	f32 n2 = v2cross(s, e);
+	f32 n3 = v2cross(dc, dp);
 	
 	v2 result;
 	if (n3 == 0)
 	{
-		result = (cp1 + cp2) * 0.5f;
+		result = v2muls(v2add(cp1, cp2), 0.5f);
 	}
 	else
 	{
-		result = (n1 * dp - n2 * dc) / n3;
+		result = v2divs(v2sub(v2muls(dp, n1), v2muls(dc, n2)), n3);
 	}
 	return result;
 }
@@ -134,7 +128,7 @@ internal f32 Polygon2DArea(Polygon2D *poly)
 		vert2 = vert1;
 	}
 	result *= 0.5f;
-	return HMM_ABS(result);
+	return GCM_ABS(result);
 }
 
 internal void Polygon2DIntersect(Polygon2D *a, Polygon2D *b, Polygon2D *out)
@@ -349,8 +343,8 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	// NOTE(GameChaos): first texture is nodraw
 	{
 		Texture texture = {};
-		texture.vecs[0].vec = Vec3(1, 0, 0);
-		texture.vecs[1].vec = Vec3(0, 1, 0);
+		texture.vecs[0].vec = (v3){1, 0, 0};
+		texture.vecs[1].vec = (v3){0, 1, 0};
 		texture.vecs[0].scale = 0.25f;
 		texture.vecs[1].scale = 0.25f;
 		Format(texture.name, sizeof(texture.name), "%s", "tools/toolsnodraw");
@@ -364,18 +358,18 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		{
 			for (s32 xyz = 0; xyz < 3; xyz++)
 			{
-				texture.vecs[st].vec[xyz] = mapData->lumpTexinfo[i].vecs[st][xyz];
+				texture.vecs[st].vec.e[xyz] = mapData->lumpTexinfo[i].vecs[st][xyz];
 			}
 			texture.vecs[st].shift = mapData->lumpTexinfo[i].vecs[st][3];
 		}
 		for (s32 st = 0; st < 2; st++)
 		{
-			f32 len = Length(texture.vecs[st].vec);
+			f32 len = v3len(texture.vecs[st].vec);
 			texture.vecs[st].scale = 1;
 			if (len > 0)
 			{
 				f32 invLen = (1.0f / len);
-				texture.vecs[st].vec *= invLen;
+				texture.vecs[st].vec = v3muls(texture.vecs[st].vec, invLen);
 				texture.vecs[st].scale = invLen;
 			}
 		}
@@ -393,15 +387,15 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	for (s32 i = 0; i < mapData->faceCount; i++)
 	{
 		Face *face = &g_faces[faceCount++];
-		*face = {};
+		*face = (Face){};
 		face->plane = g_planes[mapData->lumpFaces[i].plane];
 		if (mapData->lumpFaces[i].planeSide)
 		{
-			face->plane.normal = -face->plane.normal;
+			face->plane.normal = v3negate(face->plane.normal);
 			face->plane.distance = -face->plane.distance;
 		}
-		face->bounds.mins = Vec3(F32_MAX, F32_MAX, F32_MAX);
-		face->bounds.maxs = Vec3(-F32_MAX, -F32_MAX, -F32_MAX);
+		face->bounds.mins = (v3){F32_MAX, F32_MAX, F32_MAX};
+		face->bounds.maxs = (v3){-F32_MAX, -F32_MAX, -F32_MAX};
 		s32 firstEdge = mapData->lumpFaces[i].firstEdge;
 		s32 edges = mapData->lumpFaces[i].edges;
 		// TODO: verify that the polygon generated is corrected
@@ -410,7 +404,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			 surfEdgeInd++)
 		{
 			s32 surfEdge = mapData->lumpSurfEdges[surfEdgeInd];
-			GsrcEdge edge = mapData->lumpEdges[HMM_ABS(surfEdge)];
+			GsrcEdge edge = mapData->lumpEdges[GCM_ABS(surfEdge)];
 			v3 vertex;
 			if (surfEdge < 0)
 			{
@@ -423,8 +417,8 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			face->polygon.verts[face->polygon.vertCount++] = vertex;
 			for (s32 xyz = 0; xyz < 3; xyz++)
 			{
-				face->bounds.mins[xyz] = HMM_MIN(face->bounds.mins[xyz], vertex[xyz]);
-				face->bounds.maxs[xyz] = HMM_MAX(face->bounds.maxs[xyz], vertex[xyz]);
+				face->bounds.mins.e[xyz] = GCM_MIN(face->bounds.mins.e[xyz], vertex.e[xyz]);
+				face->bounds.maxs.e[xyz] = GCM_MAX(face->bounds.maxs.e[xyz], vertex.e[xyz]);
 			}
 		}
 		face->texture = mapData->lumpFaces[i].texInfoIndex + 1;
@@ -562,7 +556,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 									brush.sides = side;
 								}
 								brush.sideCount++;
-								*side = {};
+								*side = (BrushSide){};
 								
 								side->polygon = poly;
 								side->plane = planes[planeInd];
@@ -570,16 +564,16 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 						}
 						
 						// NOTE(GameChaos): calculate brush mins/maxs
-						v3 mins = Vec3(F32_MAX, F32_MAX, F32_MAX);
-						v3 maxs = Vec3(-F32_MAX, -F32_MAX, -F32_MAX);
+						v3 mins = v3fill(F32_MAX);
+						v3 maxs = v3fill(-F32_MAX);
 						for (s32 i = 0; i < brush.sideCount; i++)
 						{
 							for (s32 vert = 0; vert < brush.sides[i].polygon.vertCount; vert++)
 							{
 								for (s32 xyz = 0; xyz < 3; xyz++)
 								{
-									mins[xyz] = HMM_MIN(brush.sides[i].polygon.verts[vert][xyz], mins[xyz]);
-									maxs[xyz] = HMM_MAX(brush.sides[i].polygon.verts[vert][xyz], maxs[xyz]);
+									mins.e[xyz] = GCM_MIN(brush.sides[i].polygon.verts[vert].e[xyz], mins.e[xyz]);
+									maxs.e[xyz] = GCM_MAX(brush.sides[i].polygon.verts[vert].e[xyz], maxs.e[xyz]);
 								}
 							}
 						}
@@ -612,7 +606,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 				}
 			}
 		}
-		g_models[model].origin = {};
+		g_models[model].origin = (v3){};
 		ArenaEndTemp(arenaTmp);
 	}
 	
@@ -627,13 +621,13 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			sideCount++;
 			BrushSide *side = &brush->sides[brushSideInd];
 			v3 nonParallel = GetNonParallelVector(side->plane.normal);
-			v3 i = Cross(side->plane.normal, nonParallel);
-			v3 j = Cross(side->plane.normal, i);
+			v3 i = v3cross(side->plane.normal, nonParallel);
+			v3 j = v3cross(side->plane.normal, i);
 			local_persist Polygon2D a;
 			a.vertCount = 0;
 			for (s32 v = side->polygon.vertCount - 1; v >= 0; v--)
 			{
-				a.verts[a.vertCount++] = Vec2(Dot(side->polygon.verts[v], i), Dot(side->polygon.verts[v], j));
+				a.verts[a.vertCount++] = (v2){v3dot(side->polygon.verts[v], i), v3dot(side->polygon.verts[v], j)};
 			}
 #ifdef DEBUG_GRAPHICS
 			// NOTE(GameChaos): visualise polygon intersection
@@ -662,7 +656,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 						b.vertCount = 0;
 						for (s32 v = face->polygon.vertCount - 1; v >= 0; v--)
 						{
-							b.verts[b.vertCount++] = Vec2(Dot(face->polygon.verts[v], i), Dot(face->polygon.verts[v], j));
+							b.verts[b.vertCount++] = (v2){v3dot(face->polygon.verts[v], i), v3dot(face->polygon.verts[v], j)};
 						}
 						local_persist Polygon2D intersected;
 						intersected.vertCount = 0;
@@ -702,8 +696,8 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 								v4 t = {0, 0.25f, 0, 0};
 								s32 texture = mapData->lumpTexinfo[face->texture - 1].miptex;
 								// TODO: DebugGfxAddMesh2D
-								DebugGfxAddMesh(&b3d, normal, {0, 1, 0}, texture, s, t);
-								DebugGfxAddMesh(&intersected3d, normal, {0, 0, 1}, -1, s, t);
+								DebugGfxAddMesh(&b3d, normal, (v3){0, 1, 0}, texture, s, t);
+								DebugGfxAddMesh(&intersected3d, normal, (v3){0, 0, 1}, -1, s, t);
 							}
 #endif
 							b32 found = false;
@@ -770,7 +764,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 						a3d.vertCount++;
 					}
 					v3 normal = {0, 0, 1};
-					DebugGfxAddMesh(&a3d, normal, {1, 0, 0}, texture, {0.25f, 0, 0, 0}, {0, 0.25f, 0, 0});
+					DebugGfxAddMesh(&a3d, normal, (v3){1, 0, 0}, texture, (v4){0.25f, 0, 0, 0}, (v4){0, 0.25f, 0, 0});
 				}
 #endif
 			}
@@ -783,7 +777,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			}
 			else
 			{
-				DebugGfxAddBrushSide(&side->polygon, side->plane.normal);
+				DebugGfxAddBrushSide(&side->polygon, side->plane.normal, -1, (v4){}, (v4){});
 			}
 		}
 		DebugGfxAddBrush(brush->sideCount);
@@ -795,7 +789,7 @@ internal b32 VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	for (s32 i = 0; i < srcEnts.entCount; i++)
 	{
 		EntProperties *ent = &srcEnts.ents[i];
-		if (StrEquals(ent->classname, STR("worldspawn")))
+		if (StrEquals(ent->classname, STR("worldspawn"), false))
 		{
 			StrbuilderCat(&vmf, STR("world\n{\n"));
 			StrbuilderPushFormat(&vmf, "\t\"id\" \"%lli\"\n", Id());

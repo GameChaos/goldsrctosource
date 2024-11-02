@@ -1,13 +1,7 @@
 
-#include "common.h"
 
 #include <stdarg.h>
 #include <stddef.h>
-
-#include "platform.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HMM_PREFIX
-#include "handmade_math.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
@@ -19,6 +13,31 @@
 #define STB_SPRINTF_NOUNALIGNED
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb/stb_sprintf.h"
+
+#define GC_MATHS_IMPLEMENTATION
+#include "gc_maths.h"
+
+#ifdef DEBUG_GRAPHICS
+#ifdef GC_DEBUG
+#define SOKOL_DEBUG
+#endif // GC_DEBUG
+#define SOKOL_IMPL
+#define SOKOL_GLCORE
+#define SOKOL_NO_ENTRY
+#include "sokol/sokol_log.h"
+#include "sokol/sokol_app.h"
+#include "sokol/sokol_gfx.h"
+#include "sokol/sokol_glue.h"
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+//typedef v2 ImVec2;
+//typedef v4 ImVec4;
+#include "imgui/cimgui.h"
+#include "sokol/sokol_imgui.h"
+#endif // DEBUG_GRAPHICS
+
+#include "common.h"
+#include "memory.h"
+#include "platform.h"
 
 #include "memory.c"
 #include "printing.c"
@@ -52,6 +71,12 @@
 
 #include "dmx.cpp"
 
+global const char *g_cmdArgTypeStrings[CMDARGTYPE_COUNT] = {
+	"None",
+	"String",
+	"Integer",
+};
+
 internal void FatalError(const char *error)
 {
 	Print("FATAL ERROR: %s\n", error);
@@ -82,19 +107,6 @@ internal void Warning(const char *format, ...)
 	va_end(args);
 }
 
-inline void *BufferPushDataAndSetLumpSize(FileWritingBuffer *buffer, SrcHeader *header, s32 lumpIndex, void *data, s32 bytes)
-{
-	void *result = buffer->memory + buffer->usedBytes;
-	header->lump[lumpIndex].offset = (s32)buffer->usedBytes;
-	header->lump[lumpIndex].length = bytes;
-	if (!BufferPushData(buffer, data, bytes))
-	{
-		ASSERT(0);
-		result = NULL;
-	}
-	
-	return result;
-}
 
 internal s32 GsrcContentsToSrcContents(s32 gsrcContents)
 {
@@ -132,7 +144,7 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 				break;
 			}
 			
-			if (StringEquals(arguments[i], cmdArgs->args[j].argName))
+			if (StringEquals(arguments[i], cmdArgs->args[j].argName, false))
 			{
 				found = true;
 				if (cmdArgs->args[j].isInCmdLine)
@@ -252,15 +264,16 @@ void BSPMain(s32 argCount, char *arguments[])
 	
 	// NOTE(GameChaos): TODO: negative values for floats/integers on the cmd line don't work right
 	// now cos it thinks it's another parameter because of the - character.
-	CmdArgs cmdArgs = {};
-	cmdArgs.help = {"-help", "Help!!!", CMDARG_NONE};
-	cmdArgs.input = {"-input", "Input GoldSrc v31 bsp file to be converted.", CMDARG_STRING};
-	cmdArgs.outputbsp = {"-outputbsp", "Output path of the converted v21 Source bsp file (CS:GO).", CMDARG_STRING};
-	cmdArgs.outputvmf = {"-outputvmf", "Output path of the converted vmf file.", CMDARG_STRING};
-	cmdArgs.enginePath = {"-enginepath", "Path of the Half-Life/ folder. Example: \"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\"", CMDARG_STRING};
-	cmdArgs.mod = {"-mod", "Name of the mod folder. Example: cstrike", CMDARG_STRING};
-	// TODO: enable the usage of this when converting a bsp as well.
-	cmdArgs.assetPath = {"-assetpath", "Path to export materials and assets to when converting a VMF. Example: \"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\\". Converted materials will be put into \"" CONVERTED_MATERIAL_PATH "\" in this path.", CMDARG_STRING};
+	CmdArgs cmdArgs = {
+		.help = {"-help", "Help!!!", CMDARG_NONE},
+		.input = {"-input", "Input GoldSrc v31 bsp file to be converted.", CMDARG_STRING},
+		.outputbsp = {"-outputbsp", "Output path of the converted v21 Source bsp file (CS:GO).", CMDARG_STRING},
+		.outputvmf = {"-outputvmf", "Output path of the converted vmf file.", CMDARG_STRING},
+		.enginePath = {"-enginepath", "Path of the Half-Life/ folder. Example: \"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\"", CMDARG_STRING},
+		.mod = {"-mod", "Name of the mod folder. Example: cstrike", CMDARG_STRING},
+		// TODO: enable the usage of this when converting a bsp as well.
+		.assetPath = {"-assetpath", "Path to export materials and assets to when converting a VMF. Example: \"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\\". Converted materials will be put into \"" CONVERTED_MATERIAL_PATH "\" in this path.", CMDARG_STRING},
+	};
 	
 	if (!ParseCmdArgs(&cmdArgs, argCount, arguments))
 	{
@@ -354,8 +367,8 @@ void BSPMain(s32 argCount, char *arguments[])
 			
 			//if (faceCount < 2)
 			{
-				v4 s = Vec4(texinfo.vecs[0][0], texinfo.vecs[0][1], texinfo.vecs[0][2], texinfo.vecs[0][3]);
-				v4 t = Vec4(texinfo.vecs[1][0], texinfo.vecs[1][1], texinfo.vecs[1][2], texinfo.vecs[1][3]);
+				v4 s = (v4){texinfo.vecs[0][0], texinfo.vecs[0][1], texinfo.vecs[0][2], texinfo.vecs[0][3]};
+				v4 t = (v4){texinfo.vecs[1][0], texinfo.vecs[1][1], texinfo.vecs[1][2], texinfo.vecs[1][3]};
 				GsrcPlane plane = mapData.lumpPlanes[face.plane];
 				DebugGfxAddFace(&poly, plane.normal, texinfo.miptex, s, t);
 				faceCount++;

@@ -1,5 +1,5 @@
 
-inline FileWritingBuffer BufferCreate(Arena *arena, s64 size)
+internal inline FileWritingBuffer BufferCreate(Arena *arena, s64 size)
 {
 	FileWritingBuffer result = {};
 	if (size > 0)
@@ -10,26 +10,26 @@ inline FileWritingBuffer BufferCreate(Arena *arena, s64 size)
 	return result;
 }
 
-inline FileWritingBuffer BufferReset(FileWritingBuffer *buffer)
+internal inline FileWritingBuffer BufferReset(FileWritingBuffer *buffer)
 {
 	FileWritingBuffer result = {};
 	buffer->usedBytes = 0;
 	return result;
 }
 
-inline s64 BufferGetSize(FileWritingBuffer buffer)
+internal inline s64 BufferGetSize(FileWritingBuffer buffer)
 {
 	s64 result = buffer.usedBytes;
 	return result;
 }
 
-inline s64 BufferGetFreeSpace(FileWritingBuffer buffer)
+internal inline s64 BufferGetFreeSpace(FileWritingBuffer buffer)
 {
 	s64 result = buffer.size - buffer.usedBytes;
 	return result;
 }
 
-inline void *BufferPushSize(FileWritingBuffer *buffer, s64 size, b32 align = true)
+internal inline void *BufferPushSize(FileWritingBuffer *buffer, s64 size, b32 align/* = true*/)
 {
 	void *result = NULL;
 	s64 space = BufferGetFreeSpace(*buffer);
@@ -49,12 +49,12 @@ inline void *BufferPushSize(FileWritingBuffer *buffer, s64 size, b32 align = tru
 	return result;
 }
 
-inline void *BufferPushData(FileWritingBuffer *buffer, void *data, s64 dataSize, b32 align = true)
+internal inline void *BufferPushData(FileWritingBuffer *buffer, void *data, s64 dataSize, b32 align/* = true*/)
 {
 	void *result = BufferPushSize(buffer, dataSize, align);
 	if (result != NULL)
 	{
-		Mem_Copy(data, result, MIN(dataSize, BufferGetFreeSpace(*buffer)));
+		Mem_Copy(data, result, GCM_MIN(dataSize, BufferGetFreeSpace(*buffer)));
 		result = buffer->memory + buffer->usedBytes;
 	}
 	return result;
@@ -93,15 +93,15 @@ internal b32 AabbiCheckPoint(aabbi a, v3i b)
 	return result;
 }
 
-inline v3 LinearInterpolate(v3 vec1, v3 vec2, f32 fraction)
+internal inline v3 LinearInterpolate(v3 vec1, v3 vec2, f32 fraction)
 {
-	v3 result = vec2 - vec1;
-	result = result * fraction + vec1;
+	v3 result = v3sub(vec2, vec1);
+	result = v3add(v3muls(result, fraction), vec1);
 	
 	return result;
 }
 
-inline v3 GetNonParallelVector(v3 vec)
+internal inline v3 GetNonParallelVector(v3 vec)
 {
 	v3 result = {};
 	
@@ -110,9 +110,9 @@ inline v3 GetNonParallelVector(v3 vec)
 		v3 temp = {};
 		
 		// find a vector that is pretty far from vec.
-		f32 absX = HMM_ABS(vec.x);
-		f32 absY = HMM_ABS(vec.y);
-		f32 absZ = HMM_ABS(vec.z);
+		f32 absX = GCM_ABS(vec.x);
+		f32 absY = GCM_ABS(vec.y);
+		f32 absZ = GCM_ABS(vec.z);
 		
 		if (absX < absY)
 		{
@@ -144,8 +144,8 @@ internal b32 ClipPolygon(Verts *poly, SrcPlane plane)
 		u32 nextIndex = (i + 1) % (poly->vertCount);
 		v3 point1 = poly->verts[i];
 		v3 point2 = poly->verts[nextIndex];
-		f32 point1Distance = Dot(plane.normal, point1) - plane.distance;
-		f32 point2Distance = Dot(plane.normal, point2) - plane.distance;
+		f32 point1Distance = v3dot(plane.normal, point1) - plane.distance;
+		f32 point2Distance = v3dot(plane.normal, point2) - plane.distance;
 		b32 point1Behind = point1Distance < 0;
 		b32 point2Behind = point2Distance < 0;
 		
@@ -189,26 +189,27 @@ internal b32 ClipPolygon(Verts *poly, SrcPlane plane)
 
 #define NORMAL_EPSILON 0.00001f
 #define DIST_EPSILON 0.01f
-internal b32 PlaneEquals(SrcPlane plane, v3 normal, f32 dist,
-						 f32 normEpsilon = NORMAL_EPSILON, f32 distEpsilon = DIST_EPSILON)
+internal b32 PlaneEquals(SrcPlane plane, v3 normal, f32 dist)
 {
+	f32 normEpsilon = NORMAL_EPSILON;
+	f32 distEpsilon = DIST_EPSILON;
 	b32 result = false;
-	if (HMM_ABS(plane.normal[0] - normal[0]) < normEpsilon
-		&& HMM_ABS(plane.normal[1] - normal[1]) < normEpsilon
-		&& HMM_ABS(plane.normal[2] - normal[2]) < normEpsilon
-		&& HMM_ABS(plane.distance - dist) < distEpsilon)
+	if (GCM_ABS(plane.normal.e[0] - normal.e[0]) < normEpsilon
+		&& GCM_ABS(plane.normal.e[1] - normal.e[1]) < normEpsilon
+		&& GCM_ABS(plane.normal.e[2] - normal.e[2]) < normEpsilon
+		&& GCM_ABS(plane.distance - dist) < distEpsilon)
 	{
 		result = true;
 	}
 	return result;
 }
 
-internal b32 VecNearlyEquals(v3 a, v3 b, f32 epsilon = NORMAL_EPSILON)
+internal b32 VecNearlyEquals(v3 a, v3 b, f32 epsilon/* = NORMAL_EPSILON*/)
 {
 	b32 result = false;
-	if (HMM_ABS(a[0] - b[0]) < epsilon
-		&& HMM_ABS(a[1] - b[1]) < epsilon
-		&& HMM_ABS(a[2] - b[2]) < epsilon)
+	if (GCM_ABS(a.x - b.x) < epsilon
+		&& GCM_ABS(a.y - b.y) < epsilon
+		&& GCM_ABS(a.z - b.z) < epsilon)
 	{
 		result = true;
 	}
@@ -227,11 +228,11 @@ internal f32 PolygonArea(Verts *poly, v3 normal)
 		v3 vert1 = poly->verts[v];
 		v3 vert2 = poly->verts[(v + 1) % poly->vertCount];
 		
-		v3 cross = Cross(vert1, vert2);
-		total += cross;
+		v3 cross = v3cross(vert1, vert2);
+		total = v3add(total, cross);
 	}
-	result = Dot(total, normal);
-	result = HMM_ABS(result * 0.5f);
+	result = v3dot(total, normal);
+	result = GCM_ABS(result * 0.5f);
 	return result;
 }
 
@@ -239,7 +240,7 @@ internal b32 MakePolygon(SrcPlane *planes, s32 planeCount, s32 planeIndex, Verts
 {
 	b32 result = false;
 	SrcPlane plane = planes[planeIndex];
-	f32 normalLen = Length(plane.normal);
+	f32 normalLen = v3len(plane.normal);
 	if (normalLen < 0.9 || normalLen > 1.1)
 	{
 		// TODO: normalise the normal ourselves instead of just up and failing?
@@ -250,18 +251,29 @@ internal b32 MakePolygon(SrcPlane *planes, s32 planeCount, s32 planeIndex, Verts
 	v3 nonParallel = GetNonParallelVector(plane.normal);
 	
 	f32 spread = SRC_MAP_SIZE;
-	v3 tangentX = Cross(plane.normal, nonParallel);
-	tangentX = Normalize(tangentX);
-	v3 tangentY = Cross(plane.normal, tangentX);
-	tangentY = Normalize(tangentY);
+	v3 tangentX = v3cross(plane.normal, nonParallel);
+	tangentX = v3normalise(tangentX);
+	v3 tangentY = v3cross(plane.normal, tangentX);
+	tangentY = v3normalise(tangentY);
 	
-	v3 pointOnPlane = plane.normal * plane.distance;
+	v3 pointOnPlane = v3subs(plane.normal, plane.distance);
 	static_assert(SRC_MAX_SIDE_VERTS > 4, "");
 	// generate an initial polygon that's bigger than the map and is in the same direction of the plane.
+#if 0
 	out->verts[out->vertCount++] = (-tangentX + -tangentY) * spread + pointOnPlane;
 	out->verts[out->vertCount++] = (-tangentX +  tangentY) * spread + pointOnPlane;
 	out->verts[out->vertCount++] = ( tangentX +  tangentY) * spread + pointOnPlane;
 	out->verts[out->vertCount++] = ( tangentX + -tangentY) * spread + pointOnPlane;
+#endif
+	for (s32 i = 0; i < 4; i++)
+	{
+		s32 negX = -(i == 0 || i == 1);
+		s32 negY = -(i == 0 || i == 3);
+		v3 vert = v3add(v3muls(tangentX, negX), v3muls(tangentY, negY));
+		vert = v3muls(vert, spread);
+		vert = v3add(vert, pointOnPlane);
+		out->verts[out->vertCount++] = vert;
+	}
 	ASSERT(out->vertCount < ARRAYCOUNT(out->verts));
 	
 	for (s32 planeInd = 0; planeInd < planeCount; planeInd++)
@@ -365,16 +377,16 @@ internal v3 SnapVector(v3 normal)
 	v3 result = normal;
 	for (s32 i = 0; i < 3 ; i++)
 	{
-		if (HMM_ABS(result[i] - 1) < NORMAL_EPSILON)
+		if (GCM_ABS(result.e[i] - 1) < NORMAL_EPSILON)
 		{
-			result = {};
-			result[i] = 1;
+			result = (v3){};
+			result.e[i] = 1;
 			break;
 		}
-		if (HMM_ABS(result[i] + 1) < NORMAL_EPSILON)
+		if (GCM_ABS(result.e[i] + 1) < NORMAL_EPSILON)
 		{
-			result = {};
-			result[i] = -1;
+			result = (v3){};
+			result.e[i] = -1;
 			break;
 		}
 	}
@@ -384,7 +396,7 @@ internal v3 SnapVector(v3 normal)
 internal s32 s32pow(s32 base, s32 power)
 {
 	s32 result = base;
-	ASSERT(HMM_ABS(base) < 2 || power < 32);
+	ASSERT(GCM_ABS(base) < 2 || power < 32);
 	if (power == 0)
 	{
 		result = 1;
@@ -456,7 +468,7 @@ internal f32 StrToF32(str str)
 	return result;  // result = 12345 /10
 }
 
-inline StringToNumResult StringToS32(const char *string, s32 *out)
+internal inline StringToNumResult StringToS32(const char *string, s32 *out)
 {
 	StringToNumResult result = STRINGTONUM_ERR_FAILED;
 	if (string)

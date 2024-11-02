@@ -2,24 +2,6 @@
 #ifndef GOLDSRCBSP_H
 #define GOLDSRCBSP_H
 
-global const char* g_gsrcLumpNames[] = {
-	"LUMP_ENTITIES",
-	"LUMP_PLANES",
-	"LUMP_TEXTURES",
-	"LUMP_VERTICES",
-	"LUMP_VISIBILITY",
-	"LUMP_NODES",
-	"LUMP_TEXINFO",
-	"LUMP_FACES",
-	"LUMP_LIGHTING",
-	"LUMP_CLIPNODES",
-	"LUMP_LEAVES",
-	"LUMP_MARKSURFACES",
-	"LUMP_EDGES",
-	"LUMP_SURFEDGES",
-	"LUMP_MODELS"
-};
-
 enum
 {
 	GSRC_LUMP_ENTITIES      = 0,
@@ -103,28 +85,28 @@ enum
 	GSRC_CONTENTS_TRANSLUCENT  = -15,
 };
 
-struct GsrcPlane
-{
-	v3 normal;
-	f32 distance;
-	s32 type;
-};
-
 enum
 {
 	GSRC_MAXTEXTURENAME = 16,
 	GSRC_MIPLEVELS = 4,
 };
 
-struct GsrcMipTexture
+typedef struct
+{
+	v3 normal;
+	f32 distance;
+	s32 type;
+} GsrcPlane;
+
+typedef struct
 {
 	char name[GSRC_MAXTEXTURENAME]; // Name of texture
 	u32 width;
 	u32 height;
 	u32 offsets[GSRC_MIPLEVELS]; // Offsets to texture mipmaps MipTexture;
-};
+} GsrcMipTexture;
 
-struct GsrcLumpTextures
+typedef struct
 {
 	// header
 	u32 mipTextureCount;   // Number of MipTexture structures and mipTextureOffsets
@@ -132,9 +114,9 @@ struct GsrcLumpTextures
 	
 	// data
 	GsrcMipTexture **mipTextures;  // array of pointers to pointers of MipTextures
-};
+} GsrcLumpTextures;
 
-struct GsrcNode
+typedef struct
 {
 	u32 plane;      // Index into Planes lump
 	s16 children[2]; // If > 0, then indices into Nodes // otherwise bitwise inverse indices into Leafs
@@ -142,17 +124,17 @@ struct GsrcNode
 	s16 maxs[3];
 	u16 firstFace;  // Index and
 	u16 faceCount;  // count into Faces
-};
+} GsrcNode;
 
-struct GsrcTexinfo
+typedef struct
 {
 	// NOTE(GameChaos): NOT a v4 because that screws up packing!
 	f32 vecs[2][4];
 	u32 miptex; // Index into textures array
 	u32 flags;  // Texture flags, seem to always be 0
-};
+} GsrcTexinfo;
 
-struct GsrcFace
+typedef struct
 {
 	u16 plane;          // Plane the face is parallel to
 	u16 planeSide;      // Set if different normals orientation
@@ -161,15 +143,15 @@ struct GsrcFace
 	u16 texInfoIndex;   // Index of the texture info structure
 	u8 styles[4];       // Specify lighting styles
 	u32 lightmapOffset; // Byte offset into the raw lightmap data
-};
+} GsrcFace;
 
-struct GsrcClipnode
+typedef struct
 {
 	s32 plane;
 	s16 children[2];
-};
+} GsrcClipnode;
 
-struct GsrcLeaf
+typedef struct
 {
 	s32 contents;  // Contents enumeration
 	s32 visOffset; // Offset into the visibility lump
@@ -178,26 +160,26 @@ struct GsrcLeaf
 	s16 firstMarkSurface; // Index into marksurfaces array
 	s16 markSurfaces;      // Count into marksurfaces array
 	u8 ambientLevels[4]; // Ambient sound levels
-};
+} GsrcLeaf;
 
-struct GsrcEdge
+typedef struct
 {
 	s16 vertex[2]; // indices into the vertex array
-};
+} GsrcEdge;
 
-struct GsrcLump
+typedef struct
 {
 	s32 offset; // File offset to data
 	s32 length; // Length of data
-};
+} GsrcLump;
 
-struct GsrcHeader
+typedef struct
 {
 	s32 version;           // Must be 30 for a valid HL BSP file
 	GsrcLump lump[GSRC_HEADER_LUMPS]; // Stores the directory of lumps
-};
+} GsrcHeader;
 
-struct GsrcModel
+typedef struct
 {
 	v3 mins;
 	v3 maxs;
@@ -206,9 +188,9 @@ struct GsrcModel
 	s32 visLeafs;
 	s32 firstFace;
 	s32 faces; // Index and count into faces
-};
+} GsrcModel;
 
-struct GsrcMapData
+typedef struct
 {
 	size_t fileDataSize;
 	void *fileData;
@@ -263,6 +245,6 @@ struct GsrcMapData
 	
 	s32 modelCount;
 	GsrcModel *lumpModels;
-};
+} GsrcMapData;
 
 #endif // GOLDSRCBSP_H

@@ -9,12 +9,6 @@ internal char *PrintCb_(const char *buf, void *user, int len)
 	return (char *)user;
 }
 
-internal bool StringEquals(const char *a, const char *b, s64 maxChars)
-{
-	bool result = a && b && (strncmp(a, b, maxChars) == 0);
-	return result;
-}
-
 __attribute__((format (printf, 1, 2)))
 internal void Print(const char *format, ...)
 {

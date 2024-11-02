@@ -10,21 +10,21 @@
 #define DEBUG_GFX_NEARZ 4
 #define DEBUG_GFX_FARZ 32768
 
-struct GfxRayHit
+typedef struct
 {
 	b32 hit;
 	f32 distance;
 	v3 endPosition;
-};
+} GfxRayHit;
 
-struct GfxVertData
+typedef struct
 {
 	v3 pos;
 	v3 normal;
 	v2 uv;
-};
+} GfxVertData;
 
-struct GfxMesh
+typedef struct
 {
 	sg_buffer vertexBuffer;
 	sg_buffer indexBuffer; // if invalid, then fallback is GfxState.indexBuffer
@@ -34,29 +34,29 @@ struct GfxMesh
 	s32 wireIndexCount; // if 0, then this will be calculated from vertCount
 	s32 texture;
 	v3 wireColour;
-};
+} GfxMesh;
 
-struct GfxPoly
+typedef struct
 {
 	s32 texture;
 	s32 vertCount;
 	v4 s;
 	v4 t;
 	GfxVertData *verts;
-};
+} GfxPoly;
 
-struct GfxTexture
+typedef struct
 {
 	sg_image img;
-};
+} GfxTexture;
 
-struct GfxButton
+typedef struct
 {
 	b32 isDown;
 	s32 actionCount; // amount of up & down events in this frame.
-};
+} GfxButton;
 
-struct GfxInput
+typedef struct
 {
 	v2 mousePos;
 	v2 mouseDelta;
@@ -76,15 +76,15 @@ struct GfxInput
 		};
 		GfxButton buttons[8];
 	};
-};
+} GfxInput;
 
-struct GfxBrush
+typedef struct
 {
 	s32 firstSide;
 	s32 sideCount;
-};
+} GfxBrush;
 
-struct GfxState
+typedef struct
 {
 	// arguments passed to main()
 	s32 argCount;
@@ -135,7 +135,7 @@ struct GfxState
 	
 	// buffer for rgb888 > rgba8888 conversion
 	u32 rgba8888[8192 * 8192];
-};
+} GfxState;
 
 
 #endif //DEBUG_RENDER_H

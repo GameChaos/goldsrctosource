@@ -3,12 +3,12 @@
 
 // NOTE(GameChaos): Parts taken from: https://github.com/kristiker/Datamodel.NET
 
-struct ReadBuffer
+typedef struct
 {
 	u8 *data;
 	s64 size;
 	s64 readBytes;
-};
+} ReadBuffer;
 
 internal ReadBuffer ReadBufferCreate(void *data, s64 size)
 {
@@ -109,7 +109,7 @@ global s32 g_attrValueContainerSize[] = {
 	sizeof(u8), // DMX_ATTR_BYTE
 };
 
-internal void ReadBufferReadDmxAttributeValue_(ReadBuffer *buffer, void *out, DmxAttrType type, DmxStringTable *stringTable = NULL)
+internal void ReadBufferReadDmxAttributeValue_(ReadBuffer *buffer, void *out, DmxAttrType type, DmxStringTable *stringTable/* = NULL*/)
 {
 	switch (type)
 	{
@@ -195,7 +195,7 @@ internal void ReadBufferReadDmxAttributeValue_(ReadBuffer *buffer, void *out, Dm
 	}
 }
 
-internal b32 ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute *attr, Arena *arena, DmxStringTable *stringTable = NULL)
+internal b32 ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute *attr, Arena *arena, DmxStringTable *stringTable/* = NULL*/)
 {
 	b32 result = false;
 	if (stringTable)
@@ -238,7 +238,7 @@ internal b32 ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute *attr, 
 			for (s32 i = 0; i < attr->value.arrayCount; i++)
 			{
 				// NOTE(GameChaos): this doesn't reference the stringtable ever
-				ReadBufferReadDmxAttributeValue_(buffer, (u8 *)array + containerBytes * i, valueType);
+				ReadBufferReadDmxAttributeValue_(buffer, (u8 *)array + containerBytes * i, valueType, NULL);
 			}
 		}
 	}
@@ -266,7 +266,7 @@ internal DmxReadBinary_v9 DmxImportBinary(const char *path, Arena *arena)
 			element->attributes = (DmxAttribute *)ArenaAlloc(arena, sizeof(*element->attributes) * element->attributeCount);
 			for (s32 attr = 0; attr < element->attributeCount; attr++)
 			{
-				ReadBufferReadDmxAttribute(&buf, &element->attributes[attr], arena);
+				ReadBufferReadDmxAttribute(&buf, &element->attributes[attr], arena, NULL);
 			}
 		}
 		
@@ -376,7 +376,7 @@ internal DmxAttribute *DmxAddAttribute(Dmx *dmx, DmxElement *parent, str name, D
 	if (parent->attributeCount < parent->maxAttributes)
 	{
 		result = &parent->attributes[parent->attributeCount++];
-		*result = {};
+		*result = (DmxAttribute){};
 		result->value.type = type;
 		Format(result->name, sizeof(result->name), "%.*s", (s32)name.length, name.data);
 	}
@@ -440,7 +440,7 @@ DEFINE_DMXADDATTRIBUTE_FUNC_SIG(functionName, dataType)\
 
 DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeElementId, DmxElementId, DMX_ATTR_ELEMENT)
 DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeInt, s32, DMX_ATTR_INT32)
-DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeF32, s32, DMX_ATTR_F32)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeF32, f32, DMX_ATTR_F32)
 DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeBool, bool, DMX_ATTR_BOOL)
 DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeTimespan, s32, DMX_ATTR_TIMESPAN)
 DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeRgba8, u32, DMX_ATTR_RGBA8)
@@ -510,7 +510,7 @@ internal DmxElement *DmxCreateElement(Dmx *dmx, str name, str type, Arena *arena
 	if (dmx->elementCount < dmx->maxElements)
 	{
 		result = &dmx->elements[dmx->elementCount++];
-		*result = {};
+		*result = (DmxElement){};
 		result->maxAttributes = 1024;
 		result->attributes = (DmxAttribute *)ArenaAlloc(arena, result->maxAttributes * sizeof(*result->attributes));
 		Format(result->type, sizeof(result->type), "%.*s", (s32)type.length, type.data);
@@ -602,8 +602,8 @@ internal void DmxTest(Arena *arena, Arena *tempArena)
 			{
 				DmxElement *defaultCamera = DmxAddElement(&dmx, mapRootElement, STR("defaultcamera"), STR("CStoredCamera"), arena);
 				DmxAddAttributeInt(&dmx, defaultCamera, STR("activecamera"), -1);
-				DmxAddAttributeV3(&dmx, defaultCamera, STR("position"), Vec3(0, -1000, -1000));
-				DmxAddAttributeV3(&dmx, defaultCamera, STR("lookat"), Vec3(-0.0000000618f, -999.2929077148f, 999.2929077148f));
+				DmxAddAttributeV3(&dmx, defaultCamera, STR("position"), (v3){0, -1000, -1000});
+				DmxAddAttributeV3(&dmx, defaultCamera, STR("lookat"), (v3){-0.0000000618f, -999.2929077148f, 999.2929077148f});
 			}
 			
 			// 3dcameras

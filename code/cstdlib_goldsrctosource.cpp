@@ -1,18 +1,6 @@
 
 #include <string.h>
 
-inline f32 f32floor(f32 value)
-{
-	f32 result = floorf(value);
-	return result;
-}
-
-inline f32 f32ceil(f32 value)
-{
-	f32 result = ceilf(value);
-	return result;
-}
-
 internal ReadFileResult ReadEntireFile(Arena *arena, const char *filePath)
 {
 	ReadFileResult result = {0};

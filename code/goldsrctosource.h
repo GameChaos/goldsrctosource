@@ -18,23 +18,16 @@
 #define CONVERTED_MATERIAL_FOLDER "gsrcconv/"
 #define CONVERTED_MATERIAL_PATH "materials/" CONVERTED_MATERIAL_FOLDER
 
-typedef hmm_vec2 v2;
-typedef hmm_vec3 v3;
-typedef hmm_vec3 QAngle;
-typedef hmm_vec4 v4;
-typedef hmm_vec4 quaternion;
-typedef hmm_mat4 mat4;
-
-enum CmdArgType
+typedef enum
 {
 	CMDARG_NONE,
 	CMDARG_STRING,
 	CMDARG_INTEGER,
 	
 	CMDARGTYPE_COUNT,
-};
+} CmdArgType;
 
-enum SkySide
+typedef enum
 {
 	SKY_SIDE_UP = 0,
 	SKY_SIDE_DOWN,
@@ -44,39 +37,21 @@ enum SkySide
 	SKY_SIDE_FRONT,
 	
 	SKY_SIDE_COUNT,
-};
+} SkySide;
 
-struct ModelInfo
+typedef struct
 {
 	s32 model;
 	s32 rendermode;
-};
+} ModelInfo;
 
-union v2i
-{
-	struct
-	{
-		s32 x, y;
-	};
-	s32 e[2];
-};
-
-union v3i
-{
-	struct 
-	{
-		s32 x, y, z;
-	};
-	s32 e[3];
-};
-
-struct TraverseBspTreeNode
+typedef struct
 {
 	s32 parent;
 	s32 index;
-};
+} TraverseBspTreeNode;
 
-struct CmdArg
+typedef struct
 {
 	char argName[64];
 	char description[1024];
@@ -89,9 +64,9 @@ struct CmdArg
 	};
 	
 	b32 isInCmdLine; // whether this exists on the command line
-};
+} CmdArg;
 
-union CmdArgs
+typedef union
 {
 	struct
 	{
@@ -104,147 +79,138 @@ union CmdArgs
 		CmdArg assetPath;
 	};
 	CmdArg args[7];
-};
+} CmdArgs;
 static_assert(MEMBER_SIZE(CmdArgs, args) == sizeof(CmdArgs), "CmdArgs size and args array length are mismatched!");
 
-global const char *g_cmdArgTypeStrings[CMDARGTYPE_COUNT] = {
-	"None",
-	"String",
-	"Integer",
-};
-
-struct Verts
+typedef struct
 {
 	v3 verts[SRC_MAX_SIDE_VERTS];
 	s32 vertCount;
-};
+} Verts;
 
-struct Polygon2D
+typedef struct
 {
 	v2 verts[SRC_MAX_SIDE_VERTS];
 	s32 vertCount;
-};
+} Polygon2D;
 
-struct aabb
+typedef struct
 {
 	v3 mins;
 	v3 maxs;
-};
+} aabb;
 
-struct aabbi
+typedef struct
 {
 	v3i mins;
 	v3i maxs;
-};
+} aabbi;
 
 
-struct FileWritingBuffer
+typedef struct
 {
 	u8 *memory;
 	s64 size;
 	s64 usedBytes;
-};
+} FileWritingBuffer;
 
-struct EntProperty
+typedef struct
 {
 	str key;
 	str value;
-};
+} EntProperty;
 
-struct TexProjection
+typedef struct
 {
 	v3 vec;
 	f32 shift;
 	f32 scale;
-};
+} TexProjection;
 
-struct Texture
+typedef struct
 {
 	TexProjection vecs[2];
 	char name[128];
-};
+} Texture;
 
-struct SrcPlane
+typedef struct
 {
 	v3 normal;
 	f32 distance;
 	s32 type;
-};
+} SrcPlane;
 
-struct BrushSide
+typedef struct
 {
 	SrcPlane plane;
 	Verts polygon;
 	s32 texture;
-};
+} BrushSide;
 
-struct Brush
+typedef struct
 {
 	BrushSide *sides;
 	aabb bounds;
 	s32 sideCount;
 	s32 contents;
 	s32 model;
-};
+} Brush;
 
-struct Face
+typedef struct
 {
 	SrcPlane plane;
 	aabb bounds;
 	Verts polygon;
 	s32 texture;
 	aabb size;
-};
+} Face;
 
 #define MAX_ENT_PROPERTIES 256
 #define MAX_ENTITIES 4096
-struct EntProperties
+typedef struct
 {
 	str classname;
 	s32 propertyCount;
 	s32 model;
 	EntProperty properties[MAX_ENT_PROPERTIES];
-};
+} EntProperties;
 
-struct EntList
+typedef struct
 {
 	s32 entCount;
 	EntProperties *ents;
-};
+} EntList;
 
-struct EntlumpTokeniser
+typedef struct
 {
 	const char *at;
-};
+} EntlumpTokeniser;
 
-enum EntlumpTokenType
+typedef enum
 {
 	ENTLUMPTOKEN_OPEN_BRACE,  // {
 	ENTLUMPTOKEN_CLOSE_BRACE, // }
 	ENTLUMPTOKEN_IDENTIFIER,  // everything that's inside quotations
 	ENTLUMPTOKEN_UNKNOWN,
 	ENTLUMPTOKEN_EOS, // end of stream
-};
+} EntlumpTokenType;
 
-struct EntlumpToken
+typedef struct
 {
 	EntlumpTokenType type;
 	str string;
-};
+} EntlumpToken;
 
-enum StringToNumResult
+typedef enum
 {
 	STRINGTONUM_SUCCESS = 0,
 	STRINGTONUM_ERR_NUM_TOO_BIG = 1,
 	STRINGTONUM_ERR_FAILED = 2,
-};
-
-struct SrcHeader;
+} StringToNumResult;
 
 internal void FatalError(const char *error);
 internal void Error(const char *format, ...);
 internal void Warning(const char *format, ...);
-inline void *BufferPushDataAndSetLumpSize(FileWritingBuffer *buffer, SrcHeader *header, s32 lumpIndex, void *data, s32 bytes);
 internal s32 GsrcContentsToSrcContents(s32 gsrcContents);
 void BSPMain(s32 argCount, char *arguments[]);
 

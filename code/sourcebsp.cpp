@@ -72,7 +72,7 @@ internal s32 SrcGetPlaneType(v3 normal)
 	s32 type = -1;
 	for (int i = 0; i < 3; i++)
 	{
-		if (normal[i] == 1.0f || normal[i] == -1.0f)
+		if (normal.e[i] == 1.0f || normal.e[i] == -1.0f)
 		{
 			type = i;
 			break;
@@ -81,9 +81,9 @@ internal s32 SrcGetPlaneType(v3 normal)
 	
 	if (type == -1)
 	{
-		f32 x = HMM_ABS(normal.X);
-		f32 y = HMM_ABS(normal.Y);
-		f32 z = HMM_ABS(normal.Z);
+		f32 x = GCM_ABS(normal.x);
+		f32 y = GCM_ABS(normal.y);
+		f32 z = GCM_ABS(normal.z);
 		
 		if (x >= y && x >= z)
 		{
@@ -103,25 +103,25 @@ internal s32 SrcGetPlaneType(v3 normal)
 
 internal Rgbe8888 SrcLinearToRgbe8888(v3 colour)
 {
-	f32 max = MAX(MAX(colour.r, colour.g), colour.b);
+	f32 max = GCM_MAX(GCM_MAX(colour.r, colour.g), colour.b);
 	s32 exponent = -128;
 	if (max > 0)
 	{
 		exponent = (s32)floorf(log2f(max)) + 1;
-		exponent = (s8)CLAMP(-128, exponent, 127);
+		exponent = (s8)GCM_CLAMP(-128, exponent, 127);
 		f32 scale = powf(2.0f, -(f32)exponent);
-		colour *= scale;
-		colour *= 255.0f;
+		colour = v3muls(colour, scale);
+		colour = v3muls(colour, 255.0f);
 	}
 	for (s32 i = 0; i < 3; i++)
 	{
-		colour[i] = CLAMP(0, colour[i], 255);
+		colour.e[i] = GCM_CLAMP(0, colour.e[i], 255);
 	}
 	
 	Rgbe8888 result = {
-		(u8)colour[0],
-		(u8)colour[1],
-		(u8)colour[2],
+		(u8)colour.x,
+		(u8)colour.y,
+		(u8)colour.z,
 		(s8)exponent,
 	};
 	
@@ -136,7 +136,7 @@ internal v3 SrcRgbe8888ToLinear(Rgbe8888 colour)
 		(f32)colour.g * mul,
 		(f32)colour.b * mul,
 	};
-	result *= 1.0f / 255.0f;
+	result = v3muls(result, 1.0f / 255.0f);
 	
 	return result;
 }

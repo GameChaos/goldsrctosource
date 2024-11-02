@@ -106,7 +106,7 @@ internal b32 ZipBuilderEndAddFile(ZipBuilder *builder)
 		
 		s64 localFileOffset = (s64)((u8 *)localFile - builder->file.memory);
 		ZipEndOfCentralDirRecord *endRecord = &builder->endRecord;
-		builder->fileHeaders[endRecord->fileHeaderCount] = {};
+		builder->fileHeaders[endRecord->fileHeaderCount] = (ZipFileHeader){};
 		builder->fileHeaders[endRecord->fileHeaderCount].signature = ZIP_PKID(1, 2);
 		builder->fileHeaders[endRecord->fileHeaderCount].versionMadeBy = ZIP_VERSION;
 		builder->fileHeaders[endRecord->fileHeaderCount].versionNeededToExtract = ZIP_VERSION_REQUIRED;
@@ -164,7 +164,7 @@ internal FileWritingBuffer ZipBuilderFinish(ZipBuilder *builder)
 		endRecord->fileHeadersBytes = (u32)(file->usedBytes - endRecord->fileHeadersOffset);
 		BufferPushData(file, endRecord, sizeof(*endRecord), false);
 		result = builder->file;
-		*builder = {};
+		*builder = (ZipBuilder){};
 	}
 	return result;
 }

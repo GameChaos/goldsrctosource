@@ -1,5 +1,5 @@
 
-struct BspState
+typedef struct
 {
 	SrcTexinfo texinfo[SRC_MAX_MAP_TEXINFO];
 	s32 texinfoCount;
@@ -56,9 +56,23 @@ struct BspState
 	
 	SrcPlane planes[SRC_MAX_MAP_PLANES];
 	s32 planeCount;
-};
+} BspState;
 
 global BspState g_bspConversionState = {};
+
+internal inline void *BufferPushDataAndSetLumpSize(FileWritingBuffer *buffer, SrcHeader *header, s32 lumpIndex, void *data, s32 bytes)
+{
+	void *result = buffer->memory + buffer->usedBytes;
+	header->lump[lumpIndex].offset = (s32)buffer->usedBytes;
+	header->lump[lumpIndex].length = bytes;
+	if (!BufferPushData(buffer, data, bytes, true))
+	{
+		ASSERT(0);
+		result = NULL;
+	}
+	
+	return result;
+}
 
 // NOTE(GameChaos): https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/q3map/map.c#L125
 internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 polyCount, v3 mins, v3 maxs)
@@ -74,11 +88,11 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 	{
 		for (s32 dir = -1; dir <= 1; dir += 2, order++)
 		{
-			// see if the plane is allready present
+			// see if the plane is already present
 			s32 sideInd;
 			for (sideInd = 0; sideInd < brush->sides; sideInd++)
 			{
-				if (state->planes[brushSides[sideInd].plane].normal[axis] == dir)
+				if (state->planes[brushSides[sideInd].plane].normal.e[axis] == dir)
 				{
 					break;
 				}
@@ -94,15 +108,15 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 				}
 				SrcBrushSide side = {};
 				v3 normal = {};
-				normal[axis] = (f32)dir;
+				normal.e[axis] = (f32)dir;
 				f32 dist;
 				if (dir == 1)
 				{
-					dist = maxs[axis];
+					dist = maxs.e[axis];
 				}
 				else
 				{
-					dist = -mins[axis];
+					dist = -mins.e[axis];
 				}
 				
 				SrcPlane plane = {normal, dist, axis};
@@ -111,7 +125,7 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 				AddBrushSide(state->brushSides, &state->brushSideCount, side);
 				brush->sides++;
 				// NOTE(GameChaos): "add" blank polygon
-				polys[polyCount++] = {};
+				polys[polyCount++] = (Verts){};
 				added = true;
 			}
 			
@@ -147,7 +161,7 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 		{
 			for (s32 axis = 3; axis < 3; axis++)
 			{
-				ASSERT(state->planes[brushSides[axis * (dir + 1)].plane].normal[axis] == dir);
+				ASSERT(state->planes[brushSides[axis * (dir + 1)].plane].normal.e[axis] == dir);
 			}
 		}
 #endif
@@ -165,17 +179,17 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 			for (s32 j = 0; j < poly->vertCount; j++)
 			{
 				s32 k = (j + 1) % poly->vertCount;
-				v3 vec = poly->verts[j] - poly->verts[k];
-				f32 vecLen = Length(vec);
+				v3 vec = v3sub(poly->verts[j], poly->verts[k]);
+				f32 vecLen = v3len(vec);
 				if (vecLen < 0.5f)
 				{
 					continue;
 				}
-				vec *= 1.0f / vecLen;
+				vec = v3muls(vec, 1.0f / vecLen);
 				vec = SnapVector(vec);
 				for (k = 0; k < 3; k++)
 				{
-					if (vec[k] == -1 || vec[k] == 1)
+					if (vec.e[k] == -1 || vec.e[k] == 1)
 					{
 						break; // axial
 					}
@@ -192,15 +206,15 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 					{
 						// construct a plane
 						v3 vec2 = {};
-						vec2[axis] = (f32)dir;
-						v3 normal = Cross(vec, vec2);
-						f32 normalLength = Length(normal);
+						vec2.e[axis] = (f32)dir;
+						v3 normal = v3cross(vec, vec2);
+						f32 normalLength = v3len(normal);
 						if (normalLength < 0.5f)
 						{
 							continue;
 						}
-						normal *= (1.0f / normalLength);
-						f32 dist = Dot(poly->verts[j], normal);
+						normal = v3muls(normal, 1.0f / normalLength);
+						f32 dist = v3dot(poly->verts[j], normal);
 						
 						// if all the points on all the sides are
 						// behind this plane, it is a proper edge bevel
@@ -220,7 +234,7 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 							s32 l;
 							for (l = 0; l < poly2->vertCount; l++)
 							{
-								f32 d = Dot(poly2->verts[l], normal) - dist;
+								f32 d = v3dot(poly2->verts[l], normal) - dist;
 								if (d > 0.1f)
 								{
 									break; // point in front
@@ -249,7 +263,7 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 						AddBrushSide(state->brushSides, &state->brushSideCount, s2);
 						brush->sides++;
 						// NOTE(GameChaos): "add" blank polygon
-						polys[polyCount++] = {};
+						polys[polyCount++] = (Verts){};
 					}
 				}
 			}
@@ -293,12 +307,13 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	srcMapData->fileDataSize = buffer.size;
 	srcMapData->fileData = buffer.memory;
 	
-	srcMapData->header = (SrcHeader *)BufferPushSize(&buffer, sizeof(*srcMapData->header));
+	srcMapData->header = (SrcHeader *)BufferPushSize(&buffer, sizeof(*srcMapData->header), true);
 	SrcHeader *fileHeader = srcMapData->header;
 	
-	*fileHeader = {};
-	fileHeader->ident = SRC_BSPHEADER;
-	fileHeader->version = 21; // CSGO bsp
+	*fileHeader = (SrcHeader){
+		.ident = SRC_BSPHEADER,
+		.version = 21, // CSGO bsp
+	};
 	
 	s32 mapflags = 0;
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_MAP_FLAGS, &mapflags, sizeof(mapflags));
@@ -435,7 +450,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	for (s32 i = 0; i < (s64)mapData->lumpTextures.mipTextureCount; i++)
 	{
 		// TODO: nameStringTableID
-		state->texdata[state->texdataCount++] = {
+		state->texdata[state->texdataCount++] = (SrcTexdata){
 			{0.5f, 0.5f, 0.5f},
 			i,
 			(s32)mapData->lumpTextures.mipTextures[i]->width,
@@ -463,7 +478,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		state->tdStringTable[state->tdTableCount++] = offset;
 		s32 len = (s32)(tdStringDataEnd - tdStringData);
 		s32 formattedLen = 0;
-		if (StringEquals(mapData->lumpTextures.mipTextures[i]->name, "sky"))
+		if (StringEquals(mapData->lumpTextures.mipTextures[i]->name, "sky", false))
 		{
 			formattedLen = Format(tdStringData, len, "%s", "tools/toolsskybox2d");
 		}
@@ -501,7 +516,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			}
 		}
 		char *texName = mapData->lumpTextures.mipTextures[mapData->lumpTexinfo[i].miptex]->name;
-		if (StringEquals(texName, "sky"))
+		if (StringEquals(texName, "sky", false))
 		{
 			texinfo.flags |= SRC_SURF_NOLIGHT | SRC_SURF_SKY | SRC_SURF_SKY2D;
 		}
@@ -562,8 +577,8 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		GsrcTexinfo texinfo = mapData->lumpTexinfo[face.texinfo];
 		if (face.lightOffset >= 0 && !(texinfo.flags & 1))
 		{
-			v2 mins = Vec2(F32_MAX, F32_MAX);
-			v2 maxs = Vec2(-F32_MAX, -F32_MAX);
+			v2 mins = v2fill(F32_MAX);
+			v2 maxs = v2fill(-F32_MAX);
 			
 			for (s32 surfEdge = 0; surfEdge < face.edges; surfEdge++)
 			{
@@ -580,17 +595,17 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 				
 				for (s32 j = 0; j < 2; j++)
 				{
-					f32 val = (vert[0] * texinfo.vecs[j][0]
-							   + vert[1] * texinfo.vecs[j][1]
-							   + vert[2] * texinfo.vecs[j][2]
+					f32 val = (vert.e[0] * texinfo.vecs[j][0]
+							   + vert.e[1] * texinfo.vecs[j][1]
+							   + vert.e[2] * texinfo.vecs[j][2]
 							   + texinfo.vecs[j][3]);
-					if (val < mins[j])
+					if (val < mins.e[j])
 					{
-						mins[j] = val;
+						mins.e[j] = val;
 					}
-					if (val > maxs[j])
+					if (val > maxs.e[j])
 					{
-						maxs[j] = val;
+						maxs.e[j] = val;
 					}
 				}
 			}
@@ -599,12 +614,12 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			s32 size[2];
 			for (s32 j = 0; j < 2; j++)
 			{
-				bmins[j] = (s32)f32floor(mins[j] / 16.0f);
-				bmaxs[j] = (s32)f32ceil(maxs[j] / 16.0f);
+				bmins[j] = (s32)f32floor(mins.e[j] / 16.0f);
+				bmaxs[j] = (s32)f32ceil(maxs.e[j] / 16.0f);
 				size[j] = bmaxs[j] - bmins[j];
 				
 				if (bmins[j] != S32_MIN
-					&& size[j] < SRC_MAX_BRUSH_LIGHTMAP_DIM_INCLUDING_BORDER && HMM_ABS(bmins[j]) < 16834)
+					&& size[j] < SRC_MAX_BRUSH_LIGHTMAP_DIM_INCLUDING_BORDER && GCM_ABS(bmins[j]) < 16834)
 				{
 					face.lightmapTextureMinsInLuxels[j] = bmins[j];
 					face.lightmapTextureSizeInLuxels[j] = size[j];
@@ -700,12 +715,12 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			Rgbe8888 colour = *(Rgbe8888 *)c;
 			colour.exponent = 0;
 			v3 lin = SrcRgbe8888ToLinear(colour);
-			lin *= 1.5f;
+			lin = v3muls(lin, 1.5f);
 			for (s32 i = 0; i < 3; i++)
 			{
-				lin[i] = powf(lin[i], 2.2f);
+				lin.e[i] = powf(lin.e[i], 2.2f);
 				//lin[i] = lin[i] * lin[i];
-				lin[i] = MIN(1, lin[i]);
+				lin.e[i] = GCM_MIN(1, lin.e[i]);
 			}
 			colour = SrcLinearToRgbe8888(lin);
 			srcLight[srcLightCount++] = colour;
@@ -764,9 +779,9 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	// TODO: use light_environment entity! and convert other light entities!
 	{
 		SrcWorldLight worldLight = {};
-		worldLight.intensity = Vec3(255, 255, 255);
+		worldLight.intensity = v3fill(255);
 		worldLight.type = SRC_EMIT_SURFACE;
-		worldLight.normal = Normalize(Vec3(1, 2, -3));
+		worldLight.normal = v3normalise((v3){1, 2, -3});
 		fileHeader->lump[SRC_LUMP_WORLDLIGHTS].version = 1;
 		BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_WORLDLIGHTS, &worldLight, sizeof(worldLight));
 	}
@@ -876,16 +891,16 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 						}
 						
 						// NOTE(GameChaos): calculate brush mins/maxs
-						v3 mins = Vec3(F32_MAX, F32_MAX, F32_MAX);
-						v3 maxs = Vec3(-F32_MAX, -F32_MAX, -F32_MAX);
+						v3 mins = v3fill(F32_MAX);
+						v3 maxs = v3fill(-F32_MAX);
 						for (s32 i = 0; i < polyCount; i++)
 						{
 							for (s32 vert = 0; vert < polys[i].vertCount; vert++)
 							{
 								for (s32 xyz = 0; xyz < 3; xyz++)
 								{
-									mins[xyz] = HMM_MIN(polys[i].verts[vert][xyz], mins[xyz]);
-									maxs[xyz] = HMM_MAX(polys[i].verts[vert][xyz], maxs[xyz]);
+									mins.e[xyz] = GCM_MIN(polys[i].verts[vert].e[xyz], mins.e[xyz]);
+									maxs.e[xyz] = GCM_MAX(polys[i].verts[vert].e[xyz], maxs.e[xyz]);
 								}
 							}
 						}
@@ -895,7 +910,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 							for (s32 polyInd = 0; polyInd < polyCount; polyInd++)
 							{
 								v3 normal = state->planes[state->brushSides[brush.firstSide + polyInd].plane].normal;
-								DebugGfxAddBrushSide(&polys[polyInd], normal);
+								DebugGfxAddBrushSide(&polys[polyInd], normal, -1, (v4){}, (v4){});
 							}
 							DebugGfxAddBrush(brush.sides);
 						}
@@ -944,7 +959,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 				}
 			}
 		}
-		state->models[model].origin = {};
+		state->models[model].origin = (v3){};
 		ArenaEndTemp(arenaTmp);
 	}
 	for (s32 i = 0; i < state->leafCount; i++)

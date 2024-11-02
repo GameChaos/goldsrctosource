@@ -1,8 +1,8 @@
 
-#pragma sokol @ctype mat4 hmm_mat4
-#pragma sokol @ctype vec2 hmm_vec2
-#pragma sokol @ctype vec3 hmm_vec3
-#pragma sokol @ctype vec4 hmm_vec4
+#pragma sokol @ctype mat4 mat4
+#pragma sokol @ctype vec2 v2
+#pragma sokol @ctype vec3 v3
+#pragma sokol @ctype vec4 v4
 
 #pragma sokol @vs wire_vs
 

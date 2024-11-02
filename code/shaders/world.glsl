@@ -1,8 +1,8 @@
 
-#pragma sokol @ctype mat4 hmm_mat4
-#pragma sokol @ctype vec2 hmm_vec2
-#pragma sokol @ctype vec3 hmm_vec3
-#pragma sokol @ctype vec4 hmm_vec4
+#pragma sokol @ctype mat4 mat4
+#pragma sokol @ctype vec2 v2
+#pragma sokol @ctype vec3 v3
+#pragma sokol @ctype vec4 v4
 
 #pragma sokol @vs world_vs
 
@@ -53,7 +53,8 @@ vec3 ToLinear(vec3 srgb)
 	vec3 result = mix(higher, lower, cutoff);
 	return result;
 }
-uniform sampler2D tex;
+uniform texture2D tex;
+uniform sampler smp;
 
 in vec2 uv;
 in vec3 normal;
@@ -64,7 +65,7 @@ out vec4 frag_color;
 void main()
 {
 	float dot = abs(dot(normal, normalize(surfacePos - camOrigin)));
-	vec3 colour = ToLinear(texture(tex, uv / vec2(textureSize(tex, 0))).rgb);
+	vec3 colour = ToLinear(texture(sampler2D(tex, smp), uv / vec2(textureSize(sampler2D(tex, smp), 0))).rgb);
 	colour *= dot;
 	colour = ToSrgb(colour);
 	

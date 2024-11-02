@@ -68,10 +68,6 @@ typedef double f64;
 #define ASSERT(expression)
 #endif
 
-#define MIN(a, b) ((a) > (b) ? (b) : (a))
-#define MAX(a, b) ((a) < (b) ? (b) : (a))
-#define CLAMP(min, val, max) (MAX(MIN(val, max), min))
-
 #define MEMBER(type, member) (((type *)0)->member)
 #define MEMBER_SIZE(type, member) (sizeof(((type *)0)->member))
 #define OFFSETOF(type, member) ((u64)&MEMBER(type, member))

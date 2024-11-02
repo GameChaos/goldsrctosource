@@ -32,7 +32,7 @@ internal Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *path)
 					{
 						Error("Wad3 texture offset is out of bounds! %s\n", path ? path : "");
 						ArenaResetTo(arena, originalArenaPos);
-						result = {};
+						result = (Wad3){};
 						break;
 					}
 				}
@@ -40,7 +40,7 @@ internal Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *path)
 				{
 					// NOTE(GameChaos): don't care about wads with no textures
 					ArenaResetTo(arena, originalArenaPos);
-					result = {};
+					result = (Wad3){};
 				}
 				else
 				{
@@ -82,7 +82,7 @@ internal u32 Wad3FindTexture(Wad3 wad, char *name, s32 nameStrlen)
 		{
 			Wad3TextureHeader *textureHeader = wad.textures[i];
 			// TODO: does this need to be case sensitive?
-			if (StringEquals(name, textureHeader->name))
+			if (StringEquals(name, textureHeader->name, false))
 			{
 				result = i + 1;
 				break;

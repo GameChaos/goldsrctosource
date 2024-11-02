@@ -1,18 +1,18 @@
 
-#define STR(strLiteral) (str{sizeof(strLiteral) - 1, strLiteral})
+#define STR(strLiteral) ((str){sizeof(strLiteral) - 1, strLiteral})
 
-struct str
+typedef struct
 {
 	s64 length;
 	const char *data;
-};
+} str;
 
-struct str_builder
+typedef struct
 {
 	s64 length;
 	s64 storage;
 	char *data;
-};
+} str_builder;
 
 internal str StrFromSize(char *cstring, s64 length)
 {
@@ -20,7 +20,7 @@ internal str StrFromSize(char *cstring, s64 length)
 	return result;
 }
 
-internal b32 StrEquals(str a, str b, b32 caseSensitive = true)
+internal b32 StrEquals(str a, str b, b32 caseSensitive)
 {
 	b32 result = true;
 	if (a.length == b.length)
@@ -94,7 +94,7 @@ internal b32 StrbuilderCat(str_builder *a, str b)
 	b32 result = false;
 	if (a->storage - a->length >= b.length)
 	{
-		Mem_Copy(b.data, a->data + a->length, MIN(b.length, a->storage - a->length));
+		Mem_Copy(b.data, a->data + a->length, GCM_MIN(b.length, a->storage - a->length));
 		a->length += b.length;
 	}
 	return result;

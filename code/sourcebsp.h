@@ -240,7 +240,7 @@ enum
 	SRC_PLANE_ANYZ,
 };
 
-enum SrcEmitType
+typedef enum
 {
 	SRC_EMIT_SURFACE,
 	SRC_EMIT_POINT,
@@ -248,9 +248,9 @@ enum SrcEmitType
 	SRC_EMIT_SKYLIGHT,
 	SRC_EMIT_QUAKELIGHT,
 	SRC_EMIT_SKYAMBIENT,
-};
+} SrcEmitType;
 
-union Rgbe8888
+typedef union
 {
 	struct
 	{
@@ -258,31 +258,31 @@ union Rgbe8888
 		s8 exponent;
 	};
 	u8 elements[3];
-};
+} Rgbe8888;
 
-struct SrcLump
+typedef struct
 {
 	s32 offset;
 	s32 length;
 	s32 version;
 	char fourCC[4];
-};
+} SrcLump;
 
-struct SrcHeader
+typedef struct
 {
 	int ident;
 	int version;
 	SrcLump lump[SRC_HEADER_LUMPS];
 	int mapRevision;
-};
+} SrcHeader;
 
 
-struct SrcGamelumpHeader
+typedef struct
 {
 	s32 lumpCount;
-};
+} SrcGamelumpHeader;
 
-struct SrcGamelump
+typedef struct
 {
 	union
 	{
@@ -293,20 +293,20 @@ struct SrcGamelump
 	u16 version;
 	s32 fileOffset;
 	s32 length;
-};
+} SrcGamelump;
 
-struct SrcFaceBrush
+typedef struct
 {
 	u16 unknown;
 	u16 brush;
-};
+} SrcFaceBrush;
 
-struct SrcEdge
+typedef struct
 {
 	s16 vertex[2]; // indices into the vertex array
-};
+} SrcEdge;
 
-struct SrcWorldLight_v0
+typedef struct
 {
 	v3 origin;
 	v3 intensity;
@@ -324,10 +324,10 @@ struct SrcWorldLight_v0
 	s32 flags;
 	s32 texinfo;
 	s32 owner;
-};
+} SrcWorldLight_v0;
 
 // v1
-struct SrcWorldLight
+typedef struct
 {
 	v3 origin;
 	v3 intensity;
@@ -346,38 +346,38 @@ struct SrcWorldLight
 	s32 flags;
 	s32 texinfo;
 	s32 owner;
-};
+} SrcWorldLight;
 
-struct SrcCompressedLightCube
+typedef struct
 {
 	Rgbe8888 colour[6];
-};
+} SrcCompressedLightCube;
 
-struct SrcLeafAmbientLighting
+typedef struct
 {
 	SrcCompressedLightCube cube;
 	u8 x;
 	u8 y;
 	u8 z;
 	u8 padding_;
-};
+} SrcLeafAmbientLighting;
 
-struct SrcLeafAmbientIndex
+typedef struct
 {
 	u16 ambientSampleCount;
 	u16 firstAmbientSample;
-};
+} SrcLeafAmbientIndex;
 
-struct SrcTexinfo
+typedef struct
 {
 	// NOTE(GameChaos): NOT a v4 because that screws up packing!
 	f32 textureVecs[2][4];
 	f32 lightmapVecs[2][4];
 	s32 flags; // SRC_SURF_ flags
 	s32 texdata;
-};
+} SrcTexinfo;
 
-struct SrcTexdata
+typedef struct
 {
 	v3 reflectivity;
 	s32 nameStringTableID;
@@ -385,9 +385,9 @@ struct SrcTexdata
 	s32 height;
 	s32 viewWidth;
 	s32 viewHeight;
-};
+} SrcTexdata;
 
-struct SrcModel
+typedef struct
 {
 	v3 mins;
 	v3 maxs;
@@ -395,9 +395,9 @@ struct SrcModel
 	s32 headnode;
 	s32 firstFace;
 	s32 numFaces;
-};
+} SrcModel;
 
-struct SrcFace
+typedef struct
 {
 	u16 planeIndex;
 	u8 side;
@@ -416,24 +416,24 @@ struct SrcFace
 	u16 numPrims;
 	u16 firstPrimID;
 	u32 smoothingGroups; // lightmap smoothing group
-};
+} SrcFace;
 
-struct SrcBrush
+typedef struct
 {
 	s32 firstSide; // first brushside
 	s32 sides;     // number of brushsides
 	s32 contents;  // contents flags
-};
+} SrcBrush;
 
-struct SrcBrushSide
+typedef struct
 {
 	u16 plane;
 	s16 texinfo;  // texture info
 	s16 dispinfo; // displacement info index
 	s16 bevel;    // bevel planes are used for AABB tracing.
-};
+} SrcBrushSide;
 
-struct SrcNode
+typedef struct
 {
 	s32 plane;       // index into plane array
 	s32 children[2];
@@ -443,16 +443,16 @@ struct SrcNode
 	u16 faceCount;
 	s16 area;
 	s16 padding_;     // pad to 32 bytes length
-};
+} SrcNode;
 
-struct SrcLeafWaterData
+typedef struct
 {
 	f32 surfaceZ;
 	f32 minZ;
 	s16 surfaceTexinfo;
-};
+} SrcLeafWaterData;
 
-struct SrcLeaf
+typedef struct
 {
 	s32 contents;
 	s16 cluster;  // cluster this leaf is in
@@ -466,25 +466,25 @@ struct SrcLeaf
 	u16 leafBrushes;
 	s16 leafWaterDataIndex;
 	s16 padding_; // padding to 4-byte boundary
-};
+} SrcLeaf;
 
-struct SrcArea
+typedef struct
 {
 	s32 areaportalCount;
 	s32 areaportalIndex;
-};
+} SrcArea;
 
-struct SrcAreaportal
+typedef struct
 {
 	u16 portalKey;
 	u16 otherarea;
 	u16 firstClipPortalVert;
 	u16 clipPortalVerts;
 	s32 planenum;
-};
+} SrcAreaportal;
 
 // TODO: order the structs in good nice order
-struct SrcMapData
+typedef struct
 {
 	void *fileData;
 	size_t fileDataSize;
@@ -562,7 +562,7 @@ struct SrcMapData
 	
 	s32 modelCount;
 	SrcModel *lumpModels;
-};
+} SrcMapData;
 
 #define SOURCE_H
 #endif

@@ -8,7 +8,7 @@
 #define ZIP_PKID(a, b) (((b) << 24) | ((a) << 16) | ('K' << 8) | 'P')
 
 #pragma pack(push, 1)
-struct ZipEndOfCentralDirRecord
+typedef struct
 {
 	u32 signature; // ZIP_PKID(5, 6)
 	u16 diskNum;
@@ -18,9 +18,9 @@ struct ZipEndOfCentralDirRecord
 	u32 fileHeadersBytes;
 	u32 fileHeadersOffset;
 	u16 commentLength;
-};
+} ZipEndOfCentralDirRecord;
 
-struct ZipFileHeader
+typedef struct
 {
 	u32 signature; // ZIP_PKID(1, 2)
 	u16 versionMadeBy;
@@ -39,9 +39,9 @@ struct ZipFileHeader
 	u16 internalFileAttribs;
 	u32 externalFileAttribs;
 	u32 relativeOffsetOfLocalHeader;
-};
+} ZipFileHeader;
 
-struct ZipLocalFileHeader
+typedef struct
 {
 	u32 signature; // ZIP_PKID(3, 4)
 	u16 versionNeededToExtract;
@@ -54,11 +54,11 @@ struct ZipLocalFileHeader
 	u32 uncompressedSize;
 	u16 fileNameLength;
 	u16 extraFieldLength;
-};
+} ZipLocalFileHeader;
 static_assert(sizeof(ZipLocalFileHeader) == 30, "");
 #pragma pack(pop)
 
-struct ZipBuilder
+typedef struct
 {
 	// used by beginaddfile/pushdata/endaddfile
 	b32 addingFileCurrently;
@@ -69,6 +69,6 @@ struct ZipBuilder
 	s64 maxFiles;
 	ZipFileHeader *fileHeaders; // NOTE(GameChaos): fileHeaders count is in endRecord
 	ZipEndOfCentralDirRecord endRecord;
-};
+} ZipBuilder;
 
 #endif //ZIP_H

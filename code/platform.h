@@ -3,26 +3,22 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-struct ReadFileResult
+typedef struct
 {
 	void *contents;
 	s64 size;
-};
+} ReadFileResult;
 
-struct FileInfo
+typedef struct
 {
 	b32 isFolder;
 	char path[260];
-};
-
-struct Arena;
-inline f32 f32floor(f32 value);
-inline f32 f32ceil(f32 value);
+} FileInfo;
 
 internal ReadFileResult ReadEntireFile(Arena *arena, const char *filePath);
 internal b32 WriteEntireFile(const char *filename, const void *memory, s64 bytes);
 internal void AppendToPath(char *path, s64 pathLength, const char *file);
-internal s32 GetDirectoryFiles(char *path, FileInfo *out, s32 maxFileCount, const char *fileExtFilter = NULL);
+internal s32 GetDirectoryFiles(char *path, FileInfo *out, s32 maxFileCount, const char *fileExtFilter);
 
 internal void *Plat_MemReserve(s64 bytes);
 internal void Plat_MemCommit(void *address, s64 bytes);
@@ -35,7 +31,7 @@ internal b32 Mem_Compare(const void *a, const void *b, s64 bytes);
 internal void Plat_MemSetToZero(void *destination, s64 bytes);
 
 internal size_t StringLength(const char *string);
-internal b32 StringEquals(const char *a, const char *b, b32 caseSensitive = true);
+internal b32 StringEquals(const char *a, const char *b, b32 caseSensitive);
 internal void Plat_WriteToStdout(const char *str, s64 len);
 
 #endif //PLATFORM_H
