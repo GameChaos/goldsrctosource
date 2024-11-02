@@ -50,7 +50,7 @@ static_function void AppendToPath(char *path, i64 pathLength, const char *file)
 	}
 }
 
-static_function i32 GetDirectoryFiles(char *path, FileInfo *out, i32 maxFileCount, const char *fileExtFilter)
+static_function i32 GetDirectoryFiles(const char *path, FileInfo *out, i32 maxFileCount, const char *fileExtFilter)
 {
 	DIR *directory = opendir(path);
 	i32 count = 0;
@@ -82,9 +82,7 @@ static_function i32 GetDirectoryFiles(char *path, FileInfo *out, i32 maxFileCoun
 				fileInfo.isFolder = true;
 			}
 			
-			// TODO: is this the absolute path?
 			Format(fileInfo.path, sizeof(fileInfo.path), "%s", path);
-			ASSERT(!"TODO: test if this is the absolue path!");
 			AppendToPath(fileInfo.path, sizeof(fileInfo.path), entry->d_name);
 			out[count++] = fileInfo;
 		}
@@ -144,9 +142,9 @@ static_function bool StringEquals(const char *a, const char *b, bool caseSensiti
 {
 	if (caseSensitive)
 	{
-		return strcmp(a, b);
+		return strcmp(a, b) == 0;
 	}
-	return strcasecmp(a, b);
+	return strcasecmp(a, b) == 0;
 }
 
 int main(int argc, char **argv)

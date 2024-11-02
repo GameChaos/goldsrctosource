@@ -101,6 +101,7 @@ typedef struct
 	sg_pass_action passAction;
 	sg_buffer indexBuffer;
 	sg_buffer wireIndexBuffer;
+	sg_sampler sampler;
 	
 	GfxMesh specificFaceMesh;
 	i32 specificFaceIndex; // draw only this mesh index

@@ -109,7 +109,7 @@ static_function void AppendToPath(char *path, i64 pathLength, const char *file)
 	}
 }
 
-static_function i32 GetDirectoryFiles(char *path, FileInfo *out, i32 maxFileCount, const char *fileExtFilter)
+static_function i32 GetDirectoryFiles(const char *path, FileInfo *out, i32 maxFileCount, const char *fileExtFilter)
 {
 	WIN32_FIND_DATA findFileData = {};
 	char wildcardPath[1024] = "";
@@ -210,9 +210,9 @@ static_function bool StringEquals(const char *a, const char *b, bool caseSensiti
 {
 	if (caseSensitive)
 	{
-		return strcmp(a, b);
+		return strcmp(a, b) == 0;
 	}
-	return _stricmp(a, b);
+	return _stricmp(a, b) == 0;
 }
 
 int main(int argc, char **argv)

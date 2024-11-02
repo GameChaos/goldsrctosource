@@ -237,6 +237,7 @@ static_function void DebugGfxInit(void *userData)
 	state->specificBrushSideIndex = -1;
 	state->drawWorld = true;
 	state->drawBrushes = true;
+	
 	sg_desc desc = {
 		.environment = sglue_environment(),
 		.buffer_pool_size = DEBUG_GFX_MAX_MESHES * 2,
@@ -244,7 +245,12 @@ static_function void DebugGfxInit(void *userData)
 		.logger.func = slog_func,
 	};
 	sg_setup(&desc);
-	
+	state->sampler = sg_make_sampler(&(sg_sampler_desc){
+										 .min_filter = SG_FILTER_LINEAR,
+										 .mag_filter = SG_FILTER_LINEAR,
+										 .wrap_u = SG_WRAP_REPEAT,
+										 .wrap_v = SG_WRAP_REPEAT,
+									 });
 	simgui_desc_t imguiDesc = {};
 	simgui_setup(&imguiDesc);
 	
@@ -334,8 +340,13 @@ static_function void DebugGfxInit(void *userData)
 
 static_function void DrawMesh(GfxState *state, GfxMesh *mesh, mat4 mvp, bool solid)
 {
-	sg_bindings bindings = {};
-	bindings.vertex_buffers[0] = mesh->vertexBuffer;
+	sg_bindings bindings = {
+		.vertex_buffers[0] = mesh->vertexBuffer,
+		.fs = {
+			.images[SLOT_tex] = solid ? state->textures[0].img : state->textures[mesh->texture].img,
+			.samplers[SLOT_smp] = state->sampler,
+		}
+	};
 	i32 indexCount = mesh->indexCount;
 	if (indexCount > 0)
 	{
@@ -346,14 +357,7 @@ static_function void DrawMesh(GfxState *state, GfxMesh *mesh, mat4 mvp, bool sol
 		indexCount = (mesh->vertCount - 2) * 3;
 		bindings.index_buffer = state->indexBuffer;
 	}
-	if (solid)
-	{
-		bindings.fs.images[SLOT_tex] = state->textures[0].img;
-	}
-	else
-	{
-		bindings.fs.images[SLOT_tex] = state->textures[mesh->texture].img;
-	}
+	
 	sg_apply_bindings(&bindings);
 	
 	world_vs_params_t vs_params = {};
@@ -368,8 +372,9 @@ static_function void DrawMesh(GfxState *state, GfxMesh *mesh, mat4 mvp, bool sol
 
 static_function void DrawMeshWire(GfxState *state, GfxMesh *mesh, mat4 mvp)
 {
-	sg_bindings bindings = {};
-	bindings.vertex_buffers[0] = mesh->vertexBuffer;
+	sg_bindings bindings = {
+		.vertex_buffers[0] = mesh->vertexBuffer
+	};
 	i32 indexCount = mesh->wireIndexCount;
 	if (indexCount > 0)
 	{
