@@ -1,10 +1,21 @@
 
 const std = @import("std");
+const builtin = @import("builtin");
 const assert = std.debug.assert;
 
 fn AddShaderBuildCommand(b: *std.Build, dep_sokol_shdc: *std.Build.Dependency, inputPath: []const u8, outputPath: []const u8) *std.Build.Step.Run
 {
-	const sokolShdc = b.addSystemCommand(&.{"bin/linux/sokol-shdc", "--input"});
+	const shdcPath = switch (builtin.os.tag) {
+		.windows => "bin/win32/sokol-shdc.exe",
+		.linux => "bin/linux/sokol-shdc",
+		.macos => switch (builtin.cpu.arch) {
+			.aarch64 =>"bin/osx_arm64/sokol-shdc",
+			.x86_64 =>"bin/osx/sokol-shdc",
+			else => @compileError("Sokol-shdc doesn't support this osx cpu's arhitecture."),
+		},
+		else => @compileError("Sokol-shdc is not supported on this machine. Shaders can't be compiled."),
+	};
+	const sokolShdc = b.addSystemCommand(&.{shdcPath, "--input"});
 	sokolShdc.setCwd(dep_sokol_shdc.path(""));
 	sokolShdc.addFileArg(b.path(inputPath));
 	sokolShdc.addArg("--output");
@@ -17,6 +28,20 @@ fn AddShaderBuildCommand(b: *std.Build, dep_sokol_shdc: *std.Build.Dependency, i
 pub fn build(b: *std.Build) !void
 {
     const target = b.standardTargetOptions(.{});
+	
+	if (target.result.os.tag != .linux and target.result.os.tag != .windows)
+	{
+		std.debug.print("{} is not supported as a build target.\n", .{target.result.os.tag});
+		std.process.exit(1);
+	}
+	
+	if (target.result.cpu.arch != .x86_64)
+	{
+		std.debug.print("Only x86_64 is supported as a build target.\n", .{});
+		std.process.exit(1);
+	}
+	
+	// TODO: ABI check?
 
     // Standard optimization options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
