@@ -1,5 +1,5 @@
 
-internal inline FileWritingBuffer BufferCreate(Arena *arena, s64 size)
+static_function inline FileWritingBuffer BufferCreate(Arena *arena, i64 size)
 {
 	FileWritingBuffer result = {};
 	if (size > 0)
@@ -10,29 +10,29 @@ internal inline FileWritingBuffer BufferCreate(Arena *arena, s64 size)
 	return result;
 }
 
-internal inline FileWritingBuffer BufferReset(FileWritingBuffer *buffer)
+static_function inline FileWritingBuffer BufferReset(FileWritingBuffer *buffer)
 {
 	FileWritingBuffer result = {};
 	buffer->usedBytes = 0;
 	return result;
 }
 
-internal inline s64 BufferGetSize(FileWritingBuffer buffer)
+static_function inline i64 BufferGetSize(FileWritingBuffer buffer)
 {
-	s64 result = buffer.usedBytes;
+	i64 result = buffer.usedBytes;
 	return result;
 }
 
-internal inline s64 BufferGetFreeSpace(FileWritingBuffer buffer)
+static_function inline i64 BufferGetFreeSpace(FileWritingBuffer buffer)
 {
-	s64 result = buffer.size - buffer.usedBytes;
+	i64 result = buffer.size - buffer.usedBytes;
 	return result;
 }
 
-internal inline void *BufferPushSize(FileWritingBuffer *buffer, s64 size, b32 align/* = true*/)
+static_function inline void *BufferPushSize(FileWritingBuffer *buffer, i64 size, bool align/* = true*/)
 {
 	void *result = NULL;
-	s64 space = BufferGetFreeSpace(*buffer);
+	i64 space = BufferGetFreeSpace(*buffer);
 	ASSERT(space > 0);
 	if (space > 0)
 	{
@@ -42,14 +42,14 @@ internal inline void *BufferPushSize(FileWritingBuffer *buffer, s64 size, b32 al
 		// NOTE(GameChaos): align to 4 bytes
 		if (align)
 		{
-			buffer->usedBytes = ((buffer->usedBytes + 0x3) & (~((s64)0x3)));
+			buffer->usedBytes = ((buffer->usedBytes + 0x3) & (~((i64)0x3)));
 		}
 	}
 	
 	return result;
 }
 
-internal inline void *BufferPushData(FileWritingBuffer *buffer, void *data, s64 dataSize, b32 align/* = true*/)
+static_function inline void *BufferPushData(FileWritingBuffer *buffer, void *data, i64 dataSize, bool align/* = true*/)
 {
 	void *result = BufferPushSize(buffer, dataSize, align);
 	if (result != NULL)
@@ -60,9 +60,9 @@ internal inline void *BufferPushData(FileWritingBuffer *buffer, void *data, s64 
 	return result;
 }
 
-internal b32 AabbCheck(aabb b1, aabb b2) 
+static_function bool AabbCheck(aabb b1, aabb b2) 
 { 
-	b32 result = !(b1.maxs.x < b2.mins.x
+	bool result = !(b1.maxs.x < b2.mins.x
 				   || b1.mins.x > b2.maxs.x
 				   || b1.maxs.y < b2.mins.y
 				   || b1.mins.y > b2.maxs.y
@@ -71,9 +71,9 @@ internal b32 AabbCheck(aabb b1, aabb b2)
 	return result;
 }
 
-internal b32 AabbiCheck(aabbi b1, aabbi b2) 
+static_function bool AabbiCheck(aabbi b1, aabbi b2) 
 { 
-	b32 result = !(b1.maxs.x < b2.mins.x
+	bool result = !(b1.maxs.x < b2.mins.x
 				   || b1.mins.x > b2.maxs.x
 				   || b1.maxs.y < b2.mins.y
 				   || b1.mins.y > b2.maxs.y
@@ -82,9 +82,9 @@ internal b32 AabbiCheck(aabbi b1, aabbi b2)
 	return result;
 }
 
-internal b32 AabbiCheckPoint(aabbi a, v3i b) 
+static_function bool AabbiCheckPoint(aabbi a, v3i b) 
 { 
-	b32 result = (a.maxs.x >= b.x
+	bool result = (a.maxs.x >= b.x
 				  && a.maxs.y >= b.y
 				  && a.maxs.z >= b.z
 				  && a.mins.x <= b.x
@@ -93,7 +93,7 @@ internal b32 AabbiCheckPoint(aabbi a, v3i b)
 	return result;
 }
 
-internal inline v3 LinearInterpolate(v3 vec1, v3 vec2, f32 fraction)
+static_function inline v3 LinearInterpolate(v3 vec1, v3 vec2, f32 fraction)
 {
 	v3 result = v3sub(vec2, vec1);
 	result = v3add(v3muls(result, fraction), vec1);
@@ -101,7 +101,7 @@ internal inline v3 LinearInterpolate(v3 vec1, v3 vec2, f32 fraction)
 	return result;
 }
 
-internal inline v3 GetNonParallelVector(v3 vec)
+static_function inline v3 GetNonParallelVector(v3 vec)
 {
 	v3 result = {};
 	
@@ -133,21 +133,23 @@ internal inline v3 GetNonParallelVector(v3 vec)
 	return result;
 }
 
-internal b32 ClipPolygon(Verts *poly, SrcPlane plane)
+static_function bool ClipPolygon(Verts *poly, SrcPlane plane)
 {
-	b32 result = true;
-	local_persist Verts newPoly = {};
+	bool result = true;
+	// NOTE(GameChaos): static_persist because struct is way too
+	//  big to allocate on the stack
+	static_persist Verts newPoly = {};
 	newPoly.vertCount = 0;
 	
-	for (s32 i = 0; i < poly->vertCount; i++)
+	for (i32 i = 0; i < poly->vertCount; i++)
 	{
 		u32 nextIndex = (i + 1) % (poly->vertCount);
 		v3 point1 = poly->verts[i];
 		v3 point2 = poly->verts[nextIndex];
 		f32 point1Distance = v3dot(plane.normal, point1) - plane.distance;
 		f32 point2Distance = v3dot(plane.normal, point2) - plane.distance;
-		b32 point1Behind = point1Distance < 0;
-		b32 point2Behind = point2Distance < 0;
+		bool point1Behind = point1Distance < 0;
+		bool point2Behind = point2Distance < 0;
 		
 		if (point1Behind)
 		{
@@ -189,11 +191,11 @@ internal b32 ClipPolygon(Verts *poly, SrcPlane plane)
 
 #define NORMAL_EPSILON 0.00001f
 #define DIST_EPSILON 0.01f
-internal b32 PlaneEquals(SrcPlane plane, v3 normal, f32 dist)
+static_function bool PlaneEquals(SrcPlane plane, v3 normal, f32 dist)
 {
 	f32 normEpsilon = NORMAL_EPSILON;
 	f32 distEpsilon = DIST_EPSILON;
-	b32 result = false;
+	bool result = false;
 	if (GCM_ABS(plane.normal.e[0] - normal.e[0]) < normEpsilon
 		&& GCM_ABS(plane.normal.e[1] - normal.e[1]) < normEpsilon
 		&& GCM_ABS(plane.normal.e[2] - normal.e[2]) < normEpsilon
@@ -204,9 +206,9 @@ internal b32 PlaneEquals(SrcPlane plane, v3 normal, f32 dist)
 	return result;
 }
 
-internal b32 VecNearlyEquals(v3 a, v3 b, f32 epsilon/* = NORMAL_EPSILON*/)
+static_function bool VecNearlyEquals(v3 a, v3 b, f32 epsilon/* = NORMAL_EPSILON*/)
 {
-	b32 result = false;
+	bool result = false;
 	if (GCM_ABS(a.x - b.x) < epsilon
 		&& GCM_ABS(a.y - b.y) < epsilon
 		&& GCM_ABS(a.z - b.z) < epsilon)
@@ -218,12 +220,12 @@ internal b32 VecNearlyEquals(v3 a, v3 b, f32 epsilon/* = NORMAL_EPSILON*/)
 
 #define PARENT_TO_INDEX(parent) ((parent) < 0 ? -(parent) - 1 : (parent))
 
-internal f32 PolygonArea(Verts *poly, v3 normal)
+static_function f32 PolygonArea(Verts *poly, v3 normal)
 {
 	f32 result = 0;
 	
 	v3 total = {};
-	for (s32 v = 0; v < poly->vertCount; v++)
+	for (i32 v = 0; v < poly->vertCount; v++)
 	{
 		v3 vert1 = poly->verts[v];
 		v3 vert2 = poly->verts[(v + 1) % poly->vertCount];
@@ -236,9 +238,9 @@ internal f32 PolygonArea(Verts *poly, v3 normal)
 	return result;
 }
 
-internal b32 MakePolygon(SrcPlane *planes, s32 planeCount, s32 planeIndex, Verts *out)
+static_function bool MakePolygon(SrcPlane *planes, i32 planeCount, i32 planeIndex, Verts *out)
 {
-	b32 result = false;
+	bool result = false;
 	SrcPlane plane = planes[planeIndex];
 	f32 normalLen = v3len(plane.normal);
 	if (normalLen < 0.9 || normalLen > 1.1)
@@ -265,10 +267,10 @@ internal b32 MakePolygon(SrcPlane *planes, s32 planeCount, s32 planeIndex, Verts
 	out->verts[out->vertCount++] = ( tangentX +  tangentY) * spread + pointOnPlane;
 	out->verts[out->vertCount++] = ( tangentX + -tangentY) * spread + pointOnPlane;
 #endif
-	for (s32 i = 0; i < 4; i++)
+	for (i32 i = 0; i < 4; i++)
 	{
-		s32 negX = -(i == 0 || i == 1);
-		s32 negY = -(i == 0 || i == 3);
+		i32 negX = -(i == 0 || i == 1);
+		i32 negY = -(i == 0 || i == 3);
 		v3 vert = v3add(v3muls(tangentX, negX), v3muls(tangentY, negY));
 		vert = v3muls(vert, spread);
 		vert = v3add(vert, pointOnPlane);
@@ -276,7 +278,7 @@ internal b32 MakePolygon(SrcPlane *planes, s32 planeCount, s32 planeIndex, Verts
 	}
 	ASSERT(out->vertCount < ARRAYCOUNT(out->verts));
 	
-	for (s32 planeInd = 0; planeInd < planeCount; planeInd++)
+	for (i32 planeInd = 0; planeInd < planeCount; planeInd++)
 	{
 		if (planeInd != planeIndex)
 		{
@@ -285,16 +287,16 @@ internal b32 MakePolygon(SrcPlane *planes, s32 planeCount, s32 planeIndex, Verts
 	}
 	
 	// NOTE(GameChaos): remove duplicate vertices
-	for (s32 ind1 = 0; ind1 < out->vertCount; ind1++)
+	for (i32 ind1 = 0; ind1 < out->vertCount; ind1++)
 	{
 		v3 vert1 = out->verts[ind1];
-		for (s32 ind2 = 0; ind2 < out->vertCount; ind2++)
+		for (i32 ind2 = 0; ind2 < out->vertCount; ind2++)
 		{
 			v3 vert2 = out->verts[ind2];
 			if (ind1 != ind2 && VecNearlyEquals(vert1, vert2, 0.01f))
 			{
 				// NOTE(GameChaos): remove duplicate vert
-				for (s32 v = ind2; v < out->vertCount - 1; v++)
+				for (i32 v = ind2; v < out->vertCount - 1; v++)
 				{
 					out->verts[v] = out->verts[v + 1];
 				}
@@ -316,12 +318,12 @@ internal b32 MakePolygon(SrcPlane *planes, s32 planeCount, s32 planeIndex, Verts
 	return result;
 }
 
-internal s32 Add_(u8 *array, s32 *count, void *data, s32 elementSize, s32 maxElements, const char *arrayName)
+static_function i32 Add_(u8 *array, i32 *count, void *data, i32 elementSize, i32 maxElements, const char *arrayName)
 {
-	s32 result = 0;
+	i32 result = 0;
 	if (*count < maxElements)
 	{
-		for (s32 i = 0; i < *count; i++)
+		for (i32 i = 0; i < *count; i++)
 		{
 			if (Mem_Compare(&array[i * elementSize], data, elementSize))
 			{
@@ -342,9 +344,9 @@ internal s32 Add_(u8 *array, s32 *count, void *data, s32 elementSize, s32 maxEle
 	return result;
 }
 
-internal s32 AddSimple_(u8 *array, s32 *count, void *data, s32 elementSize, s32 maxElements, const char *arrayName)
+static_function i32 AddSimple_(u8 *array, i32 *count, void *data, i32 elementSize, i32 maxElements, const char *arrayName)
 {
-	s32 result = 0;
+	i32 result = 0;
 	if (*count < maxElements)
 	{
 		result = *count;
@@ -364,18 +366,18 @@ internal s32 AddSimple_(u8 *array, s32 *count, void *data, s32 elementSize, s32 
 #define AddBrushSide(array, count, data) AddSimple_((u8 *)(array), (count), &(data), sizeof(data), SRC_MAX_MAP_BRUSHSIDES, "brush sides")
 #define AddPlane(array, count, data) Add_((u8 *)(array), (count), &(data), sizeof(data), SRC_MAX_MAP_PLANES, "planes")
 
-internal b32 IsWhiteSpace(char c)
+static_function bool IsWhiteSpace(char c)
 {
-	b32 result = c == ' ' || c == '\t'
+	bool result = c == ' ' || c == '\t'
 		|| c == '\v' || c == '\n'
 		|| c == '\r' || c == '\f';
 	return result;
 }
 
-internal v3 SnapVector(v3 normal)
+static_function v3 SnapVector(v3 normal)
 {
 	v3 result = normal;
-	for (s32 i = 0; i < 3 ; i++)
+	for (i32 i = 0; i < 3 ; i++)
 	{
 		if (GCM_ABS(result.e[i] - 1) < NORMAL_EPSILON)
 		{
@@ -393,9 +395,9 @@ internal v3 SnapVector(v3 normal)
 	return result;
 }
 
-internal s32 s32pow(s32 base, s32 power)
+static_function i32 i32pow(i32 base, i32 power)
 {
-	s32 result = base;
+	i32 result = base;
 	ASSERT(GCM_ABS(base) < 2 || power < 32);
 	if (power == 0)
 	{
@@ -403,7 +405,7 @@ internal s32 s32pow(s32 base, s32 power)
 	}
 	else
 	{
-		for (s32 i = 0; i < power; i++)
+		for (i32 i = 0; i < power; i++)
 		{
 			result *= base;
 		}
@@ -411,20 +413,20 @@ internal s32 s32pow(s32 base, s32 power)
     return result;
 }
 
-internal s32 convert(char str[], s32 size)
+static_function i32 convert(char str[], i32 size)
 {
-    s32 number = 0;
-    for (s32 i = 0; i < size; ++i)
+    i32 number = 0;
+    for (i32 i = 0; i < size; ++i)
 	{
-        number += (str[i] - '0') * s32pow(10, (size - i - 1));
+        number += (str[i] - '0') * i32pow(10, (size - i - 1));
     }
     return number;
 }
 
-internal s32 pow10_(s32 radix)
+static_function i32 pow10_(i32 radix)
 {
-    s32 r = 1;
-    for (s32 i = 0; i < radix; i++)
+    i32 r = 1;
+    for (i32 i = 0; i < radix; i++)
 	{
         r *= 10;
 	}
@@ -432,12 +434,12 @@ internal s32 pow10_(s32 radix)
 }
 
 // NOTE(GameChaos): TEMPORARY https://stackoverflow.com/a/52706534
-internal f32 StrToF32(str str)
+static_function f32 StrToF32(str str)
 {
     // convert to string_without_decimal
     char str_without_decimal[64];
-    s32 c = 0;
-    for (s32 i = 0; i < str.length; i++)
+    i32 c = 0;
+    for (i32 i = 0; i < str.length; i++)
     {
         if (str.data[i] >= '0' && str.data[i] <= '9')
 		{
@@ -448,27 +450,27 @@ internal f32 StrToF32(str str)
     str_without_decimal[c] = '\0';
 	
     //adjust size if dot present or not.  If no dot present => size = c
-	s32 size = (s32)str.length;
+	i32 size = (i32)str.length;
     size = (size != c) ? size - 1 : size;      //size = 5 = 6-1 since dot is present
 	
 	//convert to decimal
-	s32 decimal = convert(str_without_decimal, size);  //decimal = 12345
+	i32 decimal = convert(str_without_decimal, size);  //decimal = 12345
 	
 	//get divisor
-	s32 i;
-	for (i = (s32)str.length; i >= 0; i--)
+	i32 i;
+	for (i = (i32)str.length; i >= 0; i--)
 	{
 		if (str.data[i] == '.')
 		{
 			break;
 		}
 	}
-	s32 divisor = pow10_(size - i);     //divisor = 10;
+	i32 divisor = pow10_(size - i);     //divisor = 10;
 	f32 result = (f32)decimal / (f32)divisor;
 	return result;  // result = 12345 /10
 }
 
-internal inline StringToNumResult StringToS32(const char *string, s32 *out)
+static_function inline StringToNumResult StringToS32(const char *string, i32 *out)
 {
 	StringToNumResult result = STRINGTONUM_ERR_FAILED;
 	if (string)
@@ -483,23 +485,23 @@ internal inline StringToNumResult StringToS32(const char *string, s32 *out)
 			string++;
 		}
 		
-		b32 negative = false;
+		bool negative = false;
 		if (*string == '-')
 		{
 			negative = true;
 			string++;
 		}
 		
-		s64 value = 0;
-		s64 magnitude = 1;
+		i64 value = 0;
+		i64 magnitude = 1;
 		for (const char *c = string;
 			 *c >= '0' && *c <= '9';
 			 c++)
 		{
 			value *= 10;
-			value += (s64)(*c - '0');
+			value += (i64)(*c - '0');
 			result = STRINGTONUM_SUCCESS;
-			if (value > (s64)S32_MAX + 1)
+			if (value > (i64)I32_MAX + 1)
 			{
 				break;
 			}
@@ -510,19 +512,19 @@ internal inline StringToNumResult StringToS32(const char *string, s32 *out)
 			value = -value;
 		}
 		
-		if (value > S32_MAX)
+		if (value > I32_MAX)
 		{
-			*out = S32_MAX;
+			*out = I32_MAX;
 			result = STRINGTONUM_ERR_NUM_TOO_BIG;
 		}
-		else if (value < S32_MIN)
+		else if (value < I32_MIN)
 		{
-			*out = S32_MIN;
+			*out = I32_MIN;
 			result = STRINGTONUM_ERR_NUM_TOO_BIG;
 		}
 		if (result == STRINGTONUM_SUCCESS)
 		{
-			*out = (s32)value;
+			*out = (i32)value;
 		}
 		
 	}

@@ -3,26 +3,26 @@
 
 typedef struct
 {
-	s64 length;
+	i64 length;
 	const char *data;
 } str;
 
 typedef struct
 {
-	s64 length;
-	s64 storage;
+	i64 length;
+	i64 storage;
 	char *data;
 } str_builder;
 
-internal str StrFromSize(char *cstring, s64 length)
+static_function str StrFromSize(char *cstring, i64 length)
 {
 	str result = {length, cstring};
 	return result;
 }
 
-internal b32 StrEquals(str a, str b, b32 caseSensitive)
+static_function bool StrEquals(str a, str b, bool caseSensitive)
 {
-	b32 result = true;
+	bool result = true;
 	if (a.length == b.length)
 	{
 		const char *aEnd = a.data + a.length;
@@ -54,14 +54,14 @@ internal b32 StrEquals(str a, str b, b32 caseSensitive)
 	return result;
 }
 
-internal void StrPrint(str string)
+static_function void StrPrint(str string)
 {
-	ASSERT(string.length <= S32_MAX);
-	// TODO: don't cast u64 to s32?
-	Plat_WriteToStdout(string.data, (s32)string.length);
+	ASSERT(string.length <= I32_MAX);
+	// TODO: don't cast u64 to i32?
+	Plat_WriteToStdout(string.data, (i32)string.length);
 }
 
-internal str_builder StrbuilderCreate(Arena *arena, s64 bytes)
+static_function str_builder StrbuilderCreate(Arena *arena, i64 bytes)
 {
 	str_builder result = {};
 	result.data = (char *)ArenaAlloc(arena, bytes);
@@ -72,7 +72,7 @@ internal str_builder StrbuilderCreate(Arena *arena, s64 bytes)
 	return result;
 }
 
-internal str_builder StrbuilderCreateFromData(void *data, s64 bytes)
+static_function str_builder StrbuilderCreateFromData(void *data, i64 bytes)
 {
 	str_builder result = {};
 	result.data = (char *)data;
@@ -83,15 +83,15 @@ internal str_builder StrbuilderCreateFromData(void *data, s64 bytes)
 	return result;
 }
 
-internal str StrbuilderGetStr(str_builder builder)
+static_function str StrbuilderGetStr(str_builder builder)
 {
 	str result = {builder.length, builder.data};
 	return result;
 }
 
-internal b32 StrbuilderCat(str_builder *a, str b)
+static_function bool StrbuilderCat(str_builder *a, str b)
 {
-	b32 result = false;
+	bool result = false;
 	if (a->storage - a->length >= b.length)
 	{
 		Mem_Copy(b.data, a->data + a->length, GCM_MIN(b.length, a->storage - a->length));
@@ -100,31 +100,31 @@ internal b32 StrbuilderCat(str_builder *a, str b)
 	return result;
 }
 
-internal s32 StrbuilderFormat(str_builder *string, const char *format, ...)
+static_function i32 StrbuilderFormat(str_builder *string, const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
 	
-	s32 result = VFormat(string->data, string->storage, format, args);
+	i32 result = VFormat(string->data, string->storage, format, args);
 	string->length += result;
 	va_end(args);
 	return result;
 }
 
-internal s32 StrbuilderPushFormat(str_builder *string, const char *format, ...)
+static_function i32 StrbuilderPushFormat(str_builder *string, const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
 	
-	s32 result = VFormat(string->data + string->length, string->storage - string->length, format, args);
+	i32 result = VFormat(string->data + string->length, string->storage - string->length, format, args);
 	string->length += result;
 	va_end(args);
 	return result;
 }
 
-internal b32 StrbuilderClear(str_builder *string)
+static_function bool StrbuilderClear(str_builder *string)
 {
-	b32 result = false;
+	bool result = false;
 	if (string && string->data)
 	{
 		string->data[0] = '\0';

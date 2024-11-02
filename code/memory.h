@@ -5,14 +5,14 @@
 
 typedef struct Arena {
 	void *data;
-	s64 allocPos;
-	s64 maxAllocPos; // keep track of maximum allocPos, for zeroing.
-	s64 bytes;
+	i64 allocPos;
+	i64 maxAllocPos; // keep track of maximum allocPos, for zeroing.
+	i64 bytes;
 } Arena;
 
 typedef struct ArenaTemp{
 	Arena *arena;
-	s64 originalAllocPos;
+	i64 originalAllocPos;
 } ArenaTemp;
 
 typedef struct PoolFreeNode PoolFreeNode;
@@ -22,26 +22,26 @@ struct PoolFreeNode {
 
 typedef struct Pool {
 	u8 *buffer;
-	s64 bufferBytes;
-	s64 chunkSize;
+	i64 bufferBytes;
+	i64 chunkSize;
 	PoolFreeNode *head;
 } Pool;
 
-internal Arena ArenaCreate(s64 bytes);
-internal void *ArenaAlloc(Arena *arena, s64 bytes);
-internal void ArenaReset(Arena *arena);
-internal void ArenaResetTo(Arena *arena, s64 pos);
-internal void ArenaFree(Arena *arena);
+static_function Arena ArenaCreate(i64 bytes);
+static_function void *ArenaAlloc(Arena *arena, i64 bytes);
+static_function void ArenaReset(Arena *arena);
+static_function void ArenaResetTo(Arena *arena, i64 pos);
+static_function void ArenaFree(Arena *arena);
 
-internal ArenaTemp ArenaBeginTemp(Arena *arena);
-internal void ArenaEndTemp(ArenaTemp temp);
+static_function ArenaTemp ArenaBeginTemp(Arena *arena);
+static_function void ArenaEndTemp(ArenaTemp temp);
 
 
-internal Pool PoolCreate(s64 maxElements, s64 chunkSize);
-internal void *PoolAlloc(Pool *pool);
-internal void *PoolAllocBytes(Pool *pool, s64 bytes);
-internal void PoolFreeAllElements(Pool *pool);
-internal bool PoolElementFree(Pool *pool, void *memory);
-internal void PoolFree(Pool *pool);
+static_function Pool PoolCreate(i64 maxElements, i64 chunkSize);
+static_function void *PoolAlloc(Pool *pool);
+static_function void *PoolAllocBytes(Pool *pool, i64 bytes);
+static_function void PoolFreeAllElements(Pool *pool);
+static_function bool PoolElementFree(Pool *pool, void *memory);
+static_function void PoolFree(Pool *pool);
 
 #endif //MEMORY_H

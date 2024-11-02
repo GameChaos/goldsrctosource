@@ -12,32 +12,32 @@
 
 typedef wchar_t wchar;
 
-global SYSTEM_INFO g_systemInfo = {0};
-global wchar g_wcharBuffer[2048];
+static_global SYSTEM_INFO g_systemInfo = {0};
+static_global wchar g_wcharBuffer[2048];
 
-internal s32 Win32Utf8ToUtf16(const char *utf8, wchar *utf16, s32 utf16Chars)
+static_function i32 Win32Utf8ToUtf16(const char *utf8, wchar *utf16, i32 utf16Chars)
 {
 	if (utf16)
 	{
 		utf16[0] = L'\0';
 	}
-	s32 result = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, utf16, utf16Chars);
+	i32 result = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, utf16, utf16Chars);
 	return result;
 }
 
-internal s32 Win32Utf16ToUtf8(const wchar *utf16, char *utf8, s32 utf8Chars)
+static_function i32 Win32Utf16ToUtf8(const wchar *utf16, char *utf8, i32 utf8Chars)
 {
 	if (utf8)
 	{
 		utf8[0] = '\0';
 	}
-	s32 result = WideCharToMultiByte(CP_UTF8, 0, utf16, -1, utf8, utf8Chars, NULL, NULL);
+	i32 result = WideCharToMultiByte(CP_UTF8, 0, utf16, -1, utf8, utf8Chars, NULL, NULL);
 	return result;
 }
 
-internal b32 StringEqualsW(wchar *a, wchar *b, b32 caseSensitive)
+static_function bool StringEqualsW(wchar *a, wchar *b, bool caseSensitive)
 {
-	b32 result = true;
+	bool result = true;
 	if (caseSensitive)
 	{
 		result = wcscmp(a, b) == 0;
@@ -60,7 +60,7 @@ internal b32 StringEqualsW(wchar *a, wchar *b, b32 caseSensitive)
 	return result;
 }
 
-internal void Win32FixInconsistentSlashes(char *path)
+static_function void Win32FixInconsistentSlashes(char *path)
 {
 	for (char *c = path; *c != 0; c++)
 	{
@@ -71,7 +71,7 @@ internal void Win32FixInconsistentSlashes(char *path)
 	}
 }
 
-internal wchar *Win32GetFileExtension(wchar *file)
+static_function wchar *Win32GetFileExtension(wchar *file)
 {
 	wchar *result = NULL;
 	if (file)
@@ -94,7 +94,7 @@ internal wchar *Win32GetFileExtension(wchar *file)
 	return result;
 }
 
-internal void AppendToPath(char *path, s64 pathLength, const char *file)
+static_function void AppendToPath(char *path, i64 pathLength, const char *file)
 {
 	size_t pathStrLen = strlen(path);
 	// TODO: this could be more robust probably
@@ -109,7 +109,7 @@ internal void AppendToPath(char *path, s64 pathLength, const char *file)
 	}
 }
 
-internal s32 GetDirectoryFiles(char *path, FileInfo *out, s32 maxFileCount, const char *fileExtFilter)
+static_function i32 GetDirectoryFiles(char *path, FileInfo *out, i32 maxFileCount, const char *fileExtFilter)
 {
 	WIN32_FIND_DATA findFileData = {};
 	char wildcardPath[1024] = "";
@@ -160,34 +160,34 @@ internal s32 GetDirectoryFiles(char *path, FileInfo *out, s32 maxFileCount, cons
 	return result;
 }
 
-internal void *Plat_MemReserve(s64 bytes)
+static_function void *Plat_MemReserve(i64 bytes)
 {
 	void *result = VirtualAlloc(NULL, bytes, MEM_RESERVE, PAGE_READWRITE);
 	return result;
 }
 
-internal void Plat_MemCommit(void *address, s64 bytes)
+static_function void Plat_MemCommit(void *address, i64 bytes)
 {
 	VirtualAlloc(address, bytes, MEM_COMMIT, PAGE_READWRITE);
 }
 
-internal void Plat_MemDecommit(void *address, s64 bytes)
+static_function void Plat_MemDecommit(void *address, i64 bytes)
 {
 	VirtualFree(address, bytes, MEM_DECOMMIT);
 }
 
-internal void Plat_MemFree(void *address, s64 bytes)
+static_function void Plat_MemFree(void *address, i64 bytes)
 {
 	VirtualFree(address, bytes, MEM_RELEASE);
 }
 
-internal s64 Plat_GetPageSize(void)
+static_function i64 Plat_GetPageSize(void)
 {
-	s64 result = (s64)g_systemInfo.dwPageSize;
+	i64 result = (i64)g_systemInfo.dwPageSize;
 	return result;
 }
 
-internal void Mem_Copy(const void *source, void *destination, size_t bytes)
+static_function void Mem_Copy(const void *source, void *destination, size_t bytes)
 {
 	ASSERT(source);
 	ASSERT(destination);
@@ -195,18 +195,18 @@ internal void Mem_Copy(const void *source, void *destination, size_t bytes)
 	CopyMemory(destination, source, bytes);
 }
 
-internal b32 Mem_Compare(const void *a, const void *b, s64 bytes)
+static_function bool Mem_Compare(const void *a, const void *b, i64 bytes)
 {
-	b32 result = memcmp(a, b, bytes) == 0;
+	bool result = memcmp(a, b, bytes) == 0;
 	return result;
 }
 
-internal void Plat_MemSetToZero(void *destination, s64 bytes)
+static_function void Plat_MemSetToZero(void *destination, i64 bytes)
 {
 	__stosb((u8 *)destination, 0, bytes);
 }
 
-internal b32 StringEquals(const char *a, const char *b, b32 caseSensitive)
+static_function bool StringEquals(const char *a, const char *b, bool caseSensitive)
 {
 	if (caseSensitive)
 	{

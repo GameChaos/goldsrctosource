@@ -1,5 +1,5 @@
 
-internal void EatWhiteSpace_(EntlumpTokeniser *tokeniser)
+static_function void EatWhiteSpace_(EntlumpTokeniser *tokeniser)
 {
 	while (IsWhiteSpace(tokeniser->at[0]))
 	{
@@ -7,7 +7,7 @@ internal void EatWhiteSpace_(EntlumpTokeniser *tokeniser)
 	}
 }
 
-internal str EntlumpGetString_(EntlumpTokeniser *tokeniser, s32 length)
+static_function str EntlumpGetString_(EntlumpTokeniser *tokeniser, i32 length)
 {
 	str result = {};
 	result.length = length;
@@ -16,7 +16,7 @@ internal str EntlumpGetString_(EntlumpTokeniser *tokeniser, s32 length)
 	return result;
 }
 
-internal EntlumpToken EntlumpGetToken(EntlumpTokeniser *tokeniser)
+static_function EntlumpToken EntlumpGetToken(EntlumpTokeniser *tokeniser)
 {
 	EntlumpToken result = {};
 	
@@ -46,10 +46,10 @@ internal EntlumpToken EntlumpGetToken(EntlumpTokeniser *tokeniser)
 		case '\"':
 		{
 			result.type = ENTLUMPTOKEN_IDENTIFIER;
-			s32 identifierLen = 0;
+			i32 identifierLen = 0;
 			tokeniser->at++;
 			result.string.data = tokeniser->at;
-			for (s32 i = 0; i < S32_MAX; i++)
+			for (i32 i = 0; i < I32_MAX; i++)
 			{
 				if (*tokeniser->at == '\"')
 				{
@@ -79,9 +79,9 @@ internal EntlumpToken EntlumpGetToken(EntlumpTokeniser *tokeniser)
 }
 
 // TODO: DON'T ASSUME NULL TERMINATED!!!!!!!!!!!!!!!!
-internal b32 EntlumpParseEntity_(EntProperties *ent, EntlumpTokeniser *tokeniser)
+static_function bool EntlumpParseEntity_(EntProperties *ent, EntlumpTokeniser *tokeniser)
 {
-	b32 result = false;
+	bool result = false;
 	*ent = (EntProperties){};
 	EntlumpToken token;
 	token = EntlumpGetToken(tokeniser);
@@ -158,7 +158,7 @@ internal b32 EntlumpParseEntity_(EntProperties *ent, EntlumpTokeniser *tokeniser
 	return result;
 }
 
-internal EntList GsrcParseEntities(Arena *arena, str entLump)
+static_function EntList GsrcParseEntities(Arena *arena, str entLump)
 {
 	EntProperties ent = {};
 	EntList result = {};
@@ -170,7 +170,7 @@ internal EntList GsrcParseEntities(Arena *arena, str entLump)
 #if 0
 		// print entity properties for debugging
 		PrintString("{\n");
-		for (s32 i = 0; i < ent.propertyCount; i++)
+		for (i32 i = 0; i < ent.propertyCount; i++)
 		{
 			Print("\t\"%.*s\" \"%.*s\"\n", ent.properties[i].key.length, ent.properties[i].key.data,
 				  ent.properties[i].value.length, ent.properties[i].value.data);
@@ -181,10 +181,10 @@ internal EntList GsrcParseEntities(Arena *arena, str entLump)
 	return result;
 }
 
-internal EntProperties *EntListGetEnt(EntList list, str classname)
+static_function EntProperties *EntListGetEnt(EntList list, str classname)
 {
 	EntProperties *result = NULL;
-	for (s32 i = 0; i < list.entCount; i++)
+	for (i32 i = 0; i < list.entCount; i++)
 	{
 		if (StrEquals(list.ents[i].classname, classname, false))
 		{
@@ -195,10 +195,10 @@ internal EntProperties *EntListGetEnt(EntList list, str classname)
 	return result;
 }
 
-internal EntProperty *EntGetProperty(EntProperties *ent, str key)
+static_function EntProperty *EntGetProperty(EntProperties *ent, str key)
 {
 	EntProperty *result = NULL;
-	for (s32 i = 0; i < ent->propertyCount; i++)
+	for (i32 i = 0; i < ent->propertyCount; i++)
 	{
 		if (StrEquals(ent->properties[i].key, key, false))
 		{
@@ -209,17 +209,17 @@ internal EntProperty *EntGetProperty(EntProperties *ent, str key)
 	return result;
 }
 
-internal void EntPushProp(EntProperties *out, str key, str value)
+static_function void EntPushProp(EntProperties *out, str key, str value)
 {
 	out->properties[out->propertyCount++] = (EntProperty){key, value};
 }
 
-internal ModelInfo EntConvertCommonBrush(Arena *arena, EntProperties *gsrcEnt, EntProperties *out)
+static_function ModelInfo EntConvertCommonBrush(Arena *arena, EntProperties *gsrcEnt, EntProperties *out)
 {
 	ModelInfo result = {
 		.model = -1, .rendermode = -1
 	};
-	for (s32 prop = 0; prop < gsrcEnt->propertyCount; prop++)
+	for (i32 prop = 0; prop < gsrcEnt->propertyCount; prop++)
 	{
 		if (StrEquals(gsrcEnt->properties[prop].key, STR("angles"), false))
 		{
@@ -286,9 +286,9 @@ internal ModelInfo EntConvertCommonBrush(Arena *arena, EntProperties *gsrcEnt, E
 	return result;
 }
 
-internal void EntConvertOneToOne(EntProperties *gsrcEnt, EntProperties *out)
+static_function void EntConvertOneToOne(EntProperties *gsrcEnt, EntProperties *out)
 {
-	for (s32 prop = 0; prop < gsrcEnt->propertyCount; prop++)
+	for (i32 prop = 0; prop < gsrcEnt->propertyCount; prop++)
 	{
 		EntPushProp(out, gsrcEnt->properties[prop].key, gsrcEnt->properties[prop].value);
 	}

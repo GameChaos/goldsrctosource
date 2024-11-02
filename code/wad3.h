@@ -38,7 +38,7 @@ typedef struct
 
 typedef struct
 {
-	b32 valid;
+	bool valid;
 	u32 entryCount;
 	Wad3DirEntry **entries;
 	u32 textureCount;
@@ -48,12 +48,12 @@ typedef struct
 
 typedef struct
 {
-	b32 found;
+	bool found;
 	u32 wadIndex;
 	u32 textureIndex;
 } FindTextureResult;
 
-internal Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *path/* = NULL*/);
-internal Wad3 Wad3FromFile(Arena *arena, char *path);
+static_function Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *path/* = NULL*/);
+static_function Wad3 Wad3FromFile(Arena *arena, char *path);
 
 #endif //WAD3_H

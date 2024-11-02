@@ -2,39 +2,39 @@
 typedef struct
 {
 	SrcTexinfo texinfo[SRC_MAX_MAP_TEXINFO];
-	s32 texinfoCount;
+	i32 texinfoCount;
 	
 	SrcTexdata texdata[SRC_MAX_MAP_TEXDATA];
-	s32 texdataCount;
+	i32 texdataCount;
 	
 	char tdStringData[SRC_MAX_MAP_TEXDATA_STRING_DATA];
-	s32 tdStringTable[SRC_MAX_MAP_TEXDATA_STRING_TABLE];
-	s32 tdTableCount;
+	i32 tdStringTable[SRC_MAX_MAP_TEXDATA_STRING_TABLE];
+	i32 tdTableCount;
 	
 	SrcLeaf leaves[SRC_MAX_MAP_LEAFS];
-	s32 leafCount;
+	i32 leafCount;
 	
 	SrcNode nodes[SRC_MAX_MAP_NODES];
-	s32 nodeCount;
+	i32 nodeCount;
 	
 	v3 vertices[SRC_MAX_MAP_VERTS];
-	s32 vertexCount;
+	i32 vertexCount;
 	
 	v3 vertNormals[SRC_MAX_MAP_VERTNORMALS];
-	s32 vertNormalCount;
+	i32 vertNormalCount;
 	
 	u32 vertNormalIndices[SRC_MAX_MAP_VERTNORMALINDICES];
-	s32 vertNormalIndexCount;
+	i32 vertNormalIndexCount;
 	
 	SrcEdge edges[SRC_MAX_MAP_EDGES];
-	s32 edgeCount;
+	i32 edgeCount;
 	
 	SrcFace faces[SRC_MAX_MAP_FACES];
-	s32 faceCount;
+	i32 faceCount;
 	
 	SrcModel models[SRC_MAX_MAP_MODELS];
-	b32 modelIsLadder[SRC_MAX_MAP_MODELS];
-	s32 modelCount;
+	bool modelIsLadder[SRC_MAX_MAP_MODELS];
+	i32 modelCount;
 	
 	u16 leafBrushes[SRC_MAX_MAP_LEAFBRUSHES];
 	u16 leafBrushCount;
@@ -43,27 +43,27 @@ typedef struct
 	u16 leafFaceCount;
 	
 	SrcLeafWaterData leafWaterData[SRC_MAX_MAP_LEAFWATERDATA];
-	s32 leafWaterDataCount;
+	i32 leafWaterDataCount;
 	
-	s16 leafMinDistToWater[SRC_MAX_MAP_LEAFS];
-	s32 leafMinDistToWaterCount;
+	i16 leafMinDistToWater[SRC_MAX_MAP_LEAFS];
+	i32 leafMinDistToWaterCount;
 	
 	SrcBrush brushes[SRC_MAX_MAP_BRUSHES];
-	s32 brushCount;
+	i32 brushCount;
 	
 	SrcBrushSide brushSides[SRC_MAX_MAP_BRUSHSIDES];
-	s32 brushSideCount;
+	i32 brushSideCount;
 	
 	SrcPlane planes[SRC_MAX_MAP_PLANES];
-	s32 planeCount;
+	i32 planeCount;
 } BspState;
 
-global BspState g_bspConversionState = {};
+static_global BspState g_bspConversionState = {};
 
-internal inline void *BufferPushDataAndSetLumpSize(FileWritingBuffer *buffer, SrcHeader *header, s32 lumpIndex, void *data, s32 bytes)
+static_function inline void *BufferPushDataAndSetLumpSize(FileWritingBuffer *buffer, SrcHeader *header, i32 lumpIndex, void *data, i32 bytes)
 {
 	void *result = buffer->memory + buffer->usedBytes;
-	header->lump[lumpIndex].offset = (s32)buffer->usedBytes;
+	header->lump[lumpIndex].offset = (i32)buffer->usedBytes;
 	header->lump[lumpIndex].length = bytes;
 	if (!BufferPushData(buffer, data, bytes, true))
 	{
@@ -75,21 +75,21 @@ internal inline void *BufferPushDataAndSetLumpSize(FileWritingBuffer *buffer, Sr
 }
 
 // NOTE(GameChaos): https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/q3map/map.c#L125
-internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 polyCount, v3 mins, v3 maxs)
+static_function bool AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, i32 polyCount, v3 mins, v3 maxs)
 {
-	b32 result = false;
+	bool result = false;
 	SrcBrushSide *brushSides = &state->brushSides[brush->firstSide];
 	//
 	// add the axial planes
 	//
-	s32 order = 0;
-	b32 added = false;
-	for (s32 axis = 0; axis < 3; axis++)
+	i32 order = 0;
+	bool added = false;
+	for (i32 axis = 0; axis < 3; axis++)
 	{
-		for (s32 dir = -1; dir <= 1; dir += 2, order++)
+		for (i32 dir = -1; dir <= 1; dir += 2, order++)
 		{
 			// see if the plane is already present
-			s32 sideInd;
+			i32 sideInd;
 			for (sideInd = 0; sideInd < brush->sides; sideInd++)
 			{
 				if (state->planes[brushSides[sideInd].plane].normal.e[axis] == dir)
@@ -136,7 +136,9 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 				brushSides[order] = brushSides[sideInd];
 				brushSides[sideInd] = sidetemp;
 				
-				local_persist Verts polytemp;
+				// NOTE(GameChaos): static_persist because the struct is way too
+				//  big to allocate on the stack
+				static_persist Verts polytemp;
 				polytemp = polys[order];
 				polys[order] = polys[sideInd];
 				polys[sideInd] = polytemp;
@@ -157,9 +159,9 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 	{
 #ifdef GC_DEBUG
 		// NOTE(GameChaos): test if first 6 sides are axis aligned
-		for (s32 dir = -1; dir <= 1; dir += 2)
+		for (i32 dir = -1; dir <= 1; dir += 2)
 		{
-			for (s32 axis = 3; axis < 3; axis++)
+			for (i32 axis = 3; axis < 3; axis++)
 			{
 				ASSERT(state->planes[brushSides[axis * (dir + 1)].plane].normal.e[axis] == dir);
 			}
@@ -168,7 +170,7 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 		ASSERT(brush->sides == polyCount);
 		// test the non-axial plane edges
 		// this code tends to cause some problems...
-		for (s32 i = 6; i < brush->sides; i++)
+		for (i32 i = 6; i < brush->sides; i++)
 		{
 			SrcBrushSide *s = &brushSides[i];
 			Verts *poly = &polys[i];
@@ -176,9 +178,9 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 			{
 				continue;
 			}
-			for (s32 j = 0; j < poly->vertCount; j++)
+			for (i32 j = 0; j < poly->vertCount; j++)
 			{
-				s32 k = (j + 1) % poly->vertCount;
+				i32 k = (j + 1) % poly->vertCount;
 				v3 vec = v3sub(poly->verts[j], poly->verts[k]);
 				f32 vecLen = v3len(vec);
 				if (vecLen < 0.5f)
@@ -200,9 +202,9 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 				}
 				
 				// try the six possible slanted axials from this edge
-				for (s32 axis = 0; axis < 3; axis++)
+				for (i32 axis = 0; axis < 3; axis++)
 				{
-					for (s32 dir = -1; dir <= 1; dir += 2)
+					for (i32 dir = -1; dir <= 1; dir += 2)
 					{
 						// construct a plane
 						v3 vec2 = {};
@@ -231,7 +233,7 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 							{
 								continue;
 							}
-							s32 l;
+							i32 l;
 							for (l = 0; l < poly2->vertCount; l++)
 							{
 								f32 d = v3dot(poly2->verts[l], normal) - dist;
@@ -274,9 +276,9 @@ internal b32 AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, s32 
 	return result;
 }
 
-internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapData, SrcMapData *srcMapData, char *outputPath, char *modPath, char *valvePath)
+static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapData, SrcMapData *srcMapData, char *outputPath, char *modPath, char *valvePath)
 {
-	b32 result = false;
+	bool result = false;
 	ASSERT(outputPath);
 	ASSERT(mapData);
 	ASSERT(srcMapData);
@@ -315,21 +317,23 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		.version = 21, // CSGO bsp
 	};
 	
-	s32 mapflags = 0;
+	i32 mapflags = 0;
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_MAP_FLAGS, &mapflags, sizeof(mapflags));
 	
 	SrcLump *lump = (SrcLump *)&fileHeader->lump;
 	
 	// load WADs
-	local_persist Wad3 wads[MAX_WADS] = {};
-	s32 wadCount = LoadWads(arena, modPath, valvePath, wads);
+	// NOTE(GameChaos): static_persist because the struct is way too
+	//  big to allocate on the stack
+	static_persist Wad3 wads[MAX_WADS] = {};
+	i32 wadCount = LoadWads(arena, modPath, valvePath, wads);
 	EntList gsrcEnts = GsrcParseEntities(arena, mapData->lumpEntities);
 	
 	//
 	// LUMP_PAKFILE
-	s64 maxZipBytes = mapData->lumpTextures.mipTextureCount * 2048 * 2048 * 3;
+	i64 maxZipBytes = mapData->lumpTextures.mipTextureCount * 2048 * 2048 * 3;
 	// 1 vmt and 1 vtf for every miptexture + 6 sky vmts and 6 sky vtfs
-	s64 maxZipFiles = mapData->lumpTextures.mipTextureCount * 2 + 6 + 6;
+	i64 maxZipFiles = mapData->lumpTextures.mipTextureCount * 2 + 6 + 6;
 	ZipBuilder zipBuilder = ZipBuilderCreate(arena, maxZipBytes, maxZipFiles);
 	
 	FileWritingBuffer texBuffer = BufferCreate(tempArena, 8192 * 8192 * 3);
@@ -346,27 +350,27 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	//ASSERT(skyname);
 	if (skyname)
 	{
-		for (s32 side = 0; side < SKY_SIDE_COUNT; side++)
+		for (i32 side = 0; side < SKY_SIDE_COUNT; side++)
 		{
 			BufferReset(&texBuffer);
 			
-			b32 gotTexture = GsrcGetSkyTexture(tempArena, &texBuffer, skyname->value, modPath, valvePath, (SkySide)side);
+			bool gotTexture = GsrcGetSkyTexture(tempArena, &texBuffer, skyname->value, modPath, valvePath, (SkySide)side);
 			if (gotTexture)
 			{
 				char vtfFileName[256];
-				s32 vtfFileNameLen = Format(vtfFileName, sizeof(vtfFileName), "materials/skybox/%.*s%s.vtf",
-											(s32)skyname->value.length, skyname->value.data, g_skySides[side]);
+				i32 vtfFileNameLen = Format(vtfFileName, sizeof(vtfFileName), "materials/skybox/%.*s%s.vtf",
+											(i32)skyname->value.length, skyname->value.data, g_skySides[side]);
 				ZipBuilderAddFile(&zipBuilder, vtfFileName, vtfFileNameLen, texBuffer.memory, texBuffer.usedBytes);
 				
 				char texturePath[128];
 				Format(texturePath, sizeof(texturePath), "skybox/%.*s%s",
-					   (s32)skyname->value.length, skyname->value.data, g_skySides[side]);
+					   (i32)skyname->value.length, skyname->value.data, g_skySides[side]);
 				
 				char vmt[512];
-				s32 vmtFileLength = MakeSkyTextureVmt(vmt, sizeof(vmt), texturePath);
+				i32 vmtFileLength = MakeSkyTextureVmt(vmt, sizeof(vmt), texturePath);
 				
 				char vmtFileName[128];
-				s32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), "%s.vmt", texturePath);
+				i32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), "%s.vmt", texturePath);
 				ZipBuilderAddFile(&zipBuilder, vmtFileName, vmtFileNameLen, vmt, vmtFileLength);
 			}
 			else
@@ -414,10 +418,10 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			}
 		}
 		
-		b32 transparent = mipTexture.name[0] == '{';
+		bool transparent = mipTexture.name[0] == '{';
 		
 		char vtfFileName[256];
-		s32 vtfFileNameLen = Format(vtfFileName, sizeof(vtfFileName), CONVERTED_MATERIAL_PATH "%s.vtf", mipTexture.name);
+		i32 vtfFileNameLen = Format(vtfFileName, sizeof(vtfFileName), CONVERTED_MATERIAL_PATH "%s.vtf", mipTexture.name);
 		BufferReset(&texBuffer);
 		GsrcMipTextureToVtf(tempArena, &texBuffer, mipTexture, textureData);
 #ifdef DEBUG_GRAPHICS
@@ -428,10 +432,10 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		ZipBuilderAddFile(&zipBuilder, vtfFileName, vtfFileNameLen, texBuffer.memory, texBuffer.usedBytes);
 		
 		char vmtFileName[256];
-		s32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), CONVERTED_MATERIAL_PATH "%s.vmt", mipTexture.name);
+		i32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), CONVERTED_MATERIAL_PATH "%s.vmt", mipTexture.name);
 		
 		char vmt[512];
-		s32 vmtFileLength = MakeVmt(vmt, sizeof(vmt), mipTexture.name, transparent);
+		i32 vmtFileLength = MakeVmt(vmt, sizeof(vmt), mipTexture.name, transparent);
 		
 		ZipBuilderAddFile(&zipBuilder, vmtFileName, vmtFileNameLen, vmt, vmtFileLength);
 	}
@@ -440,23 +444,23 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	if (zipFile.memory && zipFile.size)
 	{
 		BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_PAKFILE,
-									 zipFile.memory, (s32)zipFile.usedBytes);
+									 zipFile.memory, (i32)zipFile.usedBytes);
 	}
 	
 	//
 	// LUMP_TEXDATA                        = 2 # ERROR: Map with no textures
 	//
 	
-	for (s32 i = 0; i < (s64)mapData->lumpTextures.mipTextureCount; i++)
+	for (i32 i = 0; i < (i64)mapData->lumpTextures.mipTextureCount; i++)
 	{
 		// TODO: nameStringTableID
 		state->texdata[state->texdataCount++] = (SrcTexdata){
 			{0.5f, 0.5f, 0.5f},
 			i,
-			(s32)mapData->lumpTextures.mipTextures[i]->width,
-			(s32)mapData->lumpTextures.mipTextures[i]->height,
-			(s32)mapData->lumpTextures.mipTextures[i]->width,
-			(s32)mapData->lumpTextures.mipTextures[i]->height,
+			(i32)mapData->lumpTextures.mipTextures[i]->width,
+			(i32)mapData->lumpTextures.mipTextures[i]->height,
+			(i32)mapData->lumpTextures.mipTextures[i]->width,
+			(i32)mapData->lumpTextures.mipTextures[i]->height,
 		};
 	}
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_TEXDATA, state->texdata, sizeof(*state->texdata) * state->texdataCount);
@@ -474,10 +478,10 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		{
 			continue;
 		}
-		s32 offset = (s32)(tdStringData - state->tdStringData);
+		i32 offset = (i32)(tdStringData - state->tdStringData);
 		state->tdStringTable[state->tdTableCount++] = offset;
-		s32 len = (s32)(tdStringDataEnd - tdStringData);
-		s32 formattedLen = 0;
+		i32 len = (i32)(tdStringDataEnd - tdStringData);
+		i32 formattedLen = 0;
 		if (StringEquals(mapData->lumpTextures.mipTextures[i]->name, "sky", false))
 		{
 			formattedLen = Format(tdStringData, len, "%s", "tools/toolsskybox2d");
@@ -490,7 +494,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		tdStringData += formattedLen + 1;
 	}
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_TEXDATA_STRING_DATA,
-								 state->tdStringData, (s32)(tdStringData - state->tdStringData));
+								 state->tdStringData, (i32)(tdStringData - state->tdStringData));
 	
 	//
 	// LUMP_TEXDATA_STRING_TABLE           = 44 # straight up crash
@@ -503,13 +507,13 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	// LUMP_TEXINFO                        = 6 # ERROR: Map with no texinfo
 	//
 	
-	for (s32 i = 0; i < mapData->texinfoCount; i++)
+	for (i32 i = 0; i < mapData->texinfoCount; i++)
 	{
 		SrcTexinfo texinfo = {};
 		
-		for (s32 xyzw = 0; xyzw < 4; xyzw++)
+		for (i32 xyzw = 0; xyzw < 4; xyzw++)
 		{
-			for (s32 st = 0; st < 2; st++)
+			for (i32 st = 0; st < 2; st++)
 			{
 				texinfo.textureVecs[st][xyzw] = mapData->lumpTexinfo[i].vecs[st][xyzw];
 				texinfo.lightmapVecs[st][xyzw] = mapData->lumpTexinfo[i].vecs[st][xyzw] / 16.0f;
@@ -553,7 +557,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	Mem_Copy(mapData->lumpPlanes, state->planes, sizeof(*mapData->lumpPlanes) * mapData->planeCount);
 	state->planeCount = mapData->planeCount;
 	
-	for (s32 i = 0; i < mapData->faceCount; i++)
+	for (i32 i = 0; i < mapData->faceCount; i++)
 	{
 		SrcFace face = {};
 		
@@ -580,9 +584,9 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			v2 mins = v2fill(F32_MAX);
 			v2 maxs = v2fill(-F32_MAX);
 			
-			for (s32 surfEdge = 0; surfEdge < face.edges; surfEdge++)
+			for (i32 surfEdge = 0; surfEdge < face.edges; surfEdge++)
 			{
-				s32 edge = mapData->lumpSurfEdges[face.firstEdge + surfEdge];
+				i32 edge = mapData->lumpSurfEdges[face.firstEdge + surfEdge];
 				v3 vert;
 				if (edge >= 0)
 				{
@@ -593,7 +597,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 					vert = mapData->lumpVertices[mapData->lumpEdges[-edge].vertex[1]];
 				}
 				
-				for (s32 j = 0; j < 2; j++)
+				for (i32 j = 0; j < 2; j++)
 				{
 					f32 val = (vert.e[0] * texinfo.vecs[j][0]
 							   + vert.e[1] * texinfo.vecs[j][1]
@@ -609,16 +613,16 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 					}
 				}
 			}
-			s32 bmins[2];
-			s32 bmaxs[2];
-			s32 size[2];
-			for (s32 j = 0; j < 2; j++)
+			i32 bmins[2];
+			i32 bmaxs[2];
+			i32 size[2];
+			for (i32 j = 0; j < 2; j++)
 			{
-				bmins[j] = (s32)f32floor(mins.e[j] / 16.0f);
-				bmaxs[j] = (s32)f32ceil(maxs.e[j] / 16.0f);
+				bmins[j] = (i32)f32floor(mins.e[j] / 16.0f);
+				bmaxs[j] = (i32)f32ceil(maxs.e[j] / 16.0f);
 				size[j] = bmaxs[j] - bmins[j];
 				
-				if (bmins[j] != S32_MIN
+				if (bmins[j] != I32_MIN
 					&& size[j] < SRC_MAX_BRUSH_LIGHTMAP_DIM_INCLUDING_BORDER && GCM_ABS(bmins[j]) < 16834)
 				{
 					face.lightmapTextureMinsInLuxels[j] = bmins[j];
@@ -642,7 +646,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			Warning("Ran out of vertex normals!\n");
 			ASSERT(0);
 		}
-		for (s32 surfEdge = 0; surfEdge < face.edges; surfEdge++)
+		for (i32 surfEdge = 0; surfEdge < face.edges; surfEdge++)
 		{
 			if (state->vertNormalIndexCount < SRC_MAX_MAP_VERTNORMALS)
 			{
@@ -679,11 +683,11 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		
 		// NOTE(GameChaos): now, convert the new entities to a big string!
 		str_builder srcEntLump = StrbuilderCreate(tempArena, mapData->lumpEntities.length * 4);
-		for (s32 i = 0; i < srcEnts.entCount; i++)
+		for (i32 i = 0; i < srcEnts.entCount; i++)
 		{
 			EntProperties *ent = &srcEnts.ents[i];
 			StrbuilderCat(&srcEntLump, STR("{\n"));
-			for (s32 prop = 0; prop < ent->propertyCount; prop++)
+			for (i32 prop = 0; prop < ent->propertyCount; prop++)
 			{
 				StrbuilderCat(&srcEntLump, STR("\""));
 				StrbuilderCat(&srcEntLump, ent->properties[prop].key);
@@ -696,7 +700,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			StrbuilderCat(&srcEntLump, STR("\"\n}\n"));
 		}
 		
-		BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_ENTITIES, srcEntLump.data, (s32)srcEntLump.length);
+		BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_ENTITIES, srcEntLump.data, (i32)srcEntLump.length);
 		ArenaEndTemp(arenaTemp2);
 	}
 	//
@@ -705,9 +709,9 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	
 	{
 		// TODO: is lightmap exposure correct? does goldsrc encode lightmaps with the srgb oetf?
-		s32 srcLightCount = 0;
+		i32 srcLightCount = 0;
 		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-		Rgbe8888 *srcLight = (Rgbe8888 *)ArenaAlloc(arena, (s64)mapData->lightingLength / 3 * 4);
+		Rgbe8888 *srcLight = (Rgbe8888 *)ArenaAlloc(arena, (i64)mapData->lightingLength / 3 * 4);
 		for (u8 *c = mapData->lumpLighting;
 			 c < mapData->lumpLighting + mapData->lightingLength;
 			 c += 3)
@@ -716,7 +720,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 			colour.exponent = 0;
 			v3 lin = SrcRgbe8888ToLinear(colour);
 			lin = v3muls(lin, 1.5f);
-			for (s32 i = 0; i < 3; i++)
+			for (i32 i = 0; i < 3; i++)
 			{
 				lin.e[i] = powf(lin.e[i], 2.2f);
 				//lin[i] = lin[i] * lin[i];
@@ -737,9 +741,9 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	
 	{
 		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-		s32 ambientIndexCount = 0;
+		i32 ambientIndexCount = 0;
 		SrcLeafAmbientIndex *dummyAmbientIndex = (SrcLeafAmbientIndex *)ArenaAlloc(tempArena, sizeof(*dummyAmbientIndex) * mapData->leafCount);
-		for (s32 leaf = 0; leaf < mapData->leafCount; leaf++)
+		for (i32 leaf = 0; leaf < mapData->leafCount; leaf++)
 		{
 			SrcLeafAmbientIndex ambientIndex = {};
 			ambientIndex.ambientSampleCount = 1;
@@ -758,7 +762,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	// NOTE(GameChaos): dummy ambient lighting
 	{
 		SrcLeafAmbientLighting dummyAmbient = {};
-		for (s32 i = 0; i < 6; i++)
+		for (i32 i = 0; i < 6; i++)
 		{
 			dummyAmbient.cube.colour[i].r = 1;
 			dummyAmbient.cube.colour[i].g = 1;
@@ -801,14 +805,14 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	//
 	
 	// first convert nodes
-	for (s32 i = 0; i < mapData->nodeCount; i++)
+	for (i32 i = 0; i < mapData->nodeCount; i++)
 	{
 		SrcNode node = {};
 		
 		node.plane = mapData->lumpNodes[i].plane;
 		node.children[0] = mapData->lumpNodes[i].children[0];
 		node.children[1] = mapData->lumpNodes[i].children[1];
-		for (s32 j = 0; j < 3; j++)
+		for (i32 j = 0; j < 3; j++)
 		{
 			node.mins[j] = mapData->lumpNodes[i].mins[j];
 			node.maxs[j] = mapData->lumpNodes[i].maxs[j];
@@ -822,7 +826,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	}
 	
 	fileHeader->lump[SRC_LUMP_LEAFS].version = 1;
-	s16 leafCluster = 0;
+	i16 leafCluster = 0;
 	
 	// NOTE(GameChaos): index 0 solid leaf with no brushes, clusters,
 	// faces or areas. can be shared between brushmodels.
@@ -834,20 +838,20 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	}
 	
 	SrcLeaf nullLeaf = {};
-	for (s32 model = 0; model < mapData->modelCount; model++)
+	for (i32 model = 0; model < mapData->modelCount; model++)
 	{
 		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-		s64 polysByteCount = sizeof(Verts) * SRC_MAX_BRUSH_SIDES;
+		i64 polysByteCount = sizeof(Verts) * SRC_MAX_BRUSH_SIDES;
 		Verts *polys = (Verts *)ArenaAlloc(tempArena, polysByteCount);
 		
 		GsrcBspTreeIterator *iter = GsrcBspTreeIteratorBegin(tempArena, mapData, model);
-		s32 gsrcNodeIndex;
+		i32 gsrcNodeIndex;
 		while (GsrcBspTreeNext(iter, mapData, &gsrcNodeIndex))
 		{
-			for (s32 child = 0; child < 2; child++)
+			for (i32 child = 0; child < 2; child++)
 			{
 				GsrcNode *gsrcNode = &mapData->lumpNodes[gsrcNodeIndex];
-				s32 gsrcLeafIndex = -(s32)gsrcNode->children[child] - 1;
+				i32 gsrcLeafIndex = -(i32)gsrcNode->children[child] - 1;
 				if (gsrcLeafIndex >= 0)
 				{
 					GsrcLeaf gsrcLeaf = mapData->lumpLeaves[gsrcLeafIndex];
@@ -863,15 +867,17 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 						// make a brush!
 						brush.firstSide = state->brushSideCount;
 						brush.contents = leaf.contents;
-						s32 polyCount = 0;
+						i32 polyCount = 0;
 						Plat_MemSetToZero(polys, polysByteCount);
 						
-						local_persist SrcPlane planes[256];
-						s32 maxClipPlanes = ARRAYCOUNT(planes);
-						s32 clipPlaneCount = GetLeafClipPlanes(mapData, mapBboxPlanes, iter->parents, gsrcNodeIndex,
+						// NOTE(GameChaos): static_persist because the struct is way too
+						//  big to allocate on the stack
+						static_persist SrcPlane planes[256];
+						i32 maxClipPlanes = ARRAYCOUNT(planes);
+						i32 clipPlaneCount = GetLeafClipPlanes(mapData, mapBboxPlanes, iter->parents, gsrcNodeIndex,
 															   child, maxClipPlanes, planes);
 						
-						for (s32 planeInd = 0; planeInd < clipPlaneCount; planeInd++)
+						for (i32 planeInd = 0; planeInd < clipPlaneCount; planeInd++)
 						{
 							polys[polyCount].vertCount = 0;
 							if (MakePolygon(planes, clipPlaneCount, planeInd, &polys[polyCount]))
@@ -893,11 +899,11 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 						// NOTE(GameChaos): calculate brush mins/maxs
 						v3 mins = v3fill(F32_MAX);
 						v3 maxs = v3fill(-F32_MAX);
-						for (s32 i = 0; i < polyCount; i++)
+						for (i32 i = 0; i < polyCount; i++)
 						{
-							for (s32 vert = 0; vert < polys[i].vertCount; vert++)
+							for (i32 vert = 0; vert < polys[i].vertCount; vert++)
 							{
-								for (s32 xyz = 0; xyz < 3; xyz++)
+								for (i32 xyz = 0; xyz < 3; xyz++)
 								{
 									mins.e[xyz] = GCM_MIN(polys[i].verts[vert].e[xyz], mins.e[xyz]);
 									maxs.e[xyz] = GCM_MAX(polys[i].verts[vert].e[xyz], maxs.e[xyz]);
@@ -907,7 +913,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 #ifdef DEBUG_GRAPHICS
 						if (brush.sides >= 4)
 						{
-							for (s32 polyInd = 0; polyInd < polyCount; polyInd++)
+							for (i32 polyInd = 0; polyInd < polyCount; polyInd++)
 							{
 								v3 normal = state->planes[state->brushSides[brush.firstSide + polyInd].plane].normal;
 								DebugGfxAddBrushSide(&polys[polyInd], normal, -1, (v4){}, (v4){});
@@ -962,7 +968,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 		state->models[model].origin = (v3){};
 		ArenaEndTemp(arenaTmp);
 	}
-	for (s32 i = 0; i < state->leafCount; i++)
+	for (i32 i = 0; i < state->leafCount; i++)
 	{
 		state->leafMinDistToWater[state->leafMinDistToWaterCount++] = -1;
 	}
@@ -1032,7 +1038,7 @@ internal b32 BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapData *mapD
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_AREAPORTALS, &areaportal, sizeof(areaportal));
 	
 	// save bsp
-	result = WriteEntireFile(outputPath, buffer.memory, (s32)BufferGetSize(buffer));
+	result = WriteEntireFile(outputPath, buffer.memory, (i32)BufferGetSize(buffer));
 	
 	ArenaEndTemp(arenaTemp);
 	return result;

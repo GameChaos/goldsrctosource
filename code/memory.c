@@ -1,9 +1,9 @@
 
 #include "memory.h"
 
-internal inline s64 AlignUp_(s64 val, s64 granularity)
+static_function inline i64 AlignUp_(i64 val, i64 granularity)
 {
-    s64 result = (val / granularity) * granularity;
+    i64 result = (val / granularity) * granularity;
 	// NOTE(GameChaos): don't "round" 2 to 4 with granularity 2. "round" it to 2.
 	if (result != val)
 	{
@@ -12,14 +12,14 @@ internal inline s64 AlignUp_(s64 val, s64 granularity)
 	return result;
 }
 
-internal inline s64 AlignDown_(s64 val, s64 granularity)
+static_function inline i64 AlignDown_(i64 val, i64 granularity)
 {
-    s64 result = (val / granularity) * granularity;
+    i64 result = (val / granularity) * granularity;
 	return result;
 }
 
 // TODO: test if this works!
-internal void DecommitConservative(void *base, s64 bytes)
+static_function void DecommitConservative(void *base, i64 bytes)
 {
 	uintptr_t from = (uintptr_t)base;
 	uintptr_t to = from + bytes;
@@ -33,7 +33,7 @@ internal void DecommitConservative(void *base, s64 bytes)
 	}
 }
 
-internal Arena ArenaCreate(s64 bytes)
+static_function Arena ArenaCreate(i64 bytes)
 {
 	Arena result = {0};
 	
@@ -45,7 +45,7 @@ internal Arena ArenaCreate(s64 bytes)
 	return result;
 }
 
-internal void *ArenaAlloc(Arena *arena, s64 bytes)
+static_function void *ArenaAlloc(Arena *arena, i64 bytes)
 {
 	void *result = NULL;
 	ASSERT(bytes <= arena->bytes - arena->allocPos);
@@ -68,7 +68,7 @@ internal void *ArenaAlloc(Arena *arena, s64 bytes)
 	return result;
 }
 
-internal void ArenaReset(Arena *arena)
+static_function void ArenaReset(Arena *arena)
 {
 	ASSERT(arena->data);
 	ASSERT(arena->bytes);
@@ -76,12 +76,12 @@ internal void ArenaReset(Arena *arena)
 	arena->allocPos = 0;
 }
 
-internal void ArenaResetTo(Arena *arena, s64 pos)
+static_function void ArenaResetTo(Arena *arena, i64 pos)
 {
 	if (pos < arena->allocPos)
 	{
-		s64 decommitStart = AlignUp_(pos, Plat_GetPageSize());
-		s64 decommitEnd = arena->bytes;
+		i64 decommitStart = AlignUp_(pos, Plat_GetPageSize());
+		i64 decommitEnd = arena->bytes;
 		if (decommitStart < decommitEnd)
 		{
 			Plat_MemDecommit((u8 *)arena->data + decommitStart,
@@ -92,7 +92,7 @@ internal void ArenaResetTo(Arena *arena, s64 pos)
 	}
 }
 
-internal void ArenaFree(Arena *arena)
+static_function void ArenaFree(Arena *arena)
 {
 	ASSERT(arena->data);
 	ASSERT(arena->bytes);
@@ -102,7 +102,7 @@ internal void ArenaFree(Arena *arena)
 	arena->bytes = 0;
 }
 
-internal ArenaTemp ArenaBeginTemp(Arena *arena)
+static_function ArenaTemp ArenaBeginTemp(Arena *arena)
 {
 	ASSERT(arena);
 	ASSERT(arena->data);
@@ -115,12 +115,12 @@ internal ArenaTemp ArenaBeginTemp(Arena *arena)
 	return result;
 }
 
-internal void ArenaEndTemp(ArenaTemp temp)
+static_function void ArenaEndTemp(ArenaTemp temp)
 {
 	if (temp.originalAllocPos != temp.arena->allocPos)
 	{
-		s64 decommitStart = AlignUp_(temp.originalAllocPos, Plat_GetPageSize());
-		s64 decommitEnd = AlignUp_(temp.arena->bytes, Plat_GetPageSize());
+		i64 decommitStart = AlignUp_(temp.originalAllocPos, Plat_GetPageSize());
+		i64 decommitEnd = AlignUp_(temp.arena->bytes, Plat_GetPageSize());
 		if (decommitStart < decommitEnd)
 		{
 			Plat_MemDecommit((u8 *)temp.arena->data + decommitStart,
@@ -131,12 +131,12 @@ internal void ArenaEndTemp(ArenaTemp temp)
 	}
 }
 
-internal Pool PoolCreate(s64 maxElements, s64 chunkSize)
+static_function Pool PoolCreate(i64 maxElements, i64 chunkSize)
 {
 	Pool result = {0};
 	if (maxElements && chunkSize)
 	{
-		s64 bufferBytes = maxElements * chunkSize;
+		i64 bufferBytes = maxElements * chunkSize;
 		ASSERT(chunkSize > sizeof(PoolFreeNode));
 		ASSERT(bufferBytes >= chunkSize);
 		result.buffer = (u8 *)Plat_MemReserve(bufferBytes);
@@ -157,13 +157,13 @@ internal Pool PoolCreate(s64 maxElements, s64 chunkSize)
 	return result;
 }
 
-internal void *PoolAlloc(Pool *pool)
+static_function void *PoolAlloc(Pool *pool)
 {
 	void *result = PoolAllocBytes(pool, pool->chunkSize);
 	return result;
 }
 
-internal void *PoolAllocBytes(Pool *pool, s64 bytes)
+static_function void *PoolAllocBytes(Pool *pool, i64 bytes)
 {
 	void *result = NULL;
 	PoolFreeNode *node = pool->head;
@@ -184,11 +184,11 @@ internal void *PoolAllocBytes(Pool *pool, s64 bytes)
 	return result;
 }
 
-internal void PoolFreeAllElements(Pool *pool)
+static_function void PoolFreeAllElements(Pool *pool)
 {
-	s64 chunks = pool->bufferBytes / pool->chunkSize;
+	i64 chunks = pool->bufferBytes / pool->chunkSize;
 	
-	for (s64 i = 0; i < chunks; i++)
+	for (i64 i = 0; i < chunks; i++)
 	{
 		PoolFreeNode *node = (PoolFreeNode *)&pool->buffer[i * pool->chunkSize];
 		// NOTE(GameChaos): make sure memory is committed
@@ -199,7 +199,7 @@ internal void PoolFreeAllElements(Pool *pool)
 	}
 }
 
-internal bool PoolElementFree(Pool *pool, void *memory)
+static_function bool PoolElementFree(Pool *pool, void *memory)
 {
 	bool result = false;
 	if (memory != NULL)
@@ -219,7 +219,7 @@ internal bool PoolElementFree(Pool *pool, void *memory)
 	return result;
 }
 
-internal void PoolFree(Pool *pool)
+static_function void PoolFree(Pool *pool)
 {
 	Plat_MemFree(pool->buffer, pool->bufferBytes);
 	pool->buffer = NULL;

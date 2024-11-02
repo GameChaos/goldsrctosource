@@ -1,7 +1,7 @@
 
 #include "wad3.h"
 
-internal Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *path)
+static_function Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *path)
 {
 	Wad3 result = {};
 	if (data && bytes > sizeof(Wad3Header))
@@ -12,7 +12,7 @@ internal Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *path)
 		{
 			if (header->firstDirEntryOffset + header->dirEntries * sizeof(Wad3DirEntry) <= bytes)
 			{
-				s64 originalArenaPos = arena->allocPos;
+				i64 originalArenaPos = arena->allocPos;
 				result.entryCount = header->dirEntries;
 				result.entries = (Wad3DirEntry **)ArenaAlloc(arena, result.entryCount * sizeof(*result.entries));
 				result.textures = (Wad3TextureHeader **)ArenaAlloc(arena, result.entryCount * sizeof(*result.textures));
@@ -61,7 +61,7 @@ internal Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *path)
 	return result;
 }
 
-internal Wad3 Wad3FromFile(Arena *arena, char *path)
+static_function Wad3 Wad3FromFile(Arena *arena, char *path)
 {
 	ReadFileResult file = ReadEntireFile(arena, path);
 	Wad3 result = {};
@@ -73,7 +73,7 @@ internal Wad3 Wad3FromFile(Arena *arena, char *path)
 }
 
 // NOTE(GameChaos): returns textureIndex + 1 if succeeded, 0 if not
-internal u32 Wad3FindTexture(Wad3 wad, char *name, s32 nameStrlen)
+static_function u32 Wad3FindTexture(Wad3 wad, char *name, i32 nameStrlen)
 {
 	u32 result = 0;
 	if (name && wad.valid && nameStrlen)
@@ -92,13 +92,13 @@ internal u32 Wad3FindTexture(Wad3 wad, char *name, s32 nameStrlen)
 	return result;
 }
 
-internal FindTextureResult FindTextureInWads(Wad3 *wads, s32 wadCount, char *name)
+static_function FindTextureResult FindTextureInWads(Wad3 *wads, i32 wadCount, char *name)
 {
-	s32 nameStrlen = (s32)StringLength(name);
+	i32 nameStrlen = (i32)StringLength(name);
 	FindTextureResult result = {};
 	if (nameStrlen)
 	{
-		for (s32 i = 0; i < wadCount; i++)
+		for (i32 i = 0; i < wadCount; i++)
 		{
 			result.textureIndex = Wad3FindTexture(wads[i], name, nameStrlen);
 			if (result.textureIndex)

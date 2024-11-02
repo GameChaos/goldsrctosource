@@ -6,11 +6,11 @@
 typedef struct
 {
 	u8 *data;
-	s64 size;
-	s64 readBytes;
+	i64 size;
+	i64 readBytes;
 } ReadBuffer;
 
-internal ReadBuffer ReadBufferCreate(void *data, s64 size)
+static_function ReadBuffer ReadBufferCreate(void *data, i64 size)
 {
 	ReadBuffer result = {};
 	result.data = (u8 *)data;
@@ -18,9 +18,9 @@ internal ReadBuffer ReadBufferCreate(void *data, s64 size)
 	return result;
 }
 
-internal b32 ReadBufferRead(ReadBuffer *buffer, void *out, s64 outSize)
+static_function bool ReadBufferRead(ReadBuffer *buffer, void *out, i64 outSize)
 {
-	b32 result = false;
+	bool result = false;
 	if (buffer && buffer->data)
 	{
 		if (buffer->readBytes + outSize <= buffer->size)
@@ -33,7 +33,7 @@ internal b32 ReadBufferRead(ReadBuffer *buffer, void *out, s64 outSize)
 	return result;
 }
 
-internal u8 *ReadBufferGetBytes(ReadBuffer *buffer, s64 bytes)
+static_function u8 *ReadBufferGetBytes(ReadBuffer *buffer, i64 bytes)
 {
 	u8 *result = NULL;
 	if (buffer && buffer->data)
@@ -48,21 +48,21 @@ internal u8 *ReadBufferGetBytes(ReadBuffer *buffer, s64 bytes)
 }
 
 #define DEFINE_READINGBUFFER_READ_TYPE(functionName, type)\
-internal b32 functionName(ReadBuffer *buffer, type *out)\
+static_function bool functionName(ReadBuffer *buffer, type *out)\
 {\
-b32 result = ReadBufferRead(buffer, out, sizeof(*out));\
+bool result = ReadBufferRead(buffer, out, sizeof(*out));\
 return result;\
 }\
 
 DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadU8, u8);
-DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadS32, s32);
+DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadS32, i32);
 DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadU64, u64);
 DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadV3, v3);
 DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadV4, v4);
 DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadMat4, mat4);
 DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadGuid, Guid);
 
-internal char *ReadBufferGetString(ReadBuffer *buffer)
+static_function char *ReadBufferGetString(ReadBuffer *buffer)
 {
 	char *result = NULL;
 	if (buffer && buffer->data)
@@ -89,16 +89,16 @@ internal char *ReadBufferGetString(ReadBuffer *buffer)
 	return result;
 }
 
-global s32 g_attrValueContainerSize[] = {
+static_global i32 g_attrValueContainerSize[] = {
 	0, // DMX_ATTR_UNKNOWN
 	sizeof(DmxElementId), // DMX_ATTR_ELEMENT
-	sizeof(s32), // DMX_ATTR_INT32
+	sizeof(i32), // DMX_ATTR_INT32
 	sizeof(f32), // DMX_ATTR_F32
 	sizeof(bool), // DMX_ATTR_BOOL
 	sizeof(char *), // DMX_ATTR_STRING
 	sizeof(DmxBinaryBlob), // DMX_ATTR_BINARYBLOB
-	sizeof(s32), // DMX_ATTR_TIMESPAN
-	sizeof(s32), // DMX_ATTR_RGBA8
+	sizeof(i32), // DMX_ATTR_TIMESPAN
+	sizeof(i32), // DMX_ATTR_RGBA8
 	sizeof(v2), // DMX_ATTR_VECTOR2D
 	sizeof(v3), // DMX_ATTR_VECTOR3D
 	sizeof(v4), // DMX_ATTR_VECTOR4D
@@ -109,7 +109,7 @@ global s32 g_attrValueContainerSize[] = {
 	sizeof(u8), // DMX_ATTR_BYTE
 };
 
-internal void ReadBufferReadDmxAttributeValue_(ReadBuffer *buffer, void *out, DmxAttrType type, DmxStringTable *stringTable/* = NULL*/)
+static_function void ReadBufferReadDmxAttributeValue_(ReadBuffer *buffer, void *out, DmxAttrType type, DmxStringTable *stringTable/* = NULL*/)
 {
 	switch (type)
 	{
@@ -132,7 +132,7 @@ internal void ReadBufferReadDmxAttributeValue_(ReadBuffer *buffer, void *out, Dm
 		case DMX_ATTR_TIMESPAN:
 		case DMX_ATTR_RGBA8:
 		{
-			ReadBufferReadS32(buffer, (s32 *)out);
+			ReadBufferReadS32(buffer, (i32 *)out);
 		} break;
 		
 		case DMX_ATTR_BOOL:
@@ -145,7 +145,7 @@ internal void ReadBufferReadDmxAttributeValue_(ReadBuffer *buffer, void *out, Dm
 		{
 			if (stringTable)
 			{
-				s32 index = 0;
+				i32 index = 0;
 				if (ReadBufferReadS32(buffer, &index) && index >= 0 && index < stringTable->stringCount)
 				{
 					*(char **)out = stringTable->strings[index];
@@ -195,12 +195,12 @@ internal void ReadBufferReadDmxAttributeValue_(ReadBuffer *buffer, void *out, Dm
 	}
 }
 
-internal b32 ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute *attr, Arena *arena, DmxStringTable *stringTable/* = NULL*/)
+static_function bool ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute *attr, Arena *arena, DmxStringTable *stringTable/* = NULL*/)
 {
-	b32 result = false;
+	bool result = false;
 	if (stringTable)
 	{
-		s32 index = 0;
+		i32 index = 0;
 		if (ReadBufferReadS32(buffer, &index) && index >= 0 && index < stringTable->stringCount)
 		{
 			char *string = stringTable->strings[index];
@@ -232,10 +232,10 @@ internal b32 ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute *attr, 
 		ReadBufferReadS32(buffer, &attr->value.arrayCount);
 		if (valueType <= DMX_ATTR_COUNT)
 		{
-			s32 containerBytes = g_attrValueContainerSize[valueType];
+			i32 containerBytes = g_attrValueContainerSize[valueType];
 			attr->value.array = ArenaAlloc(arena, attr->value.arrayCount * containerBytes);
 			void *array = attr->value.array;
-			for (s32 i = 0; i < attr->value.arrayCount; i++)
+			for (i32 i = 0; i < attr->value.arrayCount; i++)
 			{
 				// NOTE(GameChaos): this doesn't reference the stringtable ever
 				ReadBufferReadDmxAttributeValue_(buffer, (u8 *)array + containerBytes * i, valueType, NULL);
@@ -246,7 +246,7 @@ internal b32 ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute *attr, 
 	return result;
 }
 
-internal DmxReadBinary_v9 DmxImportBinary(const char *path, Arena *arena)
+static_function DmxReadBinary_v9 DmxImportBinary(const char *path, Arena *arena)
 {
 	DmxReadBinary_v9 result = {};
 	result.file = ReadEntireFile(arena, path);
@@ -259,12 +259,12 @@ internal DmxReadBinary_v9 DmxImportBinary(const char *path, Arena *arena)
 		// prefix elements and attributes
 		ReadBufferReadS32(&buf, &result.prefixElementCount);
 		result.prefixElements = (DmxReadElemBody *)ArenaAlloc(arena, sizeof(*result.prefixElements) * result.prefixElementCount);
-		for (s32 prefixElem = 0; prefixElem < result.prefixElementCount; prefixElem++)
+		for (i32 prefixElem = 0; prefixElem < result.prefixElementCount; prefixElem++)
 		{
 			DmxReadElemBody *element = &result.prefixElements[prefixElem];
 			ReadBufferReadS32(&buf, &element->attributeCount);
 			element->attributes = (DmxAttribute *)ArenaAlloc(arena, sizeof(*element->attributes) * element->attributeCount);
-			for (s32 attr = 0; attr < element->attributeCount; attr++)
+			for (i32 attr = 0; attr < element->attributeCount; attr++)
 			{
 				ReadBufferReadDmxAttribute(&buf, &element->attributes[attr], arena, NULL);
 			}
@@ -273,7 +273,7 @@ internal DmxReadBinary_v9 DmxImportBinary(const char *path, Arena *arena)
 		// string table
 		ReadBufferReadS32(&buf, &result.stringTable.stringCount);
 		result.stringTable.strings = (char **)ArenaAlloc(arena, sizeof(*result.stringTable.strings) * result.stringTable.stringCount);
-		for (s32 stringIndex = 0; stringIndex < result.stringTable.stringCount; stringIndex++)
+		for (i32 stringIndex = 0; stringIndex < result.stringTable.stringCount; stringIndex++)
 		{
 			result.stringTable.strings[stringIndex] = ReadBufferGetString(&buf);
 		}
@@ -281,11 +281,11 @@ internal DmxReadBinary_v9 DmxImportBinary(const char *path, Arena *arena)
 		// element headers
 		ReadBufferReadS32(&buf, &result.elementCount);
 		result.elementHeaders = (DmxReadElemHeader *)ArenaAlloc(arena, sizeof(*result.elementHeaders) * result.elementCount);
-		for (s32 elem = 0; elem < result.elementCount; elem++)
+		for (i32 elem = 0; elem < result.elementCount; elem++)
 		{
 			DmxReadElemHeader *elemHeader = &result.elementHeaders[elem];
-			s32 typeIndex = 0;
-			s32 nameIndex = 0;
+			i32 typeIndex = 0;
+			i32 nameIndex = 0;
 			ReadBufferReadS32(&buf, &typeIndex);
 			ReadBufferReadS32(&buf, &nameIndex);
 			ReadBufferReadGuid(&buf, &elemHeader->guid);
@@ -295,12 +295,12 @@ internal DmxReadBinary_v9 DmxImportBinary(const char *path, Arena *arena)
 		
 		// element bodies
 		result.elements = (DmxReadElemBody *)ArenaAlloc(arena, sizeof(*result.elements) * result.elementCount);
-		for (s32 elem = 0; elem < result.elementCount; elem++)
+		for (i32 elem = 0; elem < result.elementCount; elem++)
 		{
 			DmxReadElemBody *element = &result.elements[elem];
 			ReadBufferReadS32(&buf, &element->attributeCount);
 			element->attributes = (DmxAttribute *)ArenaAlloc(arena, sizeof(*element->attributes) * element->attributeCount);
-			for (s32 attr = 0; attr < element->attributeCount; attr++)
+			for (i32 attr = 0; attr < element->attributeCount; attr++)
 			{
 				ReadBufferReadDmxAttribute(&buf, &element->attributes[attr], arena, &result.stringTable);
 			}
@@ -311,18 +311,18 @@ internal DmxReadBinary_v9 DmxImportBinary(const char *path, Arena *arena)
 }
 
 #if 0
-internal void DmxExportBinary(char *path, Arena *arena, DmxReadBinary_v9 dmx)
+static_function void DmxExportBinary(char *path, Arena *arena, DmxReadBinary_v9 dmx)
 {
 	FileWritingBuffer buf = BufferCreate(arena, GIGABYTES(1));
 	
 	BufferPushData(&buf, DMX_V9_BIN_HEADER, sizeof(DMX_V9_BIN_HEADER), false);
 	BufferPushData(&buf, &dmx.prefixElementCount, sizeof(dmx.prefixElementCount), false);
-	for (s32 elemInd = 0; elemInd < dmx.prefixElementCount; elemInd++)
+	for (i32 elemInd = 0; elemInd < dmx.prefixElementCount; elemInd++)
 	{
 		DmxReadElemBody *elem = &dmx.prefixElements[elemInd];
 		BufferPushData(&buf, &elem->attributeCount, sizeof(elem->attributeCount), false);
 		
-		for (s32 attrInd = 0; attrInd < elem->attributeCount; attrInd++)
+		for (i32 attrInd = 0; attrInd < elem->attributeCount; attrInd++)
 		{
 			DmxAttribute *attr = &elem->attributes[attrInd];
 			BufferPushData(&buf, &attr->name, strlen(attr->name) + 1, false);
@@ -333,7 +333,7 @@ internal void DmxExportBinary(char *path, Arena *arena, DmxReadBinary_v9 dmx)
 }
 #endif
 
-internal Dmx DmxCreate(Arena *arena)
+static_function Dmx DmxCreate(Arena *arena)
 {
 	Dmx result = {};
 	
@@ -352,24 +352,24 @@ internal Dmx DmxCreate(Arena *arena)
 	return result;
 }
 
-internal DmxElement *DmxGetPrefix(Dmx *dmx)
+static_function DmxElement *DmxGetPrefix(Dmx *dmx)
 {
 	DmxElement *result = &dmx->prefix;
 	return result;
 }
 
 // NOTE(GameChaos): i hope source 2 doesn't care that my guids don't conform to the standard.
-internal Guid GenerateGuid()
+static_function Guid GenerateGuid()
 {
 	Guid result = {};
-	for (s32 i = 0; i < 4; i++)
+	for (i32 i = 0; i < 4; i++)
 	{
 		result.uints[i] = pcg32_random();
 	}
 	return result;
 }
 
-internal DmxAttribute *DmxAddAttribute(Dmx *dmx, DmxElement *parent, str name, DmxAttrType type)
+static_function DmxAttribute *DmxAddAttribute(Dmx *dmx, DmxElement *parent, str name, DmxAttrType type)
 {
 	ASSERT(parent && name.data);
 	DmxAttribute *result = NULL;
@@ -378,14 +378,14 @@ internal DmxAttribute *DmxAddAttribute(Dmx *dmx, DmxElement *parent, str name, D
 		result = &parent->attributes[parent->attributeCount++];
 		*result = (DmxAttribute){};
 		result->value.type = type;
-		Format(result->name, sizeof(result->name), "%.*s", (s32)name.length, name.data);
+		Format(result->name, sizeof(result->name), "%.*s", (i32)name.length, name.data);
 	}
 	ASSERT(result);
 	
 	return result;
 }
 
-internal void DmxAttrSetData(Dmx *dmx, DmxAttribute *attr, void *data, s64 bytes)
+static_function void DmxAttrSetData(Dmx *dmx, DmxAttribute *attr, void *data, i64 bytes)
 {
 	ASSERT(data && bytes);
 	
@@ -433,16 +433,16 @@ DEFINE_DMXADDATTRIBUTE_FUNC_SIG(functionName, dataType)\
     DmxAttribute *result = DmxAddAttribute(dmx, parent, name, attrType);\
     if (result)\
     {\
-        DmxAttrSetData(dmx, result, &(value), (s64)sizeof(value));\
+        DmxAttrSetData(dmx, result, &(value), (i64)sizeof(value));\
     }\
     return result;\
 }\
 
 DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeElementId, DmxElementId, DMX_ATTR_ELEMENT)
-DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeInt, s32, DMX_ATTR_INT32)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeInt, i32, DMX_ATTR_INT32)
 DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeF32, f32, DMX_ATTR_F32)
 DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeBool, bool, DMX_ATTR_BOOL)
-DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeTimespan, s32, DMX_ATTR_TIMESPAN)
+DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeTimespan, i32, DMX_ATTR_TIMESPAN)
 DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeRgba8, u32, DMX_ATTR_RGBA8)
 DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeV2, v2, DMX_ATTR_VECTOR2D)
 DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeV3, v3, DMX_ATTR_VECTOR3D)
@@ -455,7 +455,7 @@ DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeU8, u8, DMX_ATTR_BYTE)
 
 #undef DEFINE_DMXADDATTRIBUTE_FUNC
 
-internal DmxAttribute *DmxAddAttributeBinary(Dmx *dmx, DmxElement *parent, str name, void *binaryBlob, s64 bytes)
+static_function DmxAttribute *DmxAddAttributeBinary(Dmx *dmx, DmxElement *parent, str name, void *binaryBlob, i64 bytes)
 {
 	DmxAttribute *result = DmxAddAttribute(dmx, parent, name, DMX_ATTR_BINARYBLOB);
     if (result)
@@ -465,7 +465,7 @@ internal DmxAttribute *DmxAddAttributeBinary(Dmx *dmx, DmxElement *parent, str n
     return result;
 }
 
-internal DmxAttribute *DmxAddAttributeString(Dmx *dmx, DmxElement *parent, str name, str value)
+static_function DmxAttribute *DmxAddAttributeString(Dmx *dmx, DmxElement *parent, str name, str value)
 {
 	DmxAttribute *result = DmxAddAttribute(dmx, parent, name, DMX_ATTR_STRING);
     if (result)
@@ -488,9 +488,9 @@ DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(functionName, dataType)\
 }\
 
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayElementId, DmxElementId, DMX_ATTR_ELEMENT_ARRAY)
-DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayInt, s32, DMX_ATTR_INT32_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayInt, i32, DMX_ATTR_INT32_ARRAY)
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayBool, bool, DMX_ATTR_BOOL_ARRAY)
-DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayTimespan, s32, DMX_ATTR_TIMESPAN_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayTimespan, i32, DMX_ATTR_TIMESPAN_ARRAY)
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayRgba8, u32, DMX_ATTR_RGBA8_ARRAY)
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayV2, v2, DMX_ATTR_VECTOR2D_ARRAY)
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayV3, v3, DMX_ATTR_VECTOR3D_ARRAY)
@@ -503,7 +503,7 @@ DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayU8, u8, DMX_ATTR_BYTE_ARRAY
 
 #undef DEFINE_DMXADDATTRIBUTEARRAY_FUNC
 
-internal DmxElement *DmxCreateElement(Dmx *dmx, str name, str type, Arena *arena)
+static_function DmxElement *DmxCreateElement(Dmx *dmx, str name, str type, Arena *arena)
 {
 	ASSERT(name.data && type.data);
 	DmxElement *result = NULL;
@@ -513,15 +513,15 @@ internal DmxElement *DmxCreateElement(Dmx *dmx, str name, str type, Arena *arena
 		*result = (DmxElement){};
 		result->maxAttributes = 1024;
 		result->attributes = (DmxAttribute *)ArenaAlloc(arena, result->maxAttributes * sizeof(*result->attributes));
-		Format(result->type, sizeof(result->type), "%.*s", (s32)type.length, type.data);
-		Format(result->name, sizeof(result->name), "%.*s", (s32)name.length, name.data);
+		Format(result->type, sizeof(result->type), "%.*s", (i32)type.length, type.data);
+		Format(result->name, sizeof(result->name), "%.*s", (i32)name.length, name.data);
 		result->guid = GenerateGuid();
 	}
 	ASSERT(result);
 	return result;
 }
 
-internal DmxElement *DmxAddElement(Dmx *dmx, DmxElement *parent, str name, str type, Arena *arena)
+static_function DmxElement *DmxAddElement(Dmx *dmx, DmxElement *parent, str name, str type, Arena *arena)
 {
 	DmxElement *result = DmxCreateElement(dmx, name, type, arena);
 	if (result)
@@ -540,18 +540,18 @@ internal DmxElement *DmxAddElement(Dmx *dmx, DmxElement *parent, str name, str t
 	return result;
 }
 
-internal void DmxTest(Arena *arena, Arena *tempArena)
+static_function void DmxTest(Arena *arena, Arena *tempArena)
 {
 	// load test
 	{
 		DmxReadBinary_v9 dmxTest = DmxImportBinary("debug/empty.vmap", arena);
 		
 #if 1
-		for (s32 elem = 0; elem < dmxTest.prefixElementCount; elem++)
+		for (i32 elem = 0; elem < dmxTest.prefixElementCount; elem++)
 		{
 			DmxReadElemBody *elemBody = &dmxTest.prefixElements[elem];
 			Print("{\n");
-			for (s32 attrInd = 0; attrInd < elemBody->attributeCount; attrInd++)
+			for (i32 attrInd = 0; attrInd < elemBody->attributeCount; attrInd++)
 			{
 				DmxAttribute *attr = &elemBody->attributes[attrInd];
 				Print("\t\"%s\" \"%i\" \"\"\n", attr->name, attr->value.type);
@@ -559,12 +559,12 @@ internal void DmxTest(Arena *arena, Arena *tempArena)
 			Print("%s", "}\n");
 		}
 		
-		for (s32 elem = 0; elem < dmxTest.elementCount; elem++)
+		for (i32 elem = 0; elem < dmxTest.elementCount; elem++)
 		{
 			DmxReadElemHeader *elemHeader = &dmxTest.elementHeaders[elem];
 			DmxReadElemBody *elemBody = &dmxTest.elements[elem];
 			Print("\"%s\" \"%s\"\n{\n", elemHeader->type, elemHeader->name);
-			for (s32 attrInd = 0; attrInd < elemBody->attributeCount; attrInd++)
+			for (i32 attrInd = 0; attrInd < elemBody->attributeCount; attrInd++)
 			{
 				DmxAttribute *attr = &elemBody->attributes[attrInd];
 				Print("\t\"%s\" \"%i\" \"\"\n", attr->name, attr->value.type);
@@ -584,7 +584,7 @@ internal void DmxTest(Arena *arena, Arena *tempArena)
 		// prefix attributes
 		{
 			const char *imgData = "P3\n2 2\n0 0 0\n0 0 0\n0 0 0\n0 0 0";
-			s64 imgBytes = strlen(imgData);
+			i64 imgBytes = strlen(imgData);
 			DmxAddAttributeBinary(&dmx, DmxGetPrefix(&dmx), STR("asset_preview_thumbnail"), (void *)imgData, imgBytes);
 			DmxAddAttributeString(&dmx, DmxGetPrefix(&dmx), STR("asset_preview_thumbnail_format"), STR("ppm"));
 			DmxAddAttribute(&dmx, DmxGetPrefix(&dmx), STR("map_asset_references"), DMX_ATTR_STRING_ARRAY);

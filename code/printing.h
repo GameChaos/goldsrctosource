@@ -3,10 +3,10 @@
 #ifndef PRINTING_H
 #define PRINTING_H
 
-internal void Print(const char *format, ...);
-internal void VPrint(const char *format, va_list args);
-internal s32 Format(char *buffer, s32 maxlen, const char *format, ...);
-internal s32 VFormat(char *buffer, s32 maxlen, const char *format, va_list args);
-internal void PrintString(const char *str);
+static_function void Print(const char *format, ...);
+static_function void VPrint(const char *format, va_list args);
+static_function i32 Format(char *buffer, i32 maxlen, const char *format, ...);
+static_function i32 VFormat(char *buffer, i32 maxlen, const char *format, va_list args);
+static_function void PrintString(const char *str);
 
 #endif //PRINTING_H

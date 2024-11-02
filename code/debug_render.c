@@ -4,158 +4,19 @@
 
 #include "debug_render.h"
 
-global GfxState *g_gfxState;
-
-// NOTE: from https://www.mesa3d.org/
-internal mat4 InvertMat4(mat4 in)
-{
-	f32 inv[16];
-	f64 det;
-	
-	f32 *m = (f32 *)&in;
-	
-	inv[0] = m[5]  * m[10] * m[15] - 
-		m[5]  * m[11] * m[14] - 
-		m[9]  * m[6]  * m[15] + 
-		m[9]  * m[7]  * m[14] +
-		m[13] * m[6]  * m[11] - 
-		m[13] * m[7]  * m[10];
-	
-    inv[4] = -m[4]  * m[10] * m[15] + 
-		m[4]  * m[11] * m[14] + 
-		m[8]  * m[6]  * m[15] - 
-		m[8]  * m[7]  * m[14] - 
-		m[12] * m[6]  * m[11] + 
-		m[12] * m[7]  * m[10];
-	
-    inv[8] = m[4]  * m[9] * m[15] - 
-		m[4]  * m[11] * m[13] - 
-		m[8]  * m[5] * m[15] + 
-		m[8]  * m[7] * m[13] + 
-		m[12] * m[5] * m[11] - 
-		m[12] * m[7] * m[9];
-	
-    inv[12] = -m[4]  * m[9] * m[14] + 
-		m[4]  * m[10] * m[13] +
-		m[8]  * m[5] * m[14] - 
-		m[8]  * m[6] * m[13] - 
-		m[12] * m[5] * m[10] + 
-		m[12] * m[6] * m[9];
-	
-    inv[1] = -m[1]  * m[10] * m[15] + 
-		m[1]  * m[11] * m[14] + 
-		m[9]  * m[2] * m[15] - 
-		m[9]  * m[3] * m[14] - 
-		m[13] * m[2] * m[11] + 
-		m[13] * m[3] * m[10];
-	
-    inv[5] = m[0]  * m[10] * m[15] - 
-		m[0]  * m[11] * m[14] - 
-		m[8]  * m[2] * m[15] + 
-		m[8]  * m[3] * m[14] + 
-		m[12] * m[2] * m[11] - 
-		m[12] * m[3] * m[10];
-	
-    inv[9] = -m[0]  * m[9] * m[15] + 
-		m[0]  * m[11] * m[13] + 
-		m[8]  * m[1] * m[15] - 
-		m[8]  * m[3] * m[13] - 
-		m[12] * m[1] * m[11] + 
-		m[12] * m[3] * m[9];
-	
-    inv[13] = m[0]  * m[9] * m[14] - 
-		m[0]  * m[10] * m[13] - 
-		m[8]  * m[1] * m[14] + 
-		m[8]  * m[2] * m[13] + 
-		m[12] * m[1] * m[10] - 
-		m[12] * m[2] * m[9];
-	
-    inv[2] = m[1]  * m[6] * m[15] - 
-		m[1]  * m[7] * m[14] - 
-		m[5]  * m[2] * m[15] + 
-		m[5]  * m[3] * m[14] + 
-		m[13] * m[2] * m[7] - 
-		m[13] * m[3] * m[6];
-	
-    inv[6] = -m[0]  * m[6] * m[15] + 
-		m[0]  * m[7] * m[14] + 
-		m[4]  * m[2] * m[15] - 
-		m[4]  * m[3] * m[14] - 
-		m[12] * m[2] * m[7] + 
-		m[12] * m[3] * m[6];
-	
-    inv[10] = m[0]  * m[5] * m[15] - 
-		m[0]  * m[7] * m[13] - 
-		m[4]  * m[1] * m[15] + 
-		m[4]  * m[3] * m[13] + 
-		m[12] * m[1] * m[7] - 
-		m[12] * m[3] * m[5];
-	
-    inv[14] = -m[0]  * m[5] * m[14] + 
-		m[0]  * m[6] * m[13] + 
-		m[4]  * m[1] * m[14] - 
-		m[4]  * m[2] * m[13] - 
-		m[12] * m[1] * m[6] + 
-		m[12] * m[2] * m[5];
-	
-    inv[3] = -m[1] * m[6] * m[11] + 
-		m[1] * m[7] * m[10] + 
-		m[5] * m[2] * m[11] - 
-		m[5] * m[3] * m[10] - 
-		m[9] * m[2] * m[7] + 
-		m[9] * m[3] * m[6];
-	
-    inv[7] = m[0] * m[6] * m[11] - 
-		m[0] * m[7] * m[10] - 
-		m[4] * m[2] * m[11] + 
-		m[4] * m[3] * m[10] + 
-		m[8] * m[2] * m[7] - 
-		m[8] * m[3] * m[6];
-	
-    inv[11] = -m[0] * m[5] * m[11] + 
-		m[0] * m[7] * m[9] + 
-		m[4] * m[1] * m[11] - 
-		m[4] * m[3] * m[9] - 
-		m[8] * m[1] * m[7] + 
-		m[8] * m[3] * m[5];
-	
-    inv[15] = m[0] * m[5] * m[10] - 
-		m[0] * m[6] * m[9] - 
-		m[4] * m[1] * m[10] + 
-		m[4] * m[2] * m[9] + 
-		m[8] * m[1] * m[6] - 
-		m[8] * m[2] * m[5];
-	
-    det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
-	
-	mat4 result = {};
-    if (det == 0)
-	{
-		// TODO: return identity?
-        return result;
-	}
-	
-    det = 1.0 / det;
-	
-	for (s32 i = 0; i < 16; i++)
-	{
-		((f32 *)&result)[i] = inv[i] * (f32)det;
-	}
-	
-	return result;
-}
+static_global GfxState *g_gfxState;
 
 // NOTE(GameChaos): if rgb888 is true, then it converts to rgba8888, if rgb888 is false it expects rgba8888 data
-internal void DebugGfxAddTexture(u8 *data, s32 width, s32 height, b32 rgb888/* = false*/)
+static_function void DebugGfxAddTexture(u8 *data, i32 width, i32 height, bool rgb888/* = false*/)
 {
 	GfxState *state = g_gfxState;
 	if (state->textureCount < DEBUG_GFX_MAX_TEXTURES)
 	{
-		s32 pixels = width * height;
+		i32 pixels = width * height;
 		sg_image_desc desc = {};
 		if (rgb888)
 		{
-			for (s32 i = 0; i < pixels; i++)
+			for (i32 i = 0; i < pixels; i++)
 			{
 				state->rgba8888[i] = (  (u32)data[i * 3 + 2] << 0
 									  | (u32)data[i * 3 + 1] << 8
@@ -193,7 +54,7 @@ internal void DebugGfxAddTexture(u8 *data, s32 width, s32 height, b32 rgb888/* =
 	}
 }
 
-internal void DebugGfxAddMiptexture(Arena *tempArena, GsrcMipTexture mipTexture, u8 *textureData)
+static_function void DebugGfxAddMiptexture(Arena *tempArena, GsrcMipTexture mipTexture, u8 *textureData)
 {
 	ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
 	u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * 3);
@@ -210,12 +71,12 @@ internal void DebugGfxAddMiptexture(Arena *tempArena, GsrcMipTexture mipTexture,
 	ArenaEndTemp(arenaTmp);
 }
 
-internal GfxVertData *VertsToGfxVertData(Arena *arena, Verts *poly, v3 normal, v4 s, v4 t)
+static_function GfxVertData *VertsToGfxVertData(Arena *arena, Verts *poly, v3 normal, v4 s, v4 t)
 {
 	GfxVertData *result = (GfxVertData *)ArenaAlloc(arena, poly->vertCount * sizeof(*result));
 	if (result)
 	{
-		for (s32 v = 0; v < poly->vertCount; v++)
+		for (i32 v = 0; v < poly->vertCount; v++)
 		{
 			GfxVertData vertData;
 			vertData.pos = poly->verts[v];
@@ -229,7 +90,7 @@ internal GfxVertData *VertsToGfxVertData(Arena *arena, Verts *poly, v3 normal, v
 	return result;
 }
 
-internal GfxMesh DebugGfxCreateMesh(GfxVertData *verts, s32 vertCount, s32 textureIndex, v3 wireColour/* = {0}*/)
+static_function GfxMesh DebugGfxCreateMesh(GfxVertData *verts, i32 vertCount, i32 textureIndex, v3 wireColour/* = {0}*/)
 {
 	GfxMesh result = {};
 	sg_buffer_desc vertexDesc = {};
@@ -251,7 +112,7 @@ internal GfxMesh DebugGfxCreateMesh(GfxVertData *verts, s32 vertCount, s32 textu
 	return result;
 }
 
-internal void DebugGfxTextureVecsFromNormal(v3 normal, v4 *sOut, v4 *tOut)
+static_function void DebugGfxTextureVecsFromNormal(v3 normal, v4 *sOut, v4 *tOut)
 {
 	v3 nonParallel = GetNonParallelVector(normal);
 	v3 i = v3cross(normal, nonParallel);
@@ -261,7 +122,7 @@ internal void DebugGfxTextureVecsFromNormal(v3 normal, v4 *sOut, v4 *tOut)
 	sOut->w = 0;
 	tOut->w = 0;
 }
-internal void DebugGfxAddFace(Verts *poly, v3 normal, s32 textureIndex/* = -1*/, v4 s/* = {}*/, v4 t/* = {}*/)
+static_function void DebugGfxAddFace(Verts *poly, v3 normal, i32 textureIndex/* = -1*/, v4 s/* = {}*/, v4 t/* = {}*/)
 {
 	GfxState *state = g_gfxState;
 	if (state->faceCount < SRC_MAX_MAP_FACES
@@ -290,7 +151,7 @@ internal void DebugGfxAddFace(Verts *poly, v3 normal, s32 textureIndex/* = -1*/,
 	}
 }
 
-internal void DebugGfxAddBrushSide(Verts *poly, v3 normal, s32 textureIndex/* = -1*/, v4 s/* = {}*/, v4 t/* = {}*/)
+static_function void DebugGfxAddBrushSide(Verts *poly, v3 normal, i32 textureIndex/* = -1*/, v4 s/* = {}*/, v4 t/* = {}*/)
 {
 	GfxState *state = g_gfxState;
 	if (state->brushSideCount < SRC_MAX_MAP_BRUSHSIDES
@@ -317,7 +178,7 @@ internal void DebugGfxAddBrushSide(Verts *poly, v3 normal, s32 textureIndex/* = 
 	}
 }
 
-internal void DebugGfxAddBrush(s32 sideCount)
+static_function void DebugGfxAddBrush(i32 sideCount)
 {
 	GfxState *state = g_gfxState;
 	if (state->brushCount < ARRAYCOUNT(state->brushes))
@@ -344,7 +205,7 @@ internal void DebugGfxAddBrush(s32 sideCount)
 	}
 }
 
-internal void DebugGfxAddMesh(Verts *poly, v3 normal, v3 wireColour/* = {}*/, s32 textureIndex/* = -1*/, v4 s/* = {}*/, v4 t/* = {}*/)
+static_function void DebugGfxAddMesh(Verts *poly, v3 normal, v3 wireColour/* = {}*/, i32 textureIndex/* = -1*/, v4 s/* = {}*/, v4 t/* = {}*/)
 {
 	GfxState *state = g_gfxState;
 	if (state->meshCount < DEBUG_GFX_MAX_MESHES
@@ -368,7 +229,7 @@ internal void DebugGfxAddMesh(Verts *poly, v3 normal, v3 wireColour/* = {}*/, s3
 	}
 }
 
-internal void DebugGfxInit(void *userData)
+static_function void DebugGfxInit(void *userData)
 {
 	GfxState *state = (GfxState *)userData;
 	state->specificFaceIndex = -1;
@@ -434,9 +295,9 @@ internal void DebugGfxInit(void *userData)
 	state->wirePipeline = sg_make_pipeline(&wirePipelineDesc);
 	
 	ArenaTemp arenaTemp = ArenaBeginTemp(&state->arena);
-	s32 maxIndices = 512 * SRC_MAX_SIDE_VERTS; // SRC_MAX_MAP_BRUSHSIDES * SRC_MAX_SIDE_VERTS;
+	i32 maxIndices = 512 * SRC_MAX_SIDE_VERTS; // SRC_MAX_MAP_BRUSHSIDES * SRC_MAX_SIDE_VERTS;
 	u32 *indices = (u32 *)ArenaAlloc(&state->arena, maxIndices * sizeof(*indices));
-	for (u32 i = 0; (s64)i < maxIndices - 2; i += 3)
+	for (u32 i = 0; (i64)i < maxIndices - 2; i += 3)
 	{
 		indices[i + 0] = 0;
 		indices[i + 1] = i / 3 + 1;
@@ -448,10 +309,10 @@ internal void DebugGfxInit(void *userData)
 	indexDesc.data.size = sizeof(*indices) * maxIndices;
 	
 	u32 *wireIndices = (u32 *)ArenaAlloc(&state->arena, maxIndices * sizeof(*wireIndices));
-	s32 wireIndexCount = 0;
+	i32 wireIndexCount = 0;
 	wireIndices[wireIndexCount++] = 0;
 	wireIndices[wireIndexCount++] = 1;
-	for (u32 i = 2; (s64)i < maxIndices - 1; i += 4)
+	for (u32 i = 2; (i64)i < maxIndices - 1; i += 4)
 	{
 		wireIndices[i + 0] = (i + 2) / 4 + 0;
 		wireIndices[i + 1] = (i + 2) / 4 + 1;
@@ -471,11 +332,11 @@ internal void DebugGfxInit(void *userData)
 	BSPMain(state->argCount, state->arguments);
 }
 
-internal void DrawMesh(GfxState *state, GfxMesh *mesh, mat4 mvp, b32 solid)
+static_function void DrawMesh(GfxState *state, GfxMesh *mesh, mat4 mvp, bool solid)
 {
 	sg_bindings bindings = {};
 	bindings.vertex_buffers[0] = mesh->vertexBuffer;
-	s32 indexCount = mesh->indexCount;
+	i32 indexCount = mesh->indexCount;
 	if (indexCount > 0)
 	{
 		bindings.index_buffer = mesh->indexBuffer;
@@ -505,11 +366,11 @@ internal void DrawMesh(GfxState *state, GfxMesh *mesh, mat4 mvp, b32 solid)
 	sg_draw(0, indexCount, 1);
 }
 
-internal void DrawMeshWire(GfxState *state, GfxMesh *mesh, mat4 mvp)
+static_function void DrawMeshWire(GfxState *state, GfxMesh *mesh, mat4 mvp)
 {
 	sg_bindings bindings = {};
 	bindings.vertex_buffers[0] = mesh->vertexBuffer;
-	s32 indexCount = mesh->wireIndexCount;
+	i32 indexCount = mesh->wireIndexCount;
 	if (indexCount > 0)
 	{
 		bindings.index_buffer = mesh->wireIndexBuffer;
@@ -531,9 +392,9 @@ internal void DrawMeshWire(GfxState *state, GfxMesh *mesh, mat4 mvp)
 	sg_draw(0, indexCount, 1);
 }
 
-internal b32 ImGuiCustomSlider(const char *label, s32 *value, s32 min, s32 max, s32 defaultValue)
+static_function bool ImGuiCustomSlider(const char *label, i32 *value, i32 min, i32 max, i32 defaultValue)
 {
-	b32 result = igSliderInt(label, value, min, max, "%d", 0);
+	bool result = igSliderInt(label, value, min, max, "%d", 0);
 	igSameLine(0, -1);
 	ImVec2 buttonSize = {igGetFrameHeight(), igGetFrameHeight()};
 	igPushItemFlag(ImGuiItemFlags_ButtonRepeat, true);
@@ -565,7 +426,7 @@ internal b32 ImGuiCustomSlider(const char *label, s32 *value, s32 min, s32 max, 
 	return result;
 }
 
-internal inline GfxRayHit RayPolygonIntersect(GfxPoly *polygon, v3 rayPos, v3 rayDir)
+static_function inline GfxRayHit RayPolygonIntersect(GfxPoly *polygon, v3 rayPos, v3 rayDir)
 {
 	GfxRayHit result = {};
 	
@@ -589,7 +450,7 @@ internal inline GfxRayHit RayPolygonIntersect(GfxPoly *polygon, v3 rayPos, v3 ra
 	result.hit = true; // assume that we're inside
 	
 	// check if end point is inside the polygon
-	for (s32 v = 0; v < polygon->vertCount; v++)
+	for (i32 v = 0; v < polygon->vertCount; v++)
 	{
 		v3 vert0 = polygon->verts[v].pos;
 		v3 vert1 = polygon->verts[(v + 1) % polygon->vertCount].pos;
@@ -608,7 +469,7 @@ internal inline GfxRayHit RayPolygonIntersect(GfxPoly *polygon, v3 rayPos, v3 ra
 	return result;
 }
 
-internal void UpdateSpecificBrush(GfxState *state)
+static_function void UpdateSpecificBrush(GfxState *state)
 {
 	//state->specificBrushIndex = GCM_CLAMP(-1, state->specificBrushIndex, state->brushCount - 1);
 	if (state->specificBrushIndex >= 0)
@@ -616,7 +477,7 @@ internal void UpdateSpecificBrush(GfxState *state)
 		// create specific brush mesh
 		GfxBrush brush = state->brushes[state->specificBrushIndex];
 		// NOTE(GameChaos): destroy buffers
-		for (s32 i = 0; i < ARRAYCOUNT(state->specificBrushMeshes); i++)
+		for (i32 i = 0; i < ARRAYCOUNT(state->specificBrushMeshes); i++)
 		{
 			GfxMesh *mesh = &state->specificBrushMeshes[i];
 			sg_destroy_buffer(mesh->vertexBuffer);
@@ -624,7 +485,7 @@ internal void UpdateSpecificBrush(GfxState *state)
 			sg_destroy_buffer(mesh->wireIndexBuffer);
 		}
 		// NOTE(GameChaos): create new buffers
-		for (s32 i = 0; i < brush.sideCount; i++)
+		for (i32 i = 0; i < brush.sideCount; i++)
 		{
 			GfxMesh *mesh = &state->specificBrushMeshes[i];
 			*mesh = (GfxMesh){};
@@ -634,7 +495,7 @@ internal void UpdateSpecificBrush(GfxState *state)
 	}
 }
 
-internal void UpdateSpecificFace(GfxState *state)
+static_function void UpdateSpecificFace(GfxState *state)
 {
 	//state->specificFaceIndex = GCM_CLAMP(-1, state->specificFaceIndex, state->faceCount - 1);
 	if (state->specificFaceIndex >= 0)
@@ -651,7 +512,7 @@ internal void UpdateSpecificFace(GfxState *state)
 }
 
 // from HandmadeMath.h
-internal mat4 Perspective(f32 fov, f32 aspectRatio, f32 nearDist, f32 farDist)
+static_function mat4 Perspective(f32 fov, f32 aspectRatio, f32 nearDist, f32 farDist)
 {
 	// See https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/gluPerspective.xml
 	f32 cotangent = 1.0f / f32tan(fov * (GCM_PI / 360.0f));
@@ -695,7 +556,7 @@ mat4 LookAt(v3 eye, v3 centre, v3 up)
     return result;
 }
 
-internal void DebugGfxFrame(void *userData)
+static_function void DebugGfxFrame(void *userData)
 {
 	GfxState *state = (GfxState *)userData;
 	
@@ -716,22 +577,22 @@ internal void DebugGfxFrame(void *userData)
 	{
 		// make face mesh!
 		ArenaTemp arenaTmp = ArenaBeginTemp(&state->arena);
-		s64 maxVerts = SRC_MAX_MAP_FACES * SRC_MAX_SIDE_VERTS;
+		i64 maxVerts = SRC_MAX_MAP_FACES * SRC_MAX_SIDE_VERTS;
 		GfxVertData *tempVerts = (GfxVertData *)ArenaAlloc(&state->arena, maxVerts * sizeof(*tempVerts));
 		u32 *indices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*indices));
 		u32 *wireIndices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*wireIndices));
-		for (s32 tex = 0; tex < state->textureCount; tex++)
+		for (i32 tex = 0; tex < state->textureCount; tex++)
 		{
-			s32 indexCount = 0;
-			s32 wireIndexCount = 0;
-			s32 vertCount = 0;
-			for (s32 faceInd = 0; faceInd < state->faceCount; faceInd++)
+			i32 indexCount = 0;
+			i32 wireIndexCount = 0;
+			i32 vertCount = 0;
+			for (i32 faceInd = 0; faceInd < state->faceCount; faceInd++)
 			{
 				GfxPoly *face = &state->faces[faceInd];
 				if (face->texture == tex)
 				{
 					for (u32 i = (u32)vertCount;
-						 (s64)i < vertCount + face->vertCount - 2;
+						 (i64)i < vertCount + face->vertCount - 2;
 						 i++)
 					{
 						indices[indexCount++] = (u32)vertCount;
@@ -740,7 +601,7 @@ internal void DebugGfxFrame(void *userData)
 					}
 					
 					for (u32 i = 0;
-						 (s64)i < face->vertCount;
+						 (i64)i < face->vertCount;
 						 i++)
 					{
 						wireIndices[wireIndexCount++] = i + (u32)vertCount;
@@ -794,22 +655,22 @@ internal void DebugGfxFrame(void *userData)
 	{
 		// make brush meshes!
 		ArenaTemp arenaTmp = ArenaBeginTemp(&state->arena);
-		s64 maxVerts = SRC_MAX_MAP_FACES * SRC_MAX_SIDE_VERTS * 10;
+		i64 maxVerts = SRC_MAX_MAP_FACES * SRC_MAX_SIDE_VERTS * 10;
 		GfxVertData *tempVerts = (GfxVertData *)ArenaAlloc(&state->arena, maxVerts * sizeof(*tempVerts));
 		u32 *indices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*indices));
 		u32 *wireIndices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*wireIndices));
-		for (s32 tex = 0; tex < state->textureCount; tex++)
+		for (i32 tex = 0; tex < state->textureCount; tex++)
 		{
-			s32 indexCount = 0;
-			s32 wireIndexCount = 0;
-			s32 vertCount = 0;
-			for (s32 sideInd = 0; sideInd < state->brushSideCount; sideInd++)
+			i32 indexCount = 0;
+			i32 wireIndexCount = 0;
+			i32 vertCount = 0;
+			for (i32 sideInd = 0; sideInd < state->brushSideCount; sideInd++)
 			{
 				GfxPoly *side = &state->brushSides[sideInd];
 				if (side->texture == tex)
 				{
 					for (u32 i = (u32)vertCount;
-						 (s64)i < vertCount + side->vertCount - 2;
+						 (i64)i < vertCount + side->vertCount - 2;
 						 i++)
 					{
 						indices[indexCount++] = (u32)vertCount;
@@ -818,7 +679,7 @@ internal void DebugGfxFrame(void *userData)
 					}
 					
 					for (u32 i = 0;
-						 (s64)i < side->vertCount;
+						 (i64)i < side->vertCount;
 						 i++)
 					{
 						wireIndices[wireIndexCount++] = i + (u32)vertCount;
@@ -1000,11 +861,11 @@ internal void DebugGfxFrame(void *userData)
 			if (state->pickBrush)
 			{
 				GfxRayHit closestHit = {};
-				s32 hitBrushInd = -1;
-				for (s32 brushInd = 0; brushInd < state->brushCount; brushInd++)
+				i32 hitBrushInd = -1;
+				for (i32 brushInd = 0; brushInd < state->brushCount; brushInd++)
 				{
 					GfxBrush brush = state->brushes[brushInd];
-					for (s32 sideInd = brush.firstSide;
+					for (i32 sideInd = brush.firstSide;
 						 sideInd < brush.firstSide + brush.sideCount;
 						 sideInd++)
 					{
@@ -1026,8 +887,8 @@ internal void DebugGfxFrame(void *userData)
 			else if (state->pickFace)
 			{
 				GfxRayHit closestHit = {};
-				s32 hitFaceInd = -1;
-				for (s32 faceInd = 0; faceInd < state->faceCount; faceInd++)
+				i32 hitFaceInd = -1;
+				for (i32 faceInd = 0; faceInd < state->faceCount; faceInd++)
 				{
 					GfxRayHit hit = RayPolygonIntersect(&state->faces[faceInd], state->origin, rayDir);
 					if (hit.hit && (!closestHit.hit || hit.distance < closestHit.distance))
@@ -1049,7 +910,7 @@ internal void DebugGfxFrame(void *userData)
 	}
 	
 	sg_apply_pipeline(state->pipeline);
-	for (s32 i = 0; i < state->meshCount; i++)
+	for (i32 i = 0; i < state->meshCount; i++)
 	{
 		GfxMesh *mesh = &state->meshes[i];
 		if (state->solidDrawType <= 1)
@@ -1062,7 +923,7 @@ internal void DebugGfxFrame(void *userData)
 	{
 		if (state->drawWorld)
 		{
-			for (s32 i = 0; i < state->worldMeshCount; i++)
+			for (i32 i = 0; i < state->worldMeshCount; i++)
 			{
 				GfxMesh *mesh = &state->worldMeshes[i];
 				if (state->solidDrawType <= 1)
@@ -1085,7 +946,7 @@ internal void DebugGfxFrame(void *userData)
 	{
 		if (state->drawBrushes)
 		{
-			for (s32 i = 0; i < state->brushMeshCount; i++)
+			for (i32 i = 0; i < state->brushMeshCount; i++)
 			{
 				GfxMesh *mesh = &state->brushMeshes[i];
 				if (state->solidDrawType <= 1)
@@ -1098,7 +959,7 @@ internal void DebugGfxFrame(void *userData)
 	else
 	{
 		GfxBrush brush = state->brushes[state->specificBrushIndex];
-		for (s32 i = 0; i < brush.sideCount; i++)
+		for (i32 i = 0; i < brush.sideCount; i++)
 		{
 			GfxMesh *mesh = &state->specificBrushMeshes[i];
 			if (state->solidDrawType <= 1)
@@ -1120,7 +981,7 @@ internal void DebugGfxFrame(void *userData)
 	if (state->wireframe)
 	{
 		sg_apply_pipeline(state->wirePipeline);
-		for (s32 i = 0; i < state->meshCount; i++)
+		for (i32 i = 0; i < state->meshCount; i++)
 		{
 			GfxMesh *mesh = &state->meshes[i];
 			DrawMeshWire(state, mesh, viewProj);
@@ -1130,7 +991,7 @@ internal void DebugGfxFrame(void *userData)
 		{
 			if (state->drawWorld)
 			{
-				for (s32 i = 0; i < state->worldMeshCount; i++)
+				for (i32 i = 0; i < state->worldMeshCount; i++)
 				{
 					GfxMesh *mesh = &state->worldMeshes[i];
 					DrawMeshWire(state, mesh, viewProj);
@@ -1147,7 +1008,7 @@ internal void DebugGfxFrame(void *userData)
 		{
 			if (state->drawBrushes)
 			{
-				for (s32 i = 0; i < state->brushMeshCount; i++)
+				for (i32 i = 0; i < state->brushMeshCount; i++)
 				{
 					GfxMesh *mesh = &state->brushMeshes[i];
 					DrawMeshWire(state, mesh, viewProj);
@@ -1157,7 +1018,7 @@ internal void DebugGfxFrame(void *userData)
 		else
 		{
 			GfxBrush brush = state->brushes[state->specificBrushIndex];
-			for (s32 i = 0; i < brush.sideCount; i++)
+			for (i32 i = 0; i < brush.sideCount; i++)
 			{
 				GfxMesh *mesh = &state->specificBrushMeshes[i];
 				DrawMeshWire(state, mesh, viewProj);
@@ -1175,7 +1036,7 @@ internal void DebugGfxFrame(void *userData)
 	sg_commit();
 	
 	// NOTE(GameChaos): finish input processing
-	for (s32 i = 0; i < ARRAYCOUNT(input->buttons); i++)
+	for (i32 i = 0; i < ARRAYCOUNT(input->buttons); i++)
 	{
 		input->buttons[i].actionCount = 0;
 	}
@@ -1185,12 +1046,12 @@ internal void DebugGfxFrame(void *userData)
 	input->mouseScroll.y = 0;
 }
 
-internal void DebugGfxCleanup()
+static_function void DebugGfxCleanup()
 {
 	simgui_shutdown();
 }
 
-internal void DebugGfxEvent(const sapp_event *event)
+static_function void DebugGfxEvent(const sapp_event *event)
 {
 	simgui_handle_event(event);
 	
@@ -1229,7 +1090,7 @@ button.actionCount++;\
 		case SAPP_EVENTTYPE_MOUSE_DOWN:
 		case SAPP_EVENTTYPE_MOUSE_UP:
 		{
-			b32 down = event->type == SAPP_EVENTTYPE_MOUSE_DOWN;
+			bool down = event->type == SAPP_EVENTTYPE_MOUSE_DOWN;
 			MOUSE_BUTTON_HELPER(input->mouse1, SAPP_MOUSEBUTTON_LEFT);
 			MOUSE_BUTTON_HELPER(input->mouse2, SAPP_MOUSEBUTTON_RIGHT);
 		} break;
@@ -1239,7 +1100,7 @@ button.actionCount++;\
 		{
 			if (!event->key_repeat)
 			{
-				b32 down = event->type == SAPP_EVENTTYPE_KEY_DOWN;
+				bool down = event->type == SAPP_EVENTTYPE_KEY_DOWN;
 				if (down && event->key_code == SAPP_KEYCODE_ESCAPE)
 				{
 					sapp_lock_mouse(!sapp_mouse_locked());
@@ -1277,7 +1138,7 @@ button.actionCount++;\
 #undef KEYBOARD_BUTTON_HELPER
 }
 
-internal void DebugGfxMain(s32 argCount, char *arguments[])
+static_function void DebugGfxMain(i32 argCount, char *arguments[])
 {
 	Arena arena = ArenaCreate(GIGABYTES(4));
 	g_gfxState = (GfxState *)ArenaAlloc(&arena, sizeof(*g_gfxState));

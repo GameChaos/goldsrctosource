@@ -1,7 +1,7 @@
 
 #include "printing.h"
 
-internal char *PrintCb_(const char *buf, void *user, int len)
+static_function char *PrintCb_(const char *buf, void *user, int len)
 {
 	ASSERT(buf);
 	ASSERT(user);
@@ -10,7 +10,7 @@ internal char *PrintCb_(const char *buf, void *user, int len)
 }
 
 __attribute__((format (printf, 1, 2)))
-internal void Print(const char *format, ...)
+static_function void Print(const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -21,32 +21,32 @@ internal void Print(const char *format, ...)
 	va_end(args);
 }
 
-internal void VPrint(const char *format, va_list args)
+static_function void VPrint(const char *format, va_list args)
 {
 	char buffer[STB_SPRINTF_MIN];
 	stbsp_vsprintfcb(PrintCb_, buffer, buffer, format, args);
 }
 
 __attribute__((format (printf, 3, 4)))
-internal s32 Format(char *buffer, s32 maxlen, const char *format, ...)
+static_function i32 Format(char *buffer, i32 maxlen, const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	s32 result = stbsp_vsnprintf(buffer, maxlen, format, args);
+	i32 result = stbsp_vsnprintf(buffer, maxlen, format, args);
 	va_end(args);
 	return result;
 }
 
-internal s32 VFormat(char *buffer, s32 maxlen, const char *format, va_list args)
+static_function i32 VFormat(char *buffer, i32 maxlen, const char *format, va_list args)
 {
-	s32 result = stbsp_vsnprintf(buffer, maxlen, format, args);
+	i32 result = stbsp_vsnprintf(buffer, maxlen, format, args);
 	return result;
 }
 
-internal void PrintString(const char *str)
+static_function void PrintString(const char *str)
 {
 	ASSERT(str);
-	s64 len = strlen(str);
-	ASSERT(len <= S32_MAX);
-	Print("%.*s", (s32)len, str);
+	i64 len = strlen(str);
+	ASSERT(len <= I32_MAX);
+	Print("%.*s", (i32)len, str);
 }

@@ -1,7 +1,7 @@
 
 #include "zip.h"
 
-internal ZipBuilder ZipBuilderCreate(Arena *arena, s64 maxBytes, s64 maxFiles)
+static_function ZipBuilder ZipBuilderCreate(Arena *arena, i64 maxBytes, i64 maxFiles)
 {
 	ASSERT(maxBytes > 0);
 	ASSERT(maxFiles > 0);
@@ -23,20 +23,20 @@ internal ZipBuilder ZipBuilderCreate(Arena *arena, s64 maxBytes, s64 maxFiles)
 	return result;
 }
 
-internal b32 ZipBuilderBeginAddFile(ZipBuilder *builder, char *name, s32 nameLen)
+static_function bool ZipBuilderBeginAddFile(ZipBuilder *builder, char *name, i32 nameLen)
 {
 	ASSERT(builder);
 	ASSERT(builder->valid);
 	ASSERT(name);
 	ASSERT(!builder->addingFileCurrently);
 	
-	b32 result = false;
+	bool result = false;
 	if (name && builder && builder->valid
 		&& !builder->addingFileCurrently)
 	{
 		if (nameLen <= 0)
 		{
-			nameLen = (s32)StringLength(name);
+			nameLen = (i32)StringLength(name);
 		}
 		if (nameLen > 0 && nameLen < 65536)
 		{
@@ -55,7 +55,7 @@ internal b32 ZipBuilderBeginAddFile(ZipBuilder *builder, char *name, s32 nameLen
 	return result;
 }
 
-internal b32 ZipBuilderPushData(ZipBuilder *builder, void *data, s64 bytes)
+static_function bool ZipBuilderPushData(ZipBuilder *builder, void *data, i64 bytes)
 {
 	ASSERT(builder);
 	ASSERT(builder->valid);
@@ -63,7 +63,7 @@ internal b32 ZipBuilderPushData(ZipBuilder *builder, void *data, s64 bytes)
 	ASSERT(builder->file.memory);
 	ASSERT(builder->file.size);
 	
-	b32 result = false;
+	bool result = false;
 	if (builder && builder->valid && builder->addingFileCurrently)
 	{
 		if (BufferPushData(&builder->file, data, bytes, false))
@@ -74,7 +74,7 @@ internal b32 ZipBuilderPushData(ZipBuilder *builder, void *data, s64 bytes)
 	return result;
 }
 
-internal b32 ZipBuilderEndAddFile(ZipBuilder *builder)
+static_function bool ZipBuilderEndAddFile(ZipBuilder *builder)
 {
 	ASSERT(builder);
 	ASSERT(builder->valid);
@@ -84,7 +84,7 @@ internal b32 ZipBuilderEndAddFile(ZipBuilder *builder)
 	ASSERT(builder->file.size);
 	ASSERT(builder->endRecord.fileHeaderCount < builder->maxFiles);
 	
-	b32 result = false;
+	bool result = false;
 	if (builder && builder->valid
 		&& builder->addingFileCurrently
 		&& builder->currentLocalFile
@@ -97,14 +97,14 @@ internal b32 ZipBuilderEndAddFile(ZipBuilder *builder)
 						 + sizeof(*localFile)
 						 + localFile->fileNameLength);
 		
-		s64 fileOffset = (s64)(fileStart - builder->file.memory);
+		i64 fileOffset = (i64)(fileStart - builder->file.memory);
 		localFile->uncompressedSize = (u32)(builder->file.usedBytes - fileOffset);
 		localFile->compressedSize = localFile->uncompressedSize;
 		// NOTE(GameChaos): source itself doesn't care if the crc is wrong,
 		// but when extracted as a zip, then archive programs will complain.
 		// localFile->crc32 = crc32;
 		
-		s64 localFileOffset = (s64)((u8 *)localFile - builder->file.memory);
+		i64 localFileOffset = (i64)((u8 *)localFile - builder->file.memory);
 		ZipEndOfCentralDirRecord *endRecord = &builder->endRecord;
 		builder->fileHeaders[endRecord->fileHeaderCount] = (ZipFileHeader){};
 		builder->fileHeaders[endRecord->fileHeaderCount].signature = ZIP_PKID(1, 2);
@@ -124,9 +124,9 @@ internal b32 ZipBuilderEndAddFile(ZipBuilder *builder)
 	return result;
 }
 
-internal b32 ZipBuilderAddFile(ZipBuilder *builder, char *name, s32 nameLen, void *data, s64 bytes)
+static_function bool ZipBuilderAddFile(ZipBuilder *builder, char *name, i32 nameLen, void *data, i64 bytes)
 {
-	b32 result = false;
+	bool result = false;
 	if (ZipBuilderBeginAddFile(builder, name, nameLen))
 	{
 		if (ZipBuilderPushData(builder, data, bytes))
@@ -137,7 +137,7 @@ internal b32 ZipBuilderAddFile(ZipBuilder *builder, char *name, s32 nameLen, voi
 	return result;
 }
 
-internal FileWritingBuffer ZipBuilderFinish(ZipBuilder *builder)
+static_function FileWritingBuffer ZipBuilderFinish(ZipBuilder *builder)
 {
 	ASSERT(builder);
 	ASSERT(builder->valid);
@@ -153,7 +153,7 @@ internal FileWritingBuffer ZipBuilderFinish(ZipBuilder *builder)
 		endRecord->fileHeadersOffset = (u32)builder->file.usedBytes;
 		endRecord->fileHeaderCountTotal = endRecord->fileHeaderCount;
 		FileWritingBuffer *file = &builder->file;
-		for (s32 i = 0; i < endRecord->fileHeaderCount; i++)
+		for (i32 i = 0; i < endRecord->fileHeaderCount; i++)
 		{
 			BufferPushData(&builder->file, &builder->fileHeaders[i], sizeof(builder->fileHeaders[i]), false);
 			// NOTE(GameChaos): NOT NULL TERMINATED!!!

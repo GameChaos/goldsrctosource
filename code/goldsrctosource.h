@@ -41,14 +41,14 @@ typedef enum
 
 typedef struct
 {
-	s32 model;
-	s32 rendermode;
+	i32 model;
+	i32 rendermode;
 } ModelInfo;
 
 typedef struct
 {
-	s32 parent;
-	s32 index;
+	i32 parent;
+	i32 index;
 } TraverseBspTreeNode;
 
 typedef struct
@@ -60,10 +60,10 @@ typedef struct
 	union
 	{
 		char stringValue[512];
-		s32 intValue;
+		i32 intValue;
 	};
 	
-	b32 isInCmdLine; // whether this exists on the command line
+	bool isInCmdLine; // whether this exists on the command line
 } CmdArg;
 
 typedef union
@@ -85,13 +85,13 @@ static_assert(MEMBER_SIZE(CmdArgs, args) == sizeof(CmdArgs), "CmdArgs size and a
 typedef struct
 {
 	v3 verts[SRC_MAX_SIDE_VERTS];
-	s32 vertCount;
+	i32 vertCount;
 } Verts;
 
 typedef struct
 {
 	v2 verts[SRC_MAX_SIDE_VERTS];
-	s32 vertCount;
+	i32 vertCount;
 } Polygon2D;
 
 typedef struct
@@ -110,8 +110,8 @@ typedef struct
 typedef struct
 {
 	u8 *memory;
-	s64 size;
-	s64 usedBytes;
+	i64 size;
+	i64 usedBytes;
 } FileWritingBuffer;
 
 typedef struct
@@ -137,23 +137,23 @@ typedef struct
 {
 	v3 normal;
 	f32 distance;
-	s32 type;
+	i32 type;
 } SrcPlane;
 
 typedef struct
 {
 	SrcPlane plane;
 	Verts polygon;
-	s32 texture;
+	i32 texture;
 } BrushSide;
 
 typedef struct
 {
 	BrushSide *sides;
 	aabb bounds;
-	s32 sideCount;
-	s32 contents;
-	s32 model;
+	i32 sideCount;
+	i32 contents;
+	i32 model;
 } Brush;
 
 typedef struct
@@ -161,7 +161,7 @@ typedef struct
 	SrcPlane plane;
 	aabb bounds;
 	Verts polygon;
-	s32 texture;
+	i32 texture;
 	aabb size;
 } Face;
 
@@ -170,14 +170,14 @@ typedef struct
 typedef struct
 {
 	str classname;
-	s32 propertyCount;
-	s32 model;
+	i32 propertyCount;
+	i32 model;
 	EntProperty properties[MAX_ENT_PROPERTIES];
 } EntProperties;
 
 typedef struct
 {
-	s32 entCount;
+	i32 entCount;
 	EntProperties *ents;
 } EntList;
 
@@ -208,10 +208,10 @@ typedef enum
 	STRINGTONUM_ERR_FAILED = 2,
 } StringToNumResult;
 
-internal void FatalError(const char *error);
-internal void Error(const char *format, ...);
-internal void Warning(const char *format, ...);
-internal s32 GsrcContentsToSrcContents(s32 gsrcContents);
-void BSPMain(s32 argCount, char *arguments[]);
+static_function void FatalError(const char *error);
+static_function void Error(const char *format, ...);
+static_function void Warning(const char *format, ...);
+static_function i32 GsrcContentsToSrcContents(i32 gsrcContents);
+static_function void BSPMain(i32 argCount, char *arguments[]);
 
 #endif //GOLDSRCTOSOURCE_H

@@ -255,16 +255,16 @@ typedef union
 	struct
 	{
 		u8 r, g, b;
-		s8 exponent;
+		i8 exponent;
 	};
 	u8 elements[3];
 } Rgbe8888;
 
 typedef struct
 {
-	s32 offset;
-	s32 length;
-	s32 version;
+	i32 offset;
+	i32 length;
+	i32 version;
 	char fourCC[4];
 } SrcLump;
 
@@ -279,20 +279,20 @@ typedef struct
 
 typedef struct
 {
-	s32 lumpCount;
+	i32 lumpCount;
 } SrcGamelumpHeader;
 
 typedef struct
 {
 	union
 	{
-		s32 id;
+		i32 id;
 		char fourcc[4];
 	};
 	u16 flags;
 	u16 version;
-	s32 fileOffset;
-	s32 length;
+	i32 fileOffset;
+	i32 length;
 } SrcGamelump;
 
 typedef struct
@@ -303,7 +303,7 @@ typedef struct
 
 typedef struct
 {
-	s16 vertex[2]; // indices into the vertex array
+	i16 vertex[2]; // indices into the vertex array
 } SrcEdge;
 
 typedef struct
@@ -311,9 +311,9 @@ typedef struct
 	v3 origin;
 	v3 intensity;
 	v3 normal;
-	s32 cluster;
+	i32 cluster;
 	SrcEmitType type;
-	s32 style;
+	i32 style;
 	f32 stopdot;
 	f32 stopdot2;
 	f32 exponent;
@@ -321,9 +321,9 @@ typedef struct
 	f32 constantAttenuation;	
 	f32 linearAttenuation;
 	f32 quadraticAttenuation;
-	s32 flags;
-	s32 texinfo;
-	s32 owner;
+	i32 flags;
+	i32 texinfo;
+	i32 owner;
 } SrcWorldLight_v0;
 
 // v1
@@ -333,9 +333,9 @@ typedef struct
 	v3 intensity;
 	v3 normal;
 	v3 unknown;
-	s32 cluster;
+	i32 cluster;
 	SrcEmitType type;
-	s32 style;
+	i32 style;
 	f32 stopdot;
 	f32 stopdot2;
 	f32 exponent;
@@ -343,9 +343,9 @@ typedef struct
 	f32 constantAttenuation;	
 	f32 linearAttenuation;
 	f32 quadraticAttenuation;
-	s32 flags;
-	s32 texinfo;
-	s32 owner;
+	i32 flags;
+	i32 texinfo;
+	i32 owner;
 } SrcWorldLight;
 
 typedef struct
@@ -373,18 +373,18 @@ typedef struct
 	// NOTE(GameChaos): NOT a v4 because that screws up packing!
 	f32 textureVecs[2][4];
 	f32 lightmapVecs[2][4];
-	s32 flags; // SRC_SURF_ flags
-	s32 texdata;
+	i32 flags; // SRC_SURF_ flags
+	i32 texdata;
 } SrcTexinfo;
 
 typedef struct
 {
 	v3 reflectivity;
-	s32 nameStringTableID;
-	s32 width;
-	s32 height;
-	s32 viewWidth;
-	s32 viewHeight;
+	i32 nameStringTableID;
+	i32 width;
+	i32 height;
+	i32 viewWidth;
+	i32 viewHeight;
 } SrcTexdata;
 
 typedef struct
@@ -392,9 +392,9 @@ typedef struct
 	v3 mins;
 	v3 maxs;
 	v3 origin;
-	s32 headnode;
-	s32 firstFace;
-	s32 numFaces;
+	i32 headnode;
+	i32 firstFace;
+	i32 numFaces;
 } SrcModel;
 
 typedef struct
@@ -402,17 +402,17 @@ typedef struct
 	u16 planeIndex;
 	u8 side;
 	u8 onNode;
-	s32 firstEdge;          // index into surfedges
-	s16 edges;              // number of surfedges
-	s16 texinfo;            // texture info index
-	s16 dispinfo;           // displacement info index
-	s16 surfaceFogVolumeID; // ?
+	i32 firstEdge;          // index into surfedges
+	i16 edges;              // number of surfedges
+	i16 texinfo;            // texture info index
+	i16 dispinfo;           // displacement info index
+	i16 surfaceFogVolumeID; // ?
 	u8 styles[4];           // switchable lighting info
-	s32 lightOffset;        // byte offset into lightmap lump
+	i32 lightOffset;        // byte offset into lightmap lump
 	f32 area;               // face area in units^2
-	s32 lightmapTextureMinsInLuxels[2];
-	s32 lightmapTextureSizeInLuxels[2];
-	s32 origFace;
+	i32 lightmapTextureMinsInLuxels[2];
+	i32 lightmapTextureSizeInLuxels[2];
+	i32 origFace;
 	u16 numPrims;
 	u16 firstPrimID;
 	u32 smoothingGroups; // lightmap smoothing group
@@ -420,58 +420,58 @@ typedef struct
 
 typedef struct
 {
-	s32 firstSide; // first brushside
-	s32 sides;     // number of brushsides
-	s32 contents;  // contents flags
+	i32 firstSide; // first brushside
+	i32 sides;     // number of brushsides
+	i32 contents;  // contents flags
 } SrcBrush;
 
 typedef struct
 {
 	u16 plane;
-	s16 texinfo;  // texture info
-	s16 dispinfo; // displacement info index
-	s16 bevel;    // bevel planes are used for AABB tracing.
+	i16 texinfo;  // texture info
+	i16 dispinfo; // displacement info index
+	i16 bevel;    // bevel planes are used for AABB tracing.
 } SrcBrushSide;
 
 typedef struct
 {
-	s32 plane;       // index into plane array
-	s32 children[2];
-	s16 mins[3];
-	s16 maxs[3];
+	i32 plane;       // index into plane array
+	i32 children[2];
+	i16 mins[3];
+	i16 maxs[3];
 	u16 firstFace;   // index into face array
 	u16 faceCount;
-	s16 area;
-	s16 padding_;     // pad to 32 bytes length
+	i16 area;
+	i16 padding_;     // pad to 32 bytes length
 } SrcNode;
 
 typedef struct
 {
 	f32 surfaceZ;
 	f32 minZ;
-	s16 surfaceTexinfo;
+	i16 surfaceTexinfo;
 } SrcLeafWaterData;
 
 typedef struct
 {
-	s32 contents;
-	s16 cluster;  // cluster this leaf is in
-	s16 area:9;   // area this leaf is in
-	s16 flags:7;  // leaf flags
-	s16 mins[3];
-	s16 maxs[3];
+	i32 contents;
+	i16 cluster;  // cluster this leaf is in
+	i16 area:9;   // area this leaf is in
+	i16 flags:7;  // leaf flags
+	i16 mins[3];
+	i16 maxs[3];
 	u16 firstLeafFace;   // index into leaffaces
 	u16 leafFaces;
 	u16 firstLeafBrush;  // index into leafbrushes
 	u16 leafBrushes;
-	s16 leafWaterDataIndex;
-	s16 padding_; // padding to 4-byte boundary
+	i16 leafWaterDataIndex;
+	i16 padding_; // padding to 4-byte boundary
 } SrcLeaf;
 
 typedef struct
 {
-	s32 areaportalCount;
-	s32 areaportalIndex;
+	i32 areaportalCount;
+	i32 areaportalIndex;
 } SrcArea;
 
 typedef struct
@@ -480,7 +480,7 @@ typedef struct
 	u16 otherarea;
 	u16 firstClipPortalVert;
 	u16 clipPortalVerts;
-	s32 planenum;
+	i32 planenum;
 } SrcAreaportal;
 
 // TODO: order the structs in good nice order
@@ -491,76 +491,76 @@ typedef struct
 	
 	SrcHeader *header;
 	
-	//s32 entitiesLength;
+	//i32 entitiesLength;
 	//char *lumpEntities;
 	
-	s32 planeCount;
+	i32 planeCount;
 	SrcPlane *lumpPlanes;
 	
-	//s32 texdataCount;
+	//i32 texdataCount;
 	//SrcTexdata *lumpTexdata;
 	
-	//s32 vertexCount;
+	//i32 vertexCount;
 	//v3 *lumpVertices;
 	
-	s32 edgeCount;
+	i32 edgeCount;
 	SrcEdge *lumpEdges;
 	
-	s32 surfEdgeCount;
-	s32 *lumpSurfEdges;
+	i32 surfEdgeCount;
+	i32 *lumpSurfEdges;
 	
-	//s32 faceCount;
+	//i32 faceCount;
 	//SrcFace *lumpFaces;
 	
-	s32 brushCount;
+	i32 brushCount;
 	SrcBrush *lumpBrushes;
 	
-	s32 brushSideCount;
+	i32 brushSideCount;
 	SrcBrushSide *lumpBrushSides;
 	
 	/*
-	s32 visLength;
+	i32 visLength;
 	u8 *lumpVIS;
 	*/
 	
-	//s32 nodeCount;
+	//i32 nodeCount;
 	//SrcNode *lumpNodes;
 	
-	//s32 leafCount;
+	//i32 leafCount;
 	//SrcLeaf *lumpLeaves;
 	
-	s32 leafFaceCount;
+	i32 leafFaceCount;
 	u16 *lumpLeafFaces;
 	
-	s32 leafBrushCount;
+	i32 leafBrushCount;
 	u16 *lumpLeafBrushes;
 	
-	s32 areaCount;
+	i32 areaCount;
 	SrcArea *lumpAreas;
 	
-	//s32 texinfoCount;
+	//i32 texinfoCount;
 	//SrcTexinfo *lumpTexinfo;
 	
-	//s32 texdataStringDataSize;
+	//i32 texdataStringDataSize;
 	//char *lumpTexdataStringData;
 	
-	//s32 texdataStringTableCount;
-	//s32 *lumpTexdataStringTable;
+	//i32 texdataStringTableCount;
+	//i32 *lumpTexdataStringTable;
 	
 	/*
-			s32 lightingLength;
+			i32 lightingLength;
 			u8 *lumpLighting;
 			
-			s32 clipnodeCount;
+			i32 clipnodeCount;
 			Clipnode *lumpClipnodes;
 			*/
 	
 	/*
-	s32 marksurfaceCount;
+	i32 marksurfaceCount;
 	u16 *lumpMarksurfaces;
 	*/
 	
-	s32 modelCount;
+	i32 modelCount;
 	SrcModel *lumpModels;
 } SrcMapData;
 

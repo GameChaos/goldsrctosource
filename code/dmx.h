@@ -78,13 +78,13 @@ typedef union
 
 typedef struct
 {
-	s32 index;
+	i32 index;
 	Guid guid;
 } DmxElementId;
 
 typedef struct
 {
-	s32 byteCount;
+	i32 byteCount;
 	u8 *bytes;
 } DmxBinaryBlob;
 
@@ -96,14 +96,14 @@ typedef struct
 		u8 startOfValueData;
 		
 		DmxElementId element;
-		s32 int32;
+		i32 int32;
 		f32 float32;
 		bool boolean;
 		char *string; // DMX_ATTR_STRING only in the prefix
-		s32 stringIndex; // DMX_ATTR_STRING
+		i32 stringIndex; // DMX_ATTR_STRING
 		DmxBinaryBlob binaryBlob;
-		s32 timespan;
-		s32 rgba;
+		i32 timespan;
+		i32 rgba;
 		v2 vector2;
 		v3 vector3;
 		v4 vector4;
@@ -116,18 +116,18 @@ typedef struct
 		// array types
 		struct
 		{
-			s32 arrayCount;
+			i32 arrayCount;
 			union
 			{
 				void *array; // for custom types
 				
 				DmxElementId *elementArray;
-				s32 *int32Array;
+				i32 *int32Array;
 				f32 *float32Array;
 				bool *booleanArray;
 				char **stringArray; // DMX_ATTR_STRING
 				DmxBinaryBlob *binaryBlobArray;
-				s32 *timespanArray;
+				i32 *timespanArray;
 				u32 *rgbaArray;
 				v2 *vector2Array;
 				v3 *vector3Array;
@@ -150,7 +150,7 @@ typedef struct
 
 typedef struct
 {
-	s32 stringCount;
+	i32 stringCount;
     char **strings;
 } DmxStringTable;
 
@@ -159,8 +159,8 @@ typedef struct
 	char type[DMX_MAX_NAME_LEN];
 	char name[DMX_MAX_NAME_LEN];
 	Guid guid;
-	s32 maxAttributes;
-	s32 attributeCount;
+	i32 maxAttributes;
+	i32 attributeCount;
 	DmxAttribute *attributes;
 } DmxElement;
 
@@ -169,14 +169,14 @@ typedef struct
 	// NOTE: only 1 prefix element for now.
 	DmxElement prefix;
 	
-	//s32 maxStrings;
-	//s64 maxStringBytes;
-	//s64 currentStringByte;
+	//i32 maxStrings;
+	//i64 maxStringBytes;
+	//i64 currentStringByte;
 	//char *stringMemory;
 	//DmxStringTable stringTable;
 	
-	s32 elementCount;
-	s32 maxElements;
+	i32 elementCount;
+	i32 maxElements;
 	DmxElement *elements;
 } Dmx;
 
@@ -192,7 +192,7 @@ typedef struct
 
 typedef struct
 {
-	s32 attributeCount;
+	i32 attributeCount;
 	DmxAttribute *attributes;
 } DmxReadElemBody;
 
@@ -200,33 +200,33 @@ typedef struct
 {
 	ReadFileResult file;
 	char *header; // "<!-- dmx encoding binary 9 format %s %i -->\n"
-	s32 prefixElementCount;
+	i32 prefixElementCount;
 	DmxReadElemBody *prefixElements;
 	DmxStringTable stringTable;
-	s32 elementCount;
+	i32 elementCount;
 	DmxReadElemHeader *elementHeaders;
 	DmxReadElemBody *elements;
 } DmxReadBinary_v9;
 
 #define DEFINE_DMXADDATTRIBUTE_FUNC_SIG(functionName, dataType)\
-internal DmxAttribute *functionName(Dmx *dmx, DmxElement *parent, str name, dataType value)
+static_function DmxAttribute *functionName(Dmx *dmx, DmxElement *parent, str name, dataType value)
 #define DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(functionName, dataType)\
-internal DmxAttribute *functionName(Dmx *dmx, DmxElement *parent, str name, dataType *items, s32 itemCount)
+static_function DmxAttribute *functionName(Dmx *dmx, DmxElement *parent, str name, dataType *items, i32 itemCount)
 
-internal Dmx DmxCreate(Arena *arena);
-internal DmxElement *DmxGetPrefix(Dmx *dmx);
+static_function Dmx DmxCreate(Arena *arena);
+static_function DmxElement *DmxGetPrefix(Dmx *dmx);
 
-internal DmxElement *DmxAddElement(Dmx *dmx, DmxElement *parent, str name, str type, Arena *arena);
+static_function DmxElement *DmxAddElement(Dmx *dmx, DmxElement *parent, str name, str type, Arena *arena);
 
-internal DmxAttribute *DmxAddAttribute(Dmx *dmx, DmxElement *parent, str name, DmxAttrType type);
+static_function DmxAttribute *DmxAddAttribute(Dmx *dmx, DmxElement *parent, str name, DmxAttrType type);
 
-internal void DmxAttrSetData(Dmx *dmx, DmxAttribute *attr, void *data, s64 bytes);
+static_function void DmxAttrSetData(Dmx *dmx, DmxAttribute *attr, void *data, i64 bytes);
 
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeElementId, DmxElementId);
-DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeInt, s32);
+DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeInt, i32);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeF32, f32);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeBool, bool);
-DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeTimespan, s32);
+DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeTimespan, i32);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeRgba8, u32);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeV2, v2);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeV3, v3);
@@ -237,15 +237,15 @@ DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeMat4, mat4);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeU64, u64);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeU8, u8);
 
-internal DmxAttribute *DmxAddAttributeBinary(Dmx *dmx, DmxElement *parent, str name, void *binaryBlob, s64 bytes);
-internal DmxAttribute *DmxAddAttributeString(Dmx *dmx, DmxElement *parent, str name, str value);
+static_function DmxAttribute *DmxAddAttributeBinary(Dmx *dmx, DmxElement *parent, str name, void *binaryBlob, i64 bytes);
+static_function DmxAttribute *DmxAddAttributeString(Dmx *dmx, DmxElement *parent, str name, str value);
 
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayElementId, DmxElementId);
-DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayInt, s32);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayInt, i32);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayBool, bool);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayString, char *);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayBinary, DmxBinaryBlob);
-DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayTimespan, s32);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayTimespan, i32);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayRgba8, u32);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayV2, v2);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayV3, v3);

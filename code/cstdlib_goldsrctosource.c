@@ -1,7 +1,7 @@
 
 #include <string.h>
 
-internal ReadFileResult ReadEntireFile(Arena *arena, const char *filePath)
+static_function ReadFileResult ReadEntireFile(Arena *arena, const char *filePath)
 {
 	ReadFileResult result = {0};
 	
@@ -9,7 +9,7 @@ internal ReadFileResult ReadEntireFile(Arena *arena, const char *filePath)
 	if (file)
 	{
 		fseek(file, 0, SEEK_END);
-		s64 fileSize = ftell(file);
+		i64 fileSize = ftell(file);
 		fseek(file, 0, SEEK_SET);
 		
 		if (fileSize)
@@ -27,7 +27,7 @@ internal ReadFileResult ReadEntireFile(Arena *arena, const char *filePath)
 	return result;
 }
 
-internal b32 WriteEntireFile(const char *filename, const void *memory, s64 bytes)
+static_function bool WriteEntireFile(const char *filename, const void *memory, i64 bytes)
 {
 	bool result = false;
 	FILE *file = fopen(filename, "wb");
@@ -42,12 +42,12 @@ internal b32 WriteEntireFile(const char *filename, const void *memory, s64 bytes
 	return result;
 }
 
-internal size_t StringLength(const char *string)
+static_function size_t StringLength(const char *string)
 {
 	return strlen(string);
 }
 
-internal void Plat_WriteToStdout(const char *str, s64 len)
+static_function void Plat_WriteToStdout(const char *str, i64 len)
 {
 	fwrite(str, len, 1, stdout);
 }

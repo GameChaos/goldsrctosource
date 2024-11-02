@@ -1,6 +1,6 @@
 #include "sourcebsp.h"
 
-global const char *g_srcLumpNames[] = {
+static_global const char *g_srcLumpNames[] = {
 	"LUMP_ENTITIES",
 	"LUMP_PLANES",
 	"LUMP_TEXDATA",
@@ -67,9 +67,9 @@ global const char *g_srcLumpNames[] = {
 	"LUMP_DISP_MULTIBLEND"
 };
 
-internal s32 SrcGetPlaneType(v3 normal)
+static_function i32 SrcGetPlaneType(v3 normal)
 {
-	s32 type = -1;
+	i32 type = -1;
 	for (int i = 0; i < 3; i++)
 	{
 		if (normal.e[i] == 1.0f || normal.e[i] == -1.0f)
@@ -101,19 +101,19 @@ internal s32 SrcGetPlaneType(v3 normal)
 	return type;
 }
 
-internal Rgbe8888 SrcLinearToRgbe8888(v3 colour)
+static_function Rgbe8888 SrcLinearToRgbe8888(v3 colour)
 {
 	f32 max = GCM_MAX(GCM_MAX(colour.r, colour.g), colour.b);
-	s32 exponent = -128;
+	i32 exponent = -128;
 	if (max > 0)
 	{
-		exponent = (s32)floorf(log2f(max)) + 1;
-		exponent = (s8)GCM_CLAMP(-128, exponent, 127);
+		exponent = (i32)floorf(log2f(max)) + 1;
+		exponent = (i8)GCM_CLAMP(-128, exponent, 127);
 		f32 scale = powf(2.0f, -(f32)exponent);
 		colour = v3muls(colour, scale);
 		colour = v3muls(colour, 255.0f);
 	}
-	for (s32 i = 0; i < 3; i++)
+	for (i32 i = 0; i < 3; i++)
 	{
 		colour.e[i] = GCM_CLAMP(0, colour.e[i], 255);
 	}
@@ -122,13 +122,13 @@ internal Rgbe8888 SrcLinearToRgbe8888(v3 colour)
 		(u8)colour.x,
 		(u8)colour.y,
 		(u8)colour.z,
-		(s8)exponent,
+		(i8)exponent,
 	};
 	
 	return result;
 }
 
-internal v3 SrcRgbe8888ToLinear(Rgbe8888 colour)
+static_function v3 SrcRgbe8888ToLinear(Rgbe8888 colour)
 {
 	f32 mul = powf(2, colour.exponent);
 	v3 result = {

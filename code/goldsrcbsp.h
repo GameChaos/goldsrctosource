@@ -95,7 +95,7 @@ typedef struct
 {
 	v3 normal;
 	f32 distance;
-	s32 type;
+	i32 type;
 } GsrcPlane;
 
 typedef struct
@@ -110,7 +110,7 @@ typedef struct
 {
 	// header
 	u32 mipTextureCount;   // Number of MipTexture structures and mipTextureOffsets
-	s32 *mipTextureOffsets; // array of MipTexture offsets
+	i32 *mipTextureOffsets; // array of MipTexture offsets
 	
 	// data
 	GsrcMipTexture **mipTextures;  // array of pointers to pointers of MipTextures
@@ -119,9 +119,9 @@ typedef struct
 typedef struct
 {
 	u32 plane;      // Index into Planes lump
-	s16 children[2]; // If > 0, then indices into Nodes // otherwise bitwise inverse indices into Leafs
-	s16 mins[3];     // Defines bounding box
-	s16 maxs[3];
+	i16 children[2]; // If > 0, then indices into Nodes // otherwise bitwise inverse indices into Leafs
+	i16 mins[3];     // Defines bounding box
+	i16 maxs[3];
 	u16 firstFace;  // Index and
 	u16 faceCount;  // count into Faces
 } GsrcNode;
@@ -147,35 +147,35 @@ typedef struct
 
 typedef struct
 {
-	s32 plane;
-	s16 children[2];
+	i32 plane;
+	i16 children[2];
 } GsrcClipnode;
 
 typedef struct
 {
-	s32 contents;  // Contents enumeration
-	s32 visOffset; // Offset into the visibility lump
-	s16 mins[3];
-	s16 maxs[3];
-	s16 firstMarkSurface; // Index into marksurfaces array
-	s16 markSurfaces;      // Count into marksurfaces array
+	i32 contents;  // Contents enumeration
+	i32 visOffset; // Offset into the visibility lump
+	i16 mins[3];
+	i16 maxs[3];
+	i16 firstMarkSurface; // Index into marksurfaces array
+	i16 markSurfaces;      // Count into marksurfaces array
 	u8 ambientLevels[4]; // Ambient sound levels
 } GsrcLeaf;
 
 typedef struct
 {
-	s16 vertex[2]; // indices into the vertex array
+	i16 vertex[2]; // indices into the vertex array
 } GsrcEdge;
 
 typedef struct
 {
-	s32 offset; // File offset to data
-	s32 length; // Length of data
+	i32 offset; // File offset to data
+	i32 length; // Length of data
 } GsrcLump;
 
 typedef struct
 {
-	s32 version;           // Must be 30 for a valid HL BSP file
+	i32 version;           // Must be 30 for a valid HL BSP file
 	GsrcLump lump[GSRC_HEADER_LUMPS]; // Stores the directory of lumps
 } GsrcHeader;
 
@@ -184,10 +184,10 @@ typedef struct
 	v3 mins;
 	v3 maxs;
 	v3 origin;
-	s32 headnodes[GSRC_MAX_MAP_HULLS]; // Index into nodes array
-	s32 visLeafs;
-	s32 firstFace;
-	s32 faces; // Index and count into faces
+	i32 headnodes[GSRC_MAX_MAP_HULLS]; // Index into nodes array
+	i32 visLeafs;
+	i32 firstFace;
+	i32 faces; // Index and count into faces
 } GsrcModel;
 
 typedef struct
@@ -202,48 +202,48 @@ typedef struct
 	// this has to be the first lump.
 	str lumpEntities;
 	
-	s32 planeCount;
+	i32 planeCount;
 	GsrcPlane *lumpPlanes;
 	
 	// NOTE: lumpTextures is just a lump of data for now
-	s32 textureLumpSize;
+	i32 textureLumpSize;
 	u8 *lumpTextureMemory;
 	GsrcLumpTextures lumpTextures;
 	
-	s32 vertexCount;
+	i32 vertexCount;
 	v3 *lumpVertices;
 	
-	s32 visLength;
+	i32 visLength;
 	u8 *lumpVIS;
 	
-	s32 nodeCount;
+	i32 nodeCount;
 	GsrcNode *lumpNodes;
 	
-	s32 texinfoCount;
+	i32 texinfoCount;
 	GsrcTexinfo *lumpTexinfo;
 	
-	s32 faceCount;
+	i32 faceCount;
 	GsrcFace *lumpFaces;
 	
-	s32 lightingLength;
+	i32 lightingLength;
 	u8 *lumpLighting;
 	
-	s32 clipnodeCount;
+	i32 clipnodeCount;
 	GsrcClipnode *lumpClipnodes;
 	
-	s32 leafCount;
+	i32 leafCount;
 	GsrcLeaf *lumpLeaves;
 	
-	s32 marksurfaceCount;
+	i32 marksurfaceCount;
 	u16 *lumpMarksurfaces;
 	
-	s32 edgeCount;
+	i32 edgeCount;
 	GsrcEdge *lumpEdges;
 	
-	s32 surfEdgeCount;
-	s32 *lumpSurfEdges;
+	i32 surfEdgeCount;
+	i32 *lumpSurfEdges;
 	
-	s32 modelCount;
+	i32 modelCount;
 	GsrcModel *lumpModels;
 } GsrcMapData;
 

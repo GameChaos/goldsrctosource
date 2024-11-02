@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <strings.h>
 
-global char g_charBuffer[2048];
+static_global char g_charBuffer[2048];
 
-internal const char *Linux_GetFileExtension(const char *file)
+static_function const char *Linux_GetFileExtension(const char *file)
 {
 	const char *result = NULL;
 	if (file)
@@ -37,7 +37,7 @@ internal const char *Linux_GetFileExtension(const char *file)
 	return result;
 }
 
-internal void AppendToPath(char *path, s64 pathLength, const char *file)
+static_function void AppendToPath(char *path, i64 pathLength, const char *file)
 {
 	size_t pathStrLen = strlen(path);
 	if (path[pathStrLen - 1] == '/' || pathStrLen == 0)
@@ -50,10 +50,10 @@ internal void AppendToPath(char *path, s64 pathLength, const char *file)
 	}
 }
 
-internal s32 GetDirectoryFiles(char *path, FileInfo *out, s32 maxFileCount, const char *fileExtFilter)
+static_function i32 GetDirectoryFiles(char *path, FileInfo *out, i32 maxFileCount, const char *fileExtFilter)
 {
 	DIR *directory = opendir(path);
-	s32 count = 0;
+	i32 count = 0;
 	if (directory && out)
 	{
 		errno = 0;
@@ -94,34 +94,34 @@ internal s32 GetDirectoryFiles(char *path, FileInfo *out, s32 maxFileCount, cons
 }
 
 
-internal void *Plat_MemReserve(s64 bytes)
+static_function void *Plat_MemReserve(i64 bytes)
 {
 	void *result = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
 	return result;
 }
 
-internal void Plat_MemCommit(void *address, s64 bytes)
+static_function void Plat_MemCommit(void *address, i64 bytes)
 {
 	// NOTE(GameChaos): not applicable on linux
 }
 
-internal void Plat_MemDecommit(void *address, s64 bytes)
+static_function void Plat_MemDecommit(void *address, i64 bytes)
 {
 	// NOTE(GameChaos): not applicable on linux?
 }
 
-internal void Plat_MemFree(void *address, s64 bytes)
+static_function void Plat_MemFree(void *address, i64 bytes)
 {
 	munmap(address, bytes);
 }
 
-internal s64 Plat_GetPageSize(void)
+static_function i64 Plat_GetPageSize(void)
 {
-	s64 result = sysconf(_SC_PAGESIZE);
+	i64 result = sysconf(_SC_PAGESIZE);
 	return result;
 }
 
-internal void Mem_Copy(const void *source, void *destination, size_t bytes)
+static_function void Mem_Copy(const void *source, void *destination, size_t bytes)
 {
 	ASSERT(source);
 	ASSERT(destination);
@@ -129,18 +129,18 @@ internal void Mem_Copy(const void *source, void *destination, size_t bytes)
 	memcpy(destination, source, bytes);
 }
 
-internal b32 Mem_Compare(const void *a, const void *b, s64 bytes)
+static_function bool Mem_Compare(const void *a, const void *b, i64 bytes)
 {
-	b32 result = memcmp(a, b, bytes) == 0;
+	bool result = memcmp(a, b, bytes) == 0;
 	return result;
 }
 
-internal void Plat_MemSetToZero(void *destination, s64 bytes)
+static_function void Plat_MemSetToZero(void *destination, i64 bytes)
 {
 	memset((u8 *)destination, 0, bytes);
 }
 
-internal b32 StringEquals(const char *a, const char *b, b32 caseSensitive)
+static_function bool StringEquals(const char *a, const char *b, bool caseSensitive)
 {
 	if (caseSensitive)
 	{

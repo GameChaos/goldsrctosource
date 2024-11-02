@@ -61,12 +61,12 @@ static_assert(sizeof(ZipLocalFileHeader) == 30, "");
 typedef struct
 {
 	// used by beginaddfile/pushdata/endaddfile
-	b32 addingFileCurrently;
 	ZipLocalFileHeader *currentLocalFile;
+	bool addingFileCurrently;
 	
-	b32 valid;
+	bool valid;
 	FileWritingBuffer file;
-	s64 maxFiles;
+	i64 maxFiles;
 	ZipFileHeader *fileHeaders; // NOTE(GameChaos): fileHeaders count is in endRecord
 	ZipEndOfCentralDirRecord endRecord;
 } ZipBuilder;

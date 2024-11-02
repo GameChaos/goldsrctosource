@@ -35,7 +35,7 @@
 #include "sokol/sokol_imgui.h"
 #endif // DEBUG_GRAPHICS
 
-#include "common.h"
+#include "gc_common.h"
 #include "memory.h"
 #include "platform.h"
 
@@ -44,7 +44,7 @@
 #define dmx_serialise
 #define dmx_name_override(name)
 #define dmx_function(function)
-#define dmx_serialise_array(type, name) s32 TOKENPASTE(name, Count); type *names
+#define dmx_serialise_array(type, name) i32 TOKENPASTE(name, Count); type *names
 
 #include "str.c"
 #include "goldsrctosource.h"
@@ -71,20 +71,20 @@
 
 #include "dmx.c"
 
-global const char *g_cmdArgTypeStrings[CMDARGTYPE_COUNT] = {
+static_global const char *g_cmdArgTypeStrings[CMDARGTYPE_COUNT] = {
 	"None",
 	"String",
 	"Integer",
 };
 
-internal void FatalError(const char *error)
+static_function void FatalError(const char *error)
 {
 	Print("FATAL ERROR: %s\n", error);
 	ASSERT(0);
 	exit(EXIT_FAILURE);
 }
 
-internal void Error(const char *format, ...)
+static_function void Error(const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -96,7 +96,7 @@ internal void Error(const char *format, ...)
 	ASSERT(0);
 }
 
-internal void Warning(const char *format, ...)
+static_function void Warning(const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -108,9 +108,9 @@ internal void Warning(const char *format, ...)
 }
 
 
-internal s32 GsrcContentsToSrcContents(s32 gsrcContents)
+static_function i32 GsrcContentsToSrcContents(i32 gsrcContents)
 {
-	s32 result = 0;
+	i32 result = 0;
 	switch (gsrcContents)
 	{
 		case GSRC_CONTENTS_SKY:
@@ -131,13 +131,13 @@ internal s32 GsrcContentsToSrcContents(s32 gsrcContents)
 	return result;
 }
 
-internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
+static_function bool ParseCmdArgs(CmdArgs *cmdArgs, i32 argCount, char *arguments[])
 {
-	b32 result = true;
-	for (s32 i = 1; i < argCount; i++)
+	bool result = true;
+	for (i32 i = 1; i < argCount; i++)
 	{
-		b32 found = false;
-		for (s32 j = 0; j < ARRAYCOUNT(cmdArgs->args); j++)
+		bool found = false;
+		for (i32 j = 0; j < ARRAYCOUNT(cmdArgs->args); j++)
 		{
 			if (i >= argCount)
 			{
@@ -163,11 +163,11 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 						{
 							if (cmdArgs->args[j].type == CMDARG_STRING)
 							{
-								s64 argLen = StringLength(arguments[i + 1]);
+								i64 argLen = StringLength(arguments[i + 1]);
 								if (argLen >= sizeof(cmdArgs->args[j].stringValue))
 								{
 									Error("String is too long for argument %s! Maximum length is %lli characters.\n\n",
-										  arguments[i], (s64)sizeof(MEMBER(CmdArg, stringValue)) - 1);
+										  arguments[i], (i64)sizeof(MEMBER(CmdArg, stringValue)) - 1);
 									result = false;
 									break;
 								}
@@ -233,10 +233,10 @@ internal b32 ParseCmdArgs(CmdArgs *cmdArgs, s32 argCount, char *arguments[])
 	return result;
 }
 
-internal void PrintCmdLineHelp(CmdArgs *cmdArgs)
+static_function void PrintCmdLineHelp(CmdArgs *cmdArgs)
 {
 	PrintString("Available commands:\n");
-	for (s32 i = 0; i < ARRAYCOUNT(cmdArgs->args); i++)
+	for (i32 i = 0; i < ARRAYCOUNT(cmdArgs->args); i++)
 	{
 		if (cmdArgs->args[i].type == CMDARG_NONE)
 		{
@@ -255,7 +255,7 @@ internal void PrintCmdLineHelp(CmdArgs *cmdArgs)
 	PrintString("\n");
 }
 
-void BSPMain(s32 argCount, char *arguments[])
+static_function void BSPMain(i32 argCount, char *arguments[])
 {
 	Arena tempArena = ArenaCreate(GIGABYTES(2));
 	Arena arena = ArenaCreate(GIGABYTES(4));
@@ -340,18 +340,20 @@ void BSPMain(s32 argCount, char *arguments[])
 		
 #ifdef DEBUG_GRAPHICS
 		// NOTE(GameChaos): debug leaf faces
-		s32 faceCount = 0;
-		for (s32 faceInd = 0; faceInd < mapData.faceCount; faceInd++)
+		i32 faceCount = 0;
+		for (i32 faceInd = 0; faceInd < mapData.faceCount; faceInd++)
 		{
 			GsrcFace face = mapData.lumpFaces[faceInd];
 			GsrcTexinfo texinfo = mapData.lumpTexinfo[face.texInfoIndex];
-			local_persist Verts poly;
+			// NOTE(GameChaos): static_persist because the struct is way too
+			//  big to allocate on the stack
+			static_persist Verts poly;
 			poly.vertCount = 0;
 			for (u32 surfEdge = face.firstEdge;
 				 surfEdge < face.firstEdge + face.edges;
 				 surfEdge++)
 			{
-				s32 edge = mapData.lumpSurfEdges[surfEdge];
+				i32 edge = mapData.lumpSurfEdges[surfEdge];
 				v3 vert;
 				if (edge >= 0)
 				{
