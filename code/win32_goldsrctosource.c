@@ -1,9 +1,9 @@
 
 #define UNICODE
 
-#include "goldsrctosource.cpp"
+#include "goldsrctosource.c"
 
-#include "cstdlib_goldsrctosource.cpp"
+#include "cstdlib_goldsrctosource.c"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

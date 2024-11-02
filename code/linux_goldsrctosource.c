@@ -1,9 +1,9 @@
 
 #define _DEFAULT_SOURCE
 
-#include "goldsrctosource.cpp"
+#include "goldsrctosource.c"
 #include <stdio.h>
-#include "cstdlib_goldsrctosource.cpp"
+#include "cstdlib_goldsrctosource.c"
 
 #include <sys/mman.h>
 #include <unistd.h>

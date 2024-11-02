@@ -46,30 +46,30 @@
 #define dmx_function(function)
 #define dmx_serialise_array(type, name) s32 TOKENPASTE(name, Count); type *names
 
-#include "str.cpp"
+#include "str.c"
 #include "goldsrctosource.h"
 #include "vtf.h"
-#include "utils.cpp"
+#include "utils.c"
 
-#include "sourcebsp.cpp"
-#include "goldsrcbsp.cpp"
-#include "wad3.cpp"
-#include "zip.cpp"
+#include "sourcebsp.c"
+#include "goldsrcbsp.c"
+#include "wad3.c"
+#include "zip.c"
 
 #ifdef DEBUG_GRAPHICS
-#include "debug_render.cpp"
+#include "debug_render.c"
 #else
-#include "debug_render_stub.cpp"
+#include "debug_render_stub.c"
 #endif
 
-#include "entities.cpp"
-#include "conversion.cpp"
-#include "vmf.cpp"
-#include "bsp.cpp"
+#include "entities.c"
+#include "conversion.c"
+#include "vmf.c"
+#include "bsp.c"
 
 #include "pcg/pcg_basic.c"
 
-#include "dmx.cpp"
+#include "dmx.c"
 
 global const char *g_cmdArgTypeStrings[CMDARGTYPE_COUNT] = {
 	"None",
