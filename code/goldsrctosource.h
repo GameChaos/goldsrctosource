@@ -74,13 +74,21 @@ typedef union
 		CmdArg input;
 		CmdArg outputbsp;
 		CmdArg outputvmf;
+		CmdArg outputvmap;
 		CmdArg enginePath;
 		CmdArg mod;
 		CmdArg assetPath;
 	};
-	CmdArg args[7];
+	CmdArg args[8];
 } CmdArgs;
 static_assert(MEMBER_SIZE(CmdArgs, args) == sizeof(CmdArgs), "CmdArgs size and args array length are mismatched!");
+
+typedef struct
+{
+	char mod[512];
+	char valve[512];
+	char assets[512];
+} GamePaths;
 
 typedef struct
 {

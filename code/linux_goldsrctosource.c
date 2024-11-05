@@ -81,6 +81,10 @@ static_function i32 GetDirectoryFiles(const char *path, FileInfo *out, i32 maxFi
 			{
 				fileInfo.isFolder = true;
 			}
+			else
+			{
+				continue;
+			}
 			
 			Format(fileInfo.path, sizeof(fileInfo.path), "%s", path);
 			AppendToPath(fileInfo.path, sizeof(fileInfo.path), entry->d_name);
@@ -145,6 +149,15 @@ static_function bool StringEquals(const char *a, const char *b, bool caseSensiti
 		return strcmp(a, b) == 0;
 	}
 	return strcasecmp(a, b) == 0;
+}
+
+static_function bool StringEqualsLen(const char *a, const char *b, i32 count, bool caseSensitive)
+{
+	if (caseSensitive)
+	{
+		return strncmp(a, b, count) == 0;
+	}
+	return strncasecmp(a, b, count) == 0;
 }
 
 int main(int argc, char **argv)

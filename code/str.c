@@ -64,7 +64,7 @@ static_function void StrPrint(str string)
 static_function str_builder StrbuilderCreate(Arena *arena, i64 bytes)
 {
 	str_builder result = {};
-	result.data = (char *)ArenaAlloc(arena, bytes);
+	result.data = ArenaAlloc(arena, bytes);
 	if (result.data)
 	{
 		result.storage = bytes;

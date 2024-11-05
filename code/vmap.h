@@ -3,39 +3,43 @@
 #ifndef VMAP_TYPES_H
 #define VMAP_TYPES_H
 
-struct EditGameClassProps
+typedef v3 QAngle;
+
+typedef struct
 {
-	s32 propertyCount;
+	i32 propertyCount;
 	DmxAttribute *properties;
-};
+} EditGameClassProps;
 
-dmx_serialise struct DmePlugList
+typedef struct
 {
-	dmx_serialise_array(char *, names);
-	dmx_serialise_array(s32, dataTypes);
-	dmx_serialise_array(s32, plugTypes);
-	dmx_serialise_array(char *, descriptions);
-};
+	char *names;
+	i32 dataTypes;
+	i32 plugTypes;
+	char *descriptions;
+} DmePlugList;
 
-dmx_serialise struct CStoredCamera
+typedef struct
 {
 	v3 position;
 	v3 lookat;
-};
+} CStoredCamera;
 
-dmx_serialise struct CStoredCameras
+typedef struct
 {
-	s32 activecamera;
-	dmx_serialise_array(CStoredCamera, cameras);
-};
+	i32 activecamera;
+	CStoredCamera cameras;
+} CStoredCameras;
 
-dmx_serialise struct CMapEntity
+typedef struct CMapEntity_s CMapEntity;
+struct CMapEntity_s
 {
-	dmx_serialise_array(CMapEntity, children);
-	dmx_serialise_array(void, variableTargetKeys);
-	dmx_serialise_array(void, variableNames);
-	dmx_serialise_array(void, connectionsData);
-	EditGameClassProps dmx_function(DmxSerialiseEntProps) entity_properties;
+	// TODO: these need counts
+	CMapEntity *children;
+	void *variableTargetKeys;
+	void *variableNames;
+	void *connectionsData;
+	EditGameClassProps entity_properties;
 	v3 hitNormal;
 	bool isProceduralEntity;
 	v3 origin;
@@ -46,58 +50,63 @@ dmx_serialise struct CMapEntity
 	bool editorOnly;
 };
 
-dmx_serialise struct CMapGroup
+typedef struct
 {
-	dmx_serialise_array(CMapEntity, children);
-	dmx_serialise_array(char *, variableTargetKeys);
-	dmx_serialise_array(char *, variableNames);
+	// TODO: these need counts
+	CMapEntity *children;
+	char *variableTargetKeys;
+	char *variableNames;
 	v3 origin;
 	QAngle angles;
 	v3 scales;
 	bool transformLocked;
 	bool force_hidden;
 	bool editorOnly;
-};
+} CMapGroup;
 
-dmx_serialise struct CVisibilityMgr
+typedef struct
 {
-	dmx_serialise_array(CMapEntity, children);
-	dmx_serialise_array(char *, variableTargetKeys);
-	dmx_serialise_array(char *, variableNames);
-	dmx_serialise_array(CMapGroup, nodes);
+	// TODO: these need counts
+	CMapEntity *children;
+	char *variableTargetKeys;
+	char *variableNames;
+	CMapGroup nodes;
 	v3 origin;
 	QAngle angles;
 	v3 scales;
 	bool transformLocked;
 	bool force_hidden;
 	bool editorOnly;
-};
+} CVisibilityMgr;
 
-dmx_serialise struct CMapVariableSet
+typedef struct
 {
-	dmx_serialise_array(char *, variableNames);
-	dmx_serialise_array(char *, variableValues);
-	dmx_serialise_array(char *, variableTypeNames);
-	dmx_serialise_array(char *, variableTypeParameters);
-	dmx_serialise_array(void, m_ChoiceGroups);
-};
+	// TODO: these need counts
+	char *variableNames;
+	char *variableValues;
+	char *variableTypeNames;
+	char *variableTypeParameters;
+	void *m_ChoiceGroups;
+} CMapVariableSet;
 
-dmx_serialise struct CMapSelectionSet
+typedef struct
 {
-	dmx_serialise_array(CMapEntity, children);
+	// TODO: this needs a count
+	CMapEntity *children;
 	char *selectionSetName;
 	DmxElementId selectionSetData;
-};
+} CMapSelectionSet;
 
-dmx_serialise struct CMapWorld
+typedef struct
 {
-	dmx_serialise_array(CMapEntity, children);
-	dmx_serialise_array(char *, variableTargetKeys);
-	dmx_serialise_array(char *, variableNames);
-	dmx_serialise_array(DmePlugList, relayPlugData);
-	dmx_serialise_array(void, connectionsData);
-	EditGameClassProps entity_properties; // TODO: how to do this?
-	s32 nextDecalID;
+	// TODO: these need counts
+	CMapEntity *children;
+	char *variableTargetKeys;
+	char *variableNames;
+	DmePlugList *relayPlugData;
+	void *connectionsData;
+	EditGameClassProps entity_properties;
+	i32 nextDecalID;
 	bool fixupEntityNames;
 	char *mapUsageType;
 	v3 origin;
@@ -106,24 +115,27 @@ dmx_serialise struct CMapWorld
 	bool transformLocked;
 	bool force_hidden;
 	bool editorOnly;
-};
+} CMapWorld;
 
-dmx_serialise struct CMapRootElement
+typedef struct
 {
 	bool isprefab;
-	s32 editorbuild;
-	s32 editorversion;
+	i32 editorbuild;
+	i32 editorversion;
 	char *itemFile;
 	CStoredCamera defaultcamera;
-	CStoredCameras dmx_name_override(3dcameras) cameras;
+	// TODO: this needs a count
+	CStoredCameras *cameras; // 3dcameras
 	CMapWorld world;
 	CVisibilityMgr visbility;
 	CMapVariableSet mapVariables;
 	CMapSelectionSet rootSelectionSet;
-	dmx_serialise_array(void, m_ReferencedMeshSnapshots);
+	// TODO: this needs a count
+	void *m_ReferencedMeshSnapshots;
 	bool m_bIsCordoning;
 	bool m_bCordonsVisible;
-	dmx_serialise_array(void, nodeInstanceData);
-};
+	// TODO: this needs a count
+	void *nodeInstanceData;
+} CMapRootElement;
 
 #endif //VMAP_TYPES_H

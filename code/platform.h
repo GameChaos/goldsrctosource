@@ -32,6 +32,7 @@ static_function void Plat_MemSetToZero(void *destination, i64 bytes);
 
 static_function size_t StringLength(const char *string);
 static_function bool StringEquals(const char *a, const char *b, bool caseSensitive);
+static_function bool StringEqualsLen(const char *a, const char *b, i32 count, bool caseSensitive);
 static_function void Plat_WriteToStdout(const char *str, i64 len);
 
 #endif //PLATFORM_H

@@ -217,7 +217,7 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 	
 	// convert skybox textures
 	FileWritingBuffer texBuffer = BufferCreate(tempArena, 8192 * 8192 * 3);
-	if (assetPath)
+	if (assetPath && *assetPath)
 	{
 		EntProperties *worldspawn = EntListGetEnt(gsrcEnts, STR("worldspawn"));
 		EntProperty *skyname = EntGetProperty(worldspawn, STR("skyname"));
@@ -244,7 +244,7 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 					char pathBuffer[512];
 					Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
 					AppendToPath(pathBuffer, sizeof(pathBuffer), vtfFileName);
-					WriteEntireFile(pathBuffer, texBuffer.memory, (u32)texBuffer.usedBytes);
+					WriteEntireFile(pathBuffer, texBuffer.memory, texBuffer.usedBytes);
 					
 					char texturePath[128];
 					i32 texturePathLen = Format(texturePath, sizeof(texturePath), "skybox/%.*s%s",
@@ -274,7 +274,7 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 #ifdef DEBUG_GRAPHICS
 	if (true)
 #else
-	if (assetPath)
+	if (assetPath && *assetPath)
 #endif
 	{
 		for (u32 i = 0; i < mapData->lumpTextures.mipTextureCount; i++)
@@ -312,30 +312,22 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 #endif
 			
 			char pathBuffer[512];
-#ifdef DEBUG_GRAPHICS
-			if (assetPath)
-#endif
-			{
-				Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
-				char vtfFileName[64];
-				Format(vtfFileName, sizeof(vtfFileName), CONVERTED_MATERIAL_PATH "%s.vtf", mipTexture.name);
-				AppendToPath(pathBuffer, sizeof(pathBuffer), vtfFileName);
-				WriteEntireFile(pathBuffer, texBuffer.memory, (u32)texBuffer.usedBytes);
-			}
+			Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
+			char vtfFileName[64];
+			Format(vtfFileName, sizeof(vtfFileName), CONVERTED_MATERIAL_PATH "%s.vtf", mipTexture.name);
+			AppendToPath(pathBuffer, sizeof(pathBuffer), vtfFileName);
+			WriteEntireFile(pathBuffer, texBuffer.memory, texBuffer.usedBytes);
 			
 			char vmt[512];
 			// NOTE(GameChaos): { means transparent
 			bool transparent = mipTexture.name[0] == '{';
 			i32 vmtFileLength = MakeVmt(vmt, sizeof(vmt), mipTexture.name, transparent);
 			
-			if (assetPath)
-			{
-				Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
-				char vmtFileName[64];
-				i32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), CONVERTED_MATERIAL_PATH "%s.vmt", mipTexture.name);
-				AppendToPath(pathBuffer, sizeof(pathBuffer), vmtFileName);
-				WriteEntireFile(pathBuffer, vmt, vmtFileLength);
-			}
+			Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
+			char vmtFileName[64];
+			i32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), CONVERTED_MATERIAL_PATH "%s.vmt", mipTexture.name);
+			AppendToPath(pathBuffer, sizeof(pathBuffer), vmtFileName);
+			WriteEntireFile(pathBuffer, vmt, vmtFileLength);
 		}
 	}
 	
@@ -560,7 +552,7 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 							poly.vertCount = 0;
 							if (MakePolygon(planes, clipPlaneCount, planeInd, &poly))
 							{
-								BrushSide *side = (BrushSide *)ArenaAlloc(arena, sizeof(BrushSide));
+								BrushSide *side = ArenaAlloc(arena, sizeof(BrushSide));
 								if (brush.sides == NULL)
 								{
 									brush.sides = side;
@@ -862,7 +854,7 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 	}
 	StrbuilderCat(&vmf, StrFromSize(g_vmfEnd, sizeof(g_vmfEnd) - 1));
 	
-	if (WriteEntireFile(outputPath, vmf.data, (u32)vmf.length))
+	if (WriteEntireFile(outputPath, vmf.data, vmf.length))
 	{
 		PrintString("VMF export finished!\n");
 	}

@@ -711,7 +711,7 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 		// TODO: is lightmap exposure correct? does goldsrc encode lightmaps with the srgb oetf?
 		i32 srcLightCount = 0;
 		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-		Rgbe8888 *srcLight = (Rgbe8888 *)ArenaAlloc(arena, (i64)mapData->lightingLength / 3 * 4);
+		Rgbe8888 *srcLight = ArenaAlloc(arena, (i64)mapData->lightingLength / 3 * 4);
 		for (u8 *c = mapData->lumpLighting;
 			 c < mapData->lumpLighting + mapData->lightingLength;
 			 c += 3)
@@ -742,7 +742,7 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 	{
 		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
 		i32 ambientIndexCount = 0;
-		SrcLeafAmbientIndex *dummyAmbientIndex = (SrcLeafAmbientIndex *)ArenaAlloc(tempArena, sizeof(*dummyAmbientIndex) * mapData->leafCount);
+		SrcLeafAmbientIndex *dummyAmbientIndex = ArenaAlloc(tempArena, sizeof(*dummyAmbientIndex) * mapData->leafCount);
 		for (i32 leaf = 0; leaf < mapData->leafCount; leaf++)
 		{
 			SrcLeafAmbientIndex ambientIndex = {};
@@ -842,7 +842,7 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 	{
 		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
 		i64 polysByteCount = sizeof(Verts) * SRC_MAX_BRUSH_SIDES;
-		Verts *polys = (Verts *)ArenaAlloc(tempArena, polysByteCount);
+		Verts *polys = ArenaAlloc(tempArena, polysByteCount);
 		
 		GsrcBspTreeIterator *iter = GsrcBspTreeIteratorBegin(tempArena, mapData, model);
 		i32 gsrcNodeIndex;
@@ -1038,7 +1038,7 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_AREAPORTALS, &areaportal, sizeof(areaportal));
 	
 	// save bsp
-	result = WriteEntireFile(outputPath, buffer.memory, (i32)BufferGetSize(buffer));
+	result = WriteEntireFile(outputPath, buffer.memory, BufferGetSize(buffer));
 	
 	ArenaEndTemp(arenaTemp);
 	return result;

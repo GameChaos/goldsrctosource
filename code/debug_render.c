@@ -57,7 +57,7 @@ static_function void DebugGfxAddTexture(u8 *data, i32 width, i32 height, bool rg
 static_function void DebugGfxAddMiptexture(Arena *tempArena, GsrcMipTexture mipTexture, u8 *textureData)
 {
 	ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-	u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * 3);
+	u8 *tempImgDataRgb888 = ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * 3);
 	u32 pixels = mipTexture.width * mipTexture.height;
 	u8 *palette = textureData + 2 + mipTexture.offsets[0] + pixels + (pixels >> 2) + (pixels >> 4) + (pixels >> 6);
 	for (u32 pix = 0; pix < pixels; pix++)
@@ -73,7 +73,7 @@ static_function void DebugGfxAddMiptexture(Arena *tempArena, GsrcMipTexture mipT
 
 static_function GfxVertData *VertsToGfxVertData(Arena *arena, Verts *poly, v3 normal, v4 s, v4 t)
 {
-	GfxVertData *result = (GfxVertData *)ArenaAlloc(arena, poly->vertCount * sizeof(*result));
+	GfxVertData *result = ArenaAlloc(arena, poly->vertCount * sizeof(*result));
 	if (result)
 	{
 		for (i32 v = 0; v < poly->vertCount; v++)
@@ -302,7 +302,7 @@ static_function void DebugGfxInit(void *userData)
 	
 	ArenaTemp arenaTemp = ArenaBeginTemp(&state->arena);
 	i32 maxIndices = 512 * SRC_MAX_SIDE_VERTS; // SRC_MAX_MAP_BRUSHSIDES * SRC_MAX_SIDE_VERTS;
-	u32 *indices = (u32 *)ArenaAlloc(&state->arena, maxIndices * sizeof(*indices));
+	u32 *indices = ArenaAlloc(&state->arena, maxIndices * sizeof(*indices));
 	for (u32 i = 0; (i64)i < maxIndices - 2; i += 3)
 	{
 		indices[i + 0] = 0;
@@ -314,7 +314,7 @@ static_function void DebugGfxInit(void *userData)
 	indexDesc.data.ptr = indices;
 	indexDesc.data.size = sizeof(*indices) * maxIndices;
 	
-	u32 *wireIndices = (u32 *)ArenaAlloc(&state->arena, maxIndices * sizeof(*wireIndices));
+	u32 *wireIndices = ArenaAlloc(&state->arena, maxIndices * sizeof(*wireIndices));
 	i32 wireIndexCount = 0;
 	wireIndices[wireIndexCount++] = 0;
 	wireIndices[wireIndexCount++] = 1;
@@ -583,9 +583,9 @@ static_function void DebugGfxFrame(void *userData)
 		// make face mesh!
 		ArenaTemp arenaTmp = ArenaBeginTemp(&state->arena);
 		i64 maxVerts = SRC_MAX_MAP_FACES * SRC_MAX_SIDE_VERTS;
-		GfxVertData *tempVerts = (GfxVertData *)ArenaAlloc(&state->arena, maxVerts * sizeof(*tempVerts));
-		u32 *indices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*indices));
-		u32 *wireIndices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*wireIndices));
+		GfxVertData *tempVerts = ArenaAlloc(&state->arena, maxVerts * sizeof(*tempVerts));
+		u32 *indices = ArenaAlloc(&state->arena, maxVerts * sizeof(*indices));
+		u32 *wireIndices = ArenaAlloc(&state->arena, maxVerts * sizeof(*wireIndices));
 		for (i32 tex = 0; tex < state->textureCount; tex++)
 		{
 			i32 indexCount = 0;
@@ -661,9 +661,9 @@ static_function void DebugGfxFrame(void *userData)
 		// make brush meshes!
 		ArenaTemp arenaTmp = ArenaBeginTemp(&state->arena);
 		i64 maxVerts = SRC_MAX_MAP_FACES * SRC_MAX_SIDE_VERTS * 10;
-		GfxVertData *tempVerts = (GfxVertData *)ArenaAlloc(&state->arena, maxVerts * sizeof(*tempVerts));
-		u32 *indices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*indices));
-		u32 *wireIndices = (u32 *)ArenaAlloc(&state->arena, maxVerts * sizeof(*wireIndices));
+		GfxVertData *tempVerts = ArenaAlloc(&state->arena, maxVerts * sizeof(*tempVerts));
+		u32 *indices = ArenaAlloc(&state->arena, maxVerts * sizeof(*indices));
+		u32 *wireIndices = ArenaAlloc(&state->arena, maxVerts * sizeof(*wireIndices));
 		for (i32 tex = 0; tex < state->textureCount; tex++)
 		{
 			i32 indexCount = 0;
@@ -1146,7 +1146,7 @@ button.actionCount++;\
 static_function void DebugGfxMain(i32 argCount, char *arguments[])
 {
 	Arena arena = ArenaCreate(GIGABYTES(4));
-	g_gfxState = (GfxState *)ArenaAlloc(&arena, sizeof(*g_gfxState));
+	g_gfxState = ArenaAlloc(&arena, sizeof(*g_gfxState));
 	g_gfxState->arena = arena;
 	g_gfxState->argCount = argCount;
 	g_gfxState->arguments = arguments;

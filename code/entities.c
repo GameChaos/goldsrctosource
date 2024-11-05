@@ -163,7 +163,7 @@ static_function EntList GsrcParseEntities(Arena *arena, str entLump)
 	EntProperties ent = {};
 	EntList result = {};
 	EntlumpTokeniser tokeniser = {entLump.data};
-	result.ents = (EntProperties *)ArenaAlloc(arena, sizeof(*result.ents) * MAX_ENTITIES);
+	result.ents = ArenaAlloc(arena, sizeof(*result.ents) * MAX_ENTITIES);
 	while (EntlumpParseEntity_(&ent, &tokeniser) && result.entCount <= MAX_ENTITIES)
 	{
 		result.ents[result.entCount++] = ent;
@@ -233,7 +233,7 @@ static_function ModelInfo EntConvertCommonBrush(Arena *arena, EntProperties *gsr
 		{
 			EntPushProp(out, STR("model"), gsrcEnt->properties[prop].value);
 			result.model = -1;
-			if (StringToS32(gsrcEnt->properties[prop].value.data + 1, &result.model) == STRINGTONUM_SUCCESS
+			if (StringToS32(gsrcEnt->properties[prop].value.data + 1, &result.model)
 				&& result.model >= 0 && result.model < SRC_MAX_MAP_MODELS)
 			{
 				out->model = result.model;

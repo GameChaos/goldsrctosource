@@ -215,6 +215,15 @@ static_function bool StringEquals(const char *a, const char *b, bool caseSensiti
 	return _stricmp(a, b) == 0;
 }
 
+static_function bool StringEqualsLen(const char *a, const char *b, i32 count, bool caseSensitive)
+{
+	if (caseSensitive)
+	{
+		return strncmp(a, b, count) == 0;
+	}
+	return _strnicmp(a, b, count) == 0;
+}
+
 int main(int argc, char **argv)
 {
 	GetSystemInfo(&g_systemInfo);

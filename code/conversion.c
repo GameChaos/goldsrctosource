@@ -115,7 +115,7 @@ static_function void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *ou
 	// generate mipmaps
 	// NOTE(GameChaos): mipmaps are stored smallest (1x1) to largest
 	ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-	u8 *largestMip = (u8 *)ArenaAlloc(tempArena, (i64)mipTexture.width * mipTexture.height * channels);
+	u8 *largestMip = ArenaAlloc(tempArena, (i64)mipTexture.width * mipTexture.height * channels);
 	for (i32 pix = 0; pix < pixels; pix++)
 	{
 		i32 indexOffset = mipTexture.offsets[0] + pix;
@@ -149,7 +149,7 @@ static_function void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *ou
 	}
 	
 	// TODO: mip 0 is correct reflectivity
-	u8 *tempImgDataRgb888 = (u8 *)ArenaAlloc(tempArena, (i64)pixels * channels);
+	u8 *tempImgDataRgb888 = ArenaAlloc(tempArena, (i64)pixels * channels);
 	for (i32 mip = vtfHeader.mipmapCount - 1;
 		 mip >= 0;
 		 mip--)
@@ -205,7 +205,7 @@ static_function aabb GsrcModelsToSrcModels(GsrcMapData *mapData, SrcModel *outMo
 static_function EntList GsrcEntitiesToSrcEntities(Arena *arena, EntList gsrcEnts, bool *modelIsLadder)
 {
 	EntList srcEnts = {};
-	srcEnts.ents = (EntProperties *)ArenaAlloc(arena, gsrcEnts.entCount * sizeof(*srcEnts.ents) * 2);
+	srcEnts.ents = ArenaAlloc(arena, gsrcEnts.entCount * sizeof(*srcEnts.ents) * 2);
 	ASSERT(srcEnts.ents);
 	// TODO: rehaul this function into a system where entity conversion is defined in a config file.
 	for (i32 i = 0; i < gsrcEnts.entCount; i++)
@@ -434,7 +434,7 @@ typedef struct
 
 static_function GsrcBspTreeIterator *GsrcBspTreeIteratorBegin(Arena *arena, GsrcMapData *mapData, i32 model)
 {
-	GsrcBspTreeIterator *result = (GsrcBspTreeIterator *)ArenaAlloc(arena, sizeof(*result));
+	GsrcBspTreeIterator *result = ArenaAlloc(arena, sizeof(*result));
 	for (i32 i = 0; i < ARRAYCOUNT(result->parents); i++)
 	{
 		result->parents[i] = I32_MIN;

@@ -3,11 +3,15 @@
 #ifndef DMX_H
 #define DMX_H
 
+// TODO: support other dmx types
 #define DMX_V9_BIN_HEADER "<!-- dmx encoding binary 9 format %s %i -->\n"
+#define DMX_V9_BIN_HEADER_START "<!-- dmx encoding binary 9 format %s %i -->\n"
 
 #define DMX_MAX_NAME_LEN 64
 #define DMX_MAX_PREFIX_ELEMS 64
 #define DMX_DEFAULT_MAX_ATTRIBUTES 64
+
+#define DMX_ENCODING_VERSION 9
 
 typedef enum DmxAttrType_s : u8
 {
@@ -69,12 +73,28 @@ typedef enum DmxAttrType_s : u8
 	DMX_ATTR_UINT64_ARRAY     = 47,
 	DMX_ATTR_BYTE_ARRAY       = 48,
 } DmxAttrType;
+static_assert(sizeof(DMX_ATTR_COUNT) == 1);
+
+typedef enum
+{
+	DMXENCODING_INVALID,
+	DMXENCODING_BINARY, // currently only support binary.
+	//DMXENCODING_KEYVALUES2,
+} DmxEncoding;
 
 typedef union
 {
 	u8 bytes[16];
 	u32 uints[4];
 } Guid;
+
+typedef struct
+{
+	DmxEncoding encoding;
+	i32 encodingVersion;
+	char format[64];
+	i32 formatVersion;
+} DmxHeader;
 
 typedef struct
 {
@@ -166,18 +186,17 @@ typedef struct
 
 typedef struct
 {
-	// NOTE: only 1 prefix element for now.
-	DmxElement prefix;
-	
-	//i32 maxStrings;
-	//i64 maxStringBytes;
-	//i64 currentStringByte;
-	//char *stringMemory;
-	//DmxStringTable stringTable;
-	
-	i32 elementCount;
-	i32 maxElements;
+	i32 count;
+	i32 max;
 	DmxElement *elements;
+} DmxElements;
+
+typedef struct
+{
+	// NOTE: only 1 prefix element for now.
+	DmxHeader header;
+	DmxElements prefix;
+	DmxElements body;
 } Dmx;
 
 
@@ -209,18 +228,14 @@ typedef struct
 } DmxReadBinary_v9;
 
 #define DEFINE_DMXADDATTRIBUTE_FUNC_SIG(functionName, dataType)\
-static_function DmxAttribute *functionName(Dmx *dmx, DmxElement *parent, str name, dataType value)
+static_function DmxAttribute *functionName(DmxElement *parent, str name, dataType value)
 #define DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(functionName, dataType)\
-static_function DmxAttribute *functionName(Dmx *dmx, DmxElement *parent, str name, dataType *items, i32 itemCount)
+static_function DmxAttribute *functionName(DmxElement *parent, str name, dataType *items, i32 itemCount)
 
-static_function Dmx DmxCreate(Arena *arena);
-static_function DmxElement *DmxGetPrefix(Dmx *dmx);
-
-static_function DmxElement *DmxAddElement(Dmx *dmx, DmxElement *parent, str name, str type, Arena *arena);
-
-static_function DmxAttribute *DmxAddAttribute(Dmx *dmx, DmxElement *parent, str name, DmxAttrType type);
-
-static_function void DmxAttrSetData(Dmx *dmx, DmxAttribute *attr, void *data, i64 bytes);
+static_function Dmx DmxCreate(Arena *arena, const char *format, i32 formatVersion);
+static_function DmxAttribute *DmxAddAttribute(DmxElement *parent, str name, DmxAttrType type);
+static_function void DmxAttrSetData(DmxAttribute *attr, void *data, i64 bytes);
+static_function DmxElement *DmxAddElement(DmxElements *elements, DmxElement *parent, str name, str type, Arena *arena);
 
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeElementId, DmxElementId);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeInt, i32);
@@ -237,8 +252,8 @@ DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeMat4, mat4);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeU64, u64);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeU8, u8);
 
-static_function DmxAttribute *DmxAddAttributeBinary(Dmx *dmx, DmxElement *parent, str name, void *binaryBlob, i64 bytes);
-static_function DmxAttribute *DmxAddAttributeString(Dmx *dmx, DmxElement *parent, str name, str value);
+static_function DmxAttribute *DmxAddAttributeBinary(DmxElement *parent, str name, void *binaryBlob, i64 bytes);
+static_function DmxAttribute *DmxAddAttributeString(DmxElement *parent, str name, str value);
 
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayElementId, DmxElementId);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayInt, i32);

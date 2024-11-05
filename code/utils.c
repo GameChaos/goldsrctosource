@@ -5,7 +5,7 @@ static_function inline FileWritingBuffer BufferCreate(Arena *arena, i64 size)
 	if (size > 0)
 	{
 		result.size = size;
-		result.memory = (u8 *)ArenaAlloc(arena, size);
+		result.memory = ArenaAlloc(arena, size);
 	}
 	return result;
 }
@@ -49,7 +49,8 @@ static_function inline void *BufferPushSize(FileWritingBuffer *buffer, i64 size,
 	return result;
 }
 
-static_function inline void *BufferPushData(FileWritingBuffer *buffer, void *data, i64 dataSize, bool align/* = true*/)
+
+static_function inline void *BufferPushData(FileWritingBuffer *buffer, const void *data, i64 dataSize, bool align/* = true*/)
 {
 	void *result = BufferPushSize(buffer, dataSize, align);
 	if (result != NULL)
@@ -59,6 +60,36 @@ static_function inline void *BufferPushData(FileWritingBuffer *buffer, void *dat
 	}
 	return result;
 }
+
+static_function inline void *BufferWriteCString(FileWritingBuffer *buffer, const char *string)
+{
+	ASSERT(buffer);
+	ASSERT(string);
+	void *result = BufferPushData(buffer, string, strlen(string) + 1, false);
+	return result;
+}
+
+#define DEFINE_BUFFER_WRITE_TYPE(functionName, type)\
+static_function void *functionName(FileWritingBuffer *buffer, type value, bool align)\
+{\
+void *result = BufferPushData(buffer, &value, sizeof(type), align);\
+return result;\
+}\
+
+DEFINE_BUFFER_WRITE_TYPE(BufferPushU8, u8);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushU16, u16);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushU32, u32);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushU64, u64);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushI8, i8);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushI16, i16);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushI32, i32);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushI64, i64);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushF32, f32);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushF64, f64);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushV2, v2);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushV3, v3);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushV4, v4);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushMat4, mat4);
 
 static_function bool AabbCheck(aabb b1, aabb b2) 
 { 
@@ -470,9 +501,9 @@ static_function f32 StrToF32(str str)
 	return result;  // result = 12345 /10
 }
 
-static_function inline StringToNumResult StringToS32(const char *string, i32 *out)
+static_function inline const char *StringToS32(const char *string, i32 *out)
 {
-	StringToNumResult result = STRINGTONUM_ERR_FAILED;
+	const char *result = NULL;
 	if (string)
 	{
 		while (string[0] == ' '
@@ -500,7 +531,7 @@ static_function inline StringToNumResult StringToS32(const char *string, i32 *ou
 		{
 			value *= 10;
 			value += (i64)(*c - '0');
-			result = STRINGTONUM_SUCCESS;
+			result = c + 1;
 			if (value > (i64)I32_MAX + 1)
 			{
 				break;
@@ -515,14 +546,12 @@ static_function inline StringToNumResult StringToS32(const char *string, i32 *ou
 		if (value > I32_MAX)
 		{
 			*out = I32_MAX;
-			result = STRINGTONUM_ERR_NUM_TOO_BIG;
 		}
 		else if (value < I32_MIN)
 		{
 			*out = I32_MIN;
-			result = STRINGTONUM_ERR_NUM_TOO_BIG;
 		}
-		if (result == STRINGTONUM_SUCCESS)
+		if (result)
 		{
 			*out = (i32)value;
 		}

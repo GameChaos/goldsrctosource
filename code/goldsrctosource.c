@@ -39,6 +39,12 @@
 #include "memory.h"
 #include "platform.h"
 
+#define STRINGMAP_VALUE_TYPE i32
+#define STRINGMAP_NAME Int
+// NOTE(GameChaos): stringmap with key as char *
+//  name is kept without prefix.
+#include "gc_stringmap_generator.h"
+
 #include "memory.c"
 #include "printing.c"
 #define dmx_serialise
@@ -68,8 +74,10 @@
 #include "bsp.c"
 
 #include "pcg/pcg_basic.c"
-
 #include "dmx.c"
+#include "vmap.c"
+
+
 
 static_global const char *g_cmdArgTypeStrings[CMDARGTYPE_COUNT] = {
 	"None",
@@ -260,8 +268,6 @@ static_function void BSPMain(i32 argCount, char *arguments[])
 	Arena tempArena = ArenaCreate(GIGABYTES(2));
 	Arena arena = ArenaCreate(GIGABYTES(4));
 	
-	DmxTest(&arena, &tempArena);
-	
 	// NOTE(GameChaos): TODO: negative values for floats/integers on the cmd line don't work right
 	// now cos it thinks it's another parameter because of the - character.
 	CmdArgs cmdArgs = {
@@ -269,6 +275,7 @@ static_function void BSPMain(i32 argCount, char *arguments[])
 		.input = {"-input", "Input GoldSrc v31 bsp file to be converted.", CMDARG_STRING},
 		.outputbsp = {"-outputbsp", "Output path of the converted v21 Source bsp file (CS:GO).", CMDARG_STRING},
 		.outputvmf = {"-outputvmf", "Output path of the converted vmf file.", CMDARG_STRING},
+		.outputvmap = {"-outputvmap", "Output path of the converted Source 2 vmap file.", CMDARG_STRING},
 		.enginePath = {"-enginepath", "Path of the Half-Life/ folder. Example: \"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Half-Life\"", CMDARG_STRING},
 		.mod = {"-mod", "Name of the mod folder. Example: cstrike", CMDARG_STRING},
 		// TODO: enable the usage of this when converting a bsp as well.
@@ -311,19 +318,17 @@ static_function void BSPMain(i32 argCount, char *arguments[])
 		return;
 	}
 	
-	char *assetPath = NULL;
+	GamePaths *paths = ArenaAlloc(&arena, sizeof(*paths));
 	if (cmdArgs.assetPath.isInCmdLine)
 	{
-		assetPath = cmdArgs.assetPath.stringValue;
+		Format(paths->assets, sizeof(paths->assets), "%s", cmdArgs.assetPath.stringValue);
 	}
 	
-	char valvePath[512];
-	Format(valvePath, sizeof(valvePath), "%s", cmdArgs.enginePath.stringValue);
-	AppendToPath(valvePath, sizeof(valvePath), "valve");
+	Format(paths->valve, sizeof(paths->valve), "%s", cmdArgs.enginePath.stringValue);
+	AppendToPath(paths->valve, sizeof(paths->valve), "valve");
 	
-	char modPath[512];
-	Format(modPath, sizeof(modPath), "%s", cmdArgs.enginePath.stringValue);
-	AppendToPath(modPath, sizeof(modPath), cmdArgs.mod.stringValue);
+	Format(paths->mod, sizeof(paths->mod), "%s", cmdArgs.enginePath.stringValue);
+	AppendToPath(paths->mod, sizeof(paths->mod), cmdArgs.mod.stringValue);
 	
 	ReadFileResult fileData = ReadEntireFile(&arena, CMDARG_GET_STRING(cmdArgs.input));
 	// NOTE(GameChaos): kz_goldenbean_200401.bsp CRASHES THE PROGRAM TODO: debug!
@@ -377,12 +382,18 @@ static_function void BSPMain(i32 argCount, char *arguments[])
 			}
 		}
 #endif
+		if (cmdArgs.outputvmap.isInCmdLine)
+		{
+			VmapFromGoldsrc(&arena, &tempArena, &mapData, CMDARG_GET_STRING(cmdArgs.outputvmap), paths);
+		}
+		DmxTest(&arena, &tempArena);
+		
 		// convert to source
 		SrcMapData srcMapData = {};
 		if (cmdArgs.outputbsp.isInCmdLine)
 		{
 			if (BspFromGoldsource(&arena, &tempArena, &mapData, &srcMapData, CMDARG_GET_STRING(cmdArgs.outputbsp),
-								  modPath, valvePath))
+								  paths->mod, paths->valve))
 			{		
 				PrintString("\n");
 				for (int i = 0; i < SRC_HEADER_LUMPS; i++)
@@ -403,16 +414,15 @@ static_function void BSPMain(i32 argCount, char *arguments[])
 		}
 		if (cmdArgs.outputvmf.isInCmdLine)
 		{
-			if (VmfFromGoldsource(&arena, &tempArena, &mapData, CMDARG_GET_STRING(cmdArgs.outputvmf),
-								  modPath, valvePath, assetPath))
-			{
-			}
+			VmfFromGoldsource(&arena, &tempArena, &mapData, CMDARG_GET_STRING(cmdArgs.outputvmf),
+							  paths->mod, paths->valve, paths->assets);
 		}
 	}
 	else
 	{
 		ASSERT(0);
 	}
+	
 	ArenaFree(&arena);
 	ArenaFree(&tempArena);
 }

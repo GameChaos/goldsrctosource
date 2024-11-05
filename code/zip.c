@@ -10,7 +10,7 @@ static_function ZipBuilder ZipBuilderCreate(Arena *arena, i64 maxBytes, i64 maxF
 	if (maxBytes > 0 && maxFiles > 0)
 	{
 		result.file = BufferCreate(arena, maxBytes);
-		result.fileHeaders = (ZipFileHeader *)ArenaAlloc(arena, sizeof(*result.fileHeaders) * maxFiles);
+		result.fileHeaders = ArenaAlloc(arena, sizeof(*result.fileHeaders) * maxFiles);
 		result.endRecord.signature = ZIP_PKID(5, 6);
 		result.maxFiles = maxFiles;
 		if (result.file.memory && result.file.size

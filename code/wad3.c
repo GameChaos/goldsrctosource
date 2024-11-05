@@ -14,8 +14,8 @@ static_function Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *pat
 			{
 				i64 originalArenaPos = arena->allocPos;
 				result.entryCount = header->dirEntries;
-				result.entries = (Wad3DirEntry **)ArenaAlloc(arena, result.entryCount * sizeof(*result.entries));
-				result.textures = (Wad3TextureHeader **)ArenaAlloc(arena, result.entryCount * sizeof(*result.textures));
+				result.entries = ArenaAlloc(arena, result.entryCount * sizeof(*result.entries));
+				result.textures = ArenaAlloc(arena, result.entryCount * sizeof(*result.textures));
 				for (u32 i = 0; i < header->dirEntries; i++)
 				{
 					Wad3DirEntry *entry = (Wad3DirEntry *)&data[header->firstDirEntryOffset + i * sizeof(*entry)];
