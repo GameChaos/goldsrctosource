@@ -429,10 +429,10 @@ static_function Dmx DmxImportBinary(const char *path, Arena *arena)
 	return result;
 }
 
-static_function void WriteDmxAttributeValue(FileWritingBuffer *buffer, DmxAttrValue *value, IntStringmap *stringtable)
+static_function void WriteDmxAttributeValue_(FileWritingBuffer *buffer, void *value, DmxAttrType type, IntStringmap *stringtable)
 {
-	ASSERT_RANGE(value->type, 0, DMX_ATTR_COUNT);
-	switch (value->type)
+	ASSERT_RANGE(type, 0, DMX_ATTR_COUNT);
+	switch (type)
 	{
 		case DMX_ATTR_UNKNOWN:
 		{
@@ -441,10 +441,11 @@ static_function void WriteDmxAttributeValue(FileWritingBuffer *buffer, DmxAttrVa
 		
 		case DMX_ATTR_ELEMENT:
 		{
-			BufferPushI32(buffer, value->element.index, false);
-			if (value->element.index == -2)
+			DmxElementId *element = value;
+			BufferPushI32(buffer, element->index, false);
+			if (element->index == -2)
 			{
-				BufferPushData(buffer, &value->element.guid, sizeof(value->element.guid), false);
+				BufferPushData(buffer, &element->guid, sizeof(element->guid), false);
 			}
 		} break;
 		
@@ -453,54 +454,55 @@ static_function void WriteDmxAttributeValue(FileWritingBuffer *buffer, DmxAttrVa
 		case DMX_ATTR_TIMESPAN:
 		case DMX_ATTR_RGBA8:
 		{
-			BufferPushI32(buffer, value->int32, false);
+			BufferPushI32(buffer, *(i32 *)value, false);
 		} break;
 		
 		case DMX_ATTR_BOOL:
 		case DMX_ATTR_BYTE:
 		{
-			BufferPushU8(buffer, value->byte, false);
+			BufferPushU8(buffer, *(u8 *)value, false);
 		} break;
 		
 		case DMX_ATTR_STRING:
 		{
 			if (stringtable)
 			{
-				BufferPushI32(buffer, IntStringmapGet(stringtable, value->string).value, false);
+				BufferPushI32(buffer, IntStringmapGet(stringtable, *(const char **)value).value, false);
 			}
 			else
 			{
-				BufferWriteCString(buffer, value->string);
+				BufferWriteCString(buffer, *(const char **)value);
 			}
 		} break;
 		
 		case DMX_ATTR_BINARYBLOB:
 		{
-			BufferPushI32(buffer, value->binaryBlob.byteCount, false);
-			BufferPushData(buffer, value->binaryBlob.bytes, value->binaryBlob.byteCount, false);
+			DmxBinaryBlob *binaryBlob = value;
+			BufferPushI32(buffer, binaryBlob->byteCount, false);
+			BufferPushData(buffer, binaryBlob->bytes, binaryBlob->byteCount, false);
 		} break;
 		
 		case DMX_ATTR_VECTOR2D:
 		case DMX_ATTR_UINT64:
 		{
-			BufferPushU64(buffer, value->uint64, false);
+			BufferPushU64(buffer, *(u64 *)value, false);
 		} break;
 		
 		case DMX_ATTR_VECTOR3D:
 		case DMX_ATTR_QANGLE:
 		{
-			BufferPushV3(buffer, value->vector3, false);
+			BufferPushV3(buffer, *(v3 *)value, false);
 		} break;
 		
 		case DMX_ATTR_VECTOR4D:
 		case DMX_ATTR_QUATERNION:
 		{
-			BufferPushV4(buffer, value->vector4, false);
+			BufferPushV4(buffer, *(v4 *)value, false);
 		} break;
 		
 		case DMX_ATTR_MATRIX4X4:
 		{
-			BufferPushMat4(buffer, value->matrix4x4, false);
+			BufferPushMat4(buffer, *(mat4 *)value, false);
 		} break;
 		
 		default:
@@ -524,7 +526,7 @@ static_function void WriteDmxAttribute_(FileWritingBuffer *buffer, DmxAttribute 
 	BufferPushU8(buffer, attr->value.type, false);
 	if (attr->value.type <= DMX_ATTR_COUNT)
 	{
-		WriteDmxAttributeValue(buffer, &attr->value, stringtable);
+		WriteDmxAttributeValue_(buffer, &attr->value.startOfValueData, attr->value.type, stringtable);
 	}
 	else
 	{
@@ -541,10 +543,12 @@ static_function void WriteDmxAttribute_(FileWritingBuffer *buffer, DmxAttribute 
 			i32 containerBytes = g_attrValueContainerSize[valueType];
 			for (i32 i = 0; i < attr->value.arrayCount; i++)
 			{
+				if (valueType == DMX_ATTR_STRING)
+				{
+					valueType = valueType;
+				}
 				// NOTE(GameChaos): this doesn't reference the stringtable ever
-				//ReadBufferReadDmxAttributeValue_(buffer, (u8 *)array + containerBytes * i, valueType, NULL);
-				// TODO: make sure all the casting, offsets etc here is correct
-				WriteDmxAttributeValue(buffer, (DmxAttrValue *)((u8 *)attr->value.array + containerBytes * i), NULL);
+				WriteDmxAttributeValue_(buffer, (u8 *)attr->value.array + containerBytes * i, valueType, NULL);
 			}
 		}
 	}

@@ -9,8 +9,8 @@
 
 #define DMX_MAX_NAME_LEN 64
 #define DMX_MAX_PREFIX_ELEMS 64
-#define DMX_MAX_ATTRIBUTES 1024
-#define DMX_MAX_ELEMENTS 8192
+#define DMX_MAX_ATTRIBUTES 256
+#define DMX_MAX_ELEMENTS 32768
 #define DMX_ENCODING_VERSION 9
 
 typedef enum DmxAttrType_s : u8
