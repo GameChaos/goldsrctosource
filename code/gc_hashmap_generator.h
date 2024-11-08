@@ -12,6 +12,11 @@
 
 /*
 
+#define HASHMAP_KEY_TYPE v2i
+#define HASHMAP_VALUE_TYPE v2i
+#define HASHMAP_NAME Tile
+#include "gc_hashmap_generator.h"
+
 api:
 
 ... is the name defined by HASHMAP_NAME
@@ -29,11 +34,6 @@ these public types will be defined:
 ...HashmapIter;
 
 sample usage:
-
-#define HASHMAP_KEY_TYPE v2i
-#define HASHMAP_VALUE_TYPE v2i
-#define HASHMAP_NAME Tile
-#include "gc_hashmap_generator.h"
 
 ----
 

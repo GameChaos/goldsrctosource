@@ -8,6 +8,26 @@ static_global const char *g_dmxEncodings[] = {
 	"binary",
 };
 
+static_global const char *g_dmxAttrTypes[] = {
+	"unknown", //DMX_ATTR_UNKNOWN    = 0,
+	"elementid", //DMX_ATTR_ELEMENT    = 1,
+	"int", //DMX_ATTR_INT32      = 2,
+	"float", //DMX_ATTR_F32        = 3,
+	"bool", //DMX_ATTR_BOOL       = 4,
+	"string", //DMX_ATTR_STRING     = 5,
+	"binary", //DMX_ATTR_BINARYBLOB = 6,
+	"time", //DMX_ATTR_TIMESPAN   = 7,
+	"rgba8", //DMX_ATTR_RGBA8      = 8,
+	"Vector2D", //DMX_ATTR_VECTOR2D   = 9,
+	"Vector", //DMX_ATTR_VECTOR3D   = 10,
+	"Vector4D", //DMX_ATTR_VECTOR4D   = 11,
+	"QAngle", //DMX_ATTR_QANGLE     = 12,
+	"Quaternion", //DMX_ATTR_QUATERNION = 13,
+	"Matrix4x4", //DMX_ATTR_MATRIX4X4  = 14,
+	"uint64", //DMX_ATTR_UINT64     = 15,
+	"byte", //DMX_ATTR_BYTE       = 16,
+};
+
 typedef struct
 {
 	u8 *data;
@@ -99,6 +119,35 @@ static_function char *ReadBufferGetString(ReadBuffer *buffer)
 	return result;
 }
 
+static_function str ReadBufferGetStr(ReadBuffer *buffer)
+{
+	str result = {};
+	if (buffer && buffer->data)
+	{
+		if (buffer->readBytes < buffer->size)
+		{
+			i64 start = buffer->readBytes;
+			result.data = (char *)(buffer->data + buffer->readBytes);
+			while (*(buffer->data + buffer->readBytes))
+			{
+				buffer->readBytes++;
+				if (buffer->readBytes == buffer->size)
+				{
+					result = (str){};
+					break;
+				}
+			}
+			if (result.data)
+			{
+				// NOTE(GameChaos): null terminator
+				buffer->readBytes++;
+				result.length = buffer->readBytes - start;
+			}
+		}
+	}
+	return result;
+}
+
 static_global i32 g_attrValueContainerSize[] = {
 	0, // DMX_ATTR_UNKNOWN
 	sizeof(DmxElementId), // DMX_ATTR_ELEMENT
@@ -156,11 +205,11 @@ static_function void ReadBufferReadDmxAttributeValue_(ReadBuffer *buffer, void *
 			if (stringTable)
 			{
 				i32 index = 0;
-				if (ReadBufferReadI32(buffer, &index) && index >= 0 && index < stringTable->stringCount)
+				if (ReadBufferReadI32(buffer, &index) && index >= 0 && index < stringTable->count)
 				{
-					*(char **)out = stringTable->strings[index];
+					*(const char **)out = stringTable->strings[index].data;
 				}
-				ASSERT(index >= 0 && index < stringTable->stringCount);
+				ASSERT(index >= 0 && index < stringTable->count);
 			}
 			else
 			{
@@ -211,13 +260,13 @@ static_function bool ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute
 	if (stringTable)
 	{
 		i32 index = 0;
-		if (ReadBufferReadI32(buffer, &index) && index >= 0 && index < stringTable->stringCount)
+		if (ReadBufferReadI32(buffer, &index) && index >= 0 && index < stringTable->count)
 		{
-			char *string = stringTable->strings[index];
-			ASSERT(strlen(string) < sizeof(attr->name));
-			Format(attr->name, sizeof(attr->name), "%s", string);
+			str string = stringTable->strings[index];
+			ASSERT(string.length < sizeof(attr->name));
+			Format(attr->name, sizeof(attr->name), "%.*s", (i32)string.length, string.data);
 		}
-		ASSERT(index >= 0 && index < stringTable->stringCount);
+		ASSERT(index >= 0 && index < stringTable->count);
 	}
 	else
 	{
@@ -258,6 +307,7 @@ static_function bool ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute
 
 static_function DmxHeader DmxReadHeader(ReadBuffer *buf)
 {
+	// TODO: print nested elements
 	DmxHeader result = {};
 	const char *header = ReadBufferGetString(buf);
 	i64 len = strlen(header);
@@ -293,7 +343,7 @@ static_function DmxHeader DmxReadHeader(ReadBuffer *buf)
 	return result;
 }
 
-static_function Dmx DmxImportBinaryNew(const char *path, Arena *arena)
+static_function Dmx DmxImportBinary(const char *path, Arena *arena)
 {
 	Dmx result = {};
 
@@ -310,70 +360,68 @@ static_function Dmx DmxImportBinaryNew(const char *path, Arena *arena)
 		
 		result = DmxCreate(arena, header.format, header.formatVersion);
 		
-		
-	}
-	
-	return result;
-}
-
-static_function DmxReadBinary_v9 DmxImportBinary(const char *path, Arena *arena)
-{
-	DmxReadBinary_v9 result = {};
-	result.file = ReadEntireFile(arena, path);
-	
-	if (result.file.contents)
-	{
-		ReadBuffer buf = ReadBufferCreate(result.file.contents, result.file.size);
-		result.header = ReadBufferGetString(&buf);
-		
 		// prefix elements and attributes
-		ReadBufferReadI32(&buf, &result.prefixElementCount);
-		result.prefixElements = ArenaAlloc(arena, sizeof(*result.prefixElements) * result.prefixElementCount);
-		for (i32 prefixElem = 0; prefixElem < result.prefixElementCount; prefixElem++)
+		i32 prefixElementCount = 0;
+		ASSERT(prefixElementCount < I16_MAX);
+		ReadBufferReadI32(&buf, &prefixElementCount);
+		for (i32 prefixElem = 0; prefixElem < prefixElementCount; prefixElem++)
 		{
-			DmxReadElemBody *element = &result.prefixElements[prefixElem];
-			ReadBufferReadI32(&buf, &element->attributeCount);
-			element->attributes = ArenaAlloc(arena, sizeof(*element->attributes) * element->attributeCount);
-			for (i32 attr = 0; attr < element->attributeCount; attr++)
+			DmxElement *elem = DmxAddElement(&result.prefix, NULL, STR(""), STR(""), arena);
+			i32 attributeCount = 0;
+			ReadBufferReadI32(&buf, &attributeCount);
+			ASSERT(attributeCount < I16_MAX);
+			for (i32 attrIndex = 0; attrIndex < attributeCount; attrIndex++)
 			{
-				ReadBufferReadDmxAttribute(&buf, &element->attributes[attr], arena, NULL);
+				DmxAttribute *attr = DmxAddAttribute(elem, STR(""), DMX_ATTR_UNKNOWN);
+				ReadBufferReadDmxAttribute(&buf, attr, arena, NULL);
 			}
 		}
 		
 		// string table
-		ReadBufferReadI32(&buf, &result.stringTable.stringCount);
-		result.stringTable.strings = ArenaAlloc(arena, sizeof(*result.stringTable.strings) * result.stringTable.stringCount);
-		for (i32 stringIndex = 0; stringIndex < result.stringTable.stringCount; stringIndex++)
+		DmxStringTable stringtable = {};
+		ReadBufferReadI32(&buf, &stringtable.count);
+		// TODO: put some reasonable cap on stringtable count
+		ASSERT(stringtable.count < I16_MAX);
+		stringtable.strings = ArenaAlloc(arena, sizeof(*stringtable.strings) * stringtable.count);
+		for (i32 stringIndex = 0; stringIndex < stringtable.count; stringIndex++)
 		{
-			result.stringTable.strings[stringIndex] = ReadBufferGetString(&buf);
-			Print("stringTable[%i]: %s\n", stringIndex, result.stringTable.strings[stringIndex]);
+			stringtable.strings[stringIndex] = ReadBufferGetStr(&buf);
+			Print("stringtable[%i]: %.*s\n", stringIndex,
+				  (i32)stringtable.strings[stringIndex].length, stringtable.strings[stringIndex].data);
 		}
 		
 		// element headers
-		ReadBufferReadI32(&buf, &result.elementCount);
-		result.elementHeaders = ArenaAlloc(arena, sizeof(*result.elementHeaders) * result.elementCount);
-		for (i32 elem = 0; elem < result.elementCount; elem++)
+		i32 elementCount = 0;
+		ReadBufferReadI32(&buf, &elementCount);
+		for (i32 elemIndex = 0; elemIndex < elementCount; elemIndex++)
 		{
-			DmxReadElemHeader *elemHeader = &result.elementHeaders[elem];
+			//DmxReadElemHeader *elemHeader = &result.elementHeaders[elem];
 			i32 typeIndex = 0;
 			i32 nameIndex = 0;
+			Guid guid = {};
 			ReadBufferReadI32(&buf, &typeIndex);
 			ReadBufferReadI32(&buf, &nameIndex);
-			ReadBufferReadGuid(&buf, &elemHeader->guid);
-			elemHeader->type = result.stringTable.strings[typeIndex];
-			elemHeader->name = result.stringTable.strings[nameIndex];
+			ReadBufferReadGuid(&buf, &guid);
+			// TODO: make this a real check you lazy bum
+			ASSERT(typeIndex < stringtable.count && nameIndex < stringtable.count);
+			DmxElement *elem = DmxAddElement(&result.body, NULL,
+											 stringtable.strings[nameIndex], stringtable.strings[typeIndex], arena);
+			// preserve guid
+			elem->guid = guid;
 		}
 		
 		// element bodies
-		result.elements = ArenaAlloc(arena, sizeof(*result.elements) * result.elementCount);
-		for (i32 elem = 0; elem < result.elementCount; elem++)
+		for (i32 elemInd = 0; elemInd < result.body.count; elemInd++)
 		{
-			DmxReadElemBody *element = &result.elements[elem];
-			ReadBufferReadI32(&buf, &element->attributeCount);
-			element->attributes = ArenaAlloc(arena, sizeof(*element->attributes) * element->attributeCount);
-			for (i32 attr = 0; attr < element->attributeCount; attr++)
+			DmxElement *elem = &result.body.elements[elemInd];
+			i32 attributeCount = 0;
+			ReadBufferReadI32(&buf, &attributeCount);
+			// TODO: make this a real check you lazy bum
+			ASSERT(attributeCount < I16_MAX);
+			for (i32 attr = 0; attr < attributeCount; attr++)
 			{
-				ReadBufferReadDmxAttribute(&buf, &element->attributes[attr], arena, &result.stringTable);
+				DmxAttribute *attr = DmxAddAttribute(elem, STR(""), DMX_ATTR_UNKNOWN);
+				ReadBufferReadDmxAttribute(&buf, attr, arena, &stringtable);
 			}
 		}
 	}
@@ -534,7 +582,6 @@ static_function void DmxExportBinary(const char *path, Arena *arena, Dmx dmx)
 		}
 	}
 	
-	DmxStringTable stringTable = {};
 	i32 stringCount = 0;
 	// construct stringtable
 	for (i32 elemInd = 0; elemInd < dmx.body.count; elemInd++)
@@ -562,19 +609,13 @@ static_function void DmxExportBinary(const char *path, Arena *arena, Dmx dmx)
 	{
 		DmxElement *elem = &dmx.body.elements[elemInd];
 		
-		if (!IntStringmapKeyExists(&stringtable, elem->type))
-		{
-			IntStringmapPush(&stringtable, elem->type, (i32)stringtable.length);
-		}
-		if (!IntStringmapKeyExists(&stringtable, elem->name))
-		{
-			IntStringmapPush(&stringtable, elem->name, (i32)stringtable.length);
-		}
+		IntStringmapPush(&stringtable, elem->type, (i32)stringtable.length);
+		IntStringmapPush(&stringtable, elem->name, (i32)stringtable.length);
 		for (i32 attrInd = 0; attrInd < elem->attributeCount; attrInd++)
 		{
 			DmxAttribute *attr = &elem->attributes[attrInd];
-			if (attr->value.type == DMX_ATTR_STRING
-				&& !IntStringmapKeyExists(&stringtable, attr->value.string))
+			IntStringmapPush(&stringtable, attr->name, (i32)stringtable.length);
+			if (attr->value.type == DMX_ATTR_STRING)
 			{
 				IntStringmapPush(&stringtable, attr->value.string, (i32)stringtable.length);
 			}
@@ -644,11 +685,11 @@ static_function Dmx DmxCreate(Arena *arena, const char *format, i32 formatVersio
 		},
 		{
 			.count = 0,
-			.max = 128,
+			.max = DMX_MAX_PREFIX_ELEMS,
 		},
 		{
 			.count = 0,
-			.max = 1024,
+			.max = DMX_MAX_ELEMENTS,
 		},
 	};
 	Format(result.header.format, sizeof(result.header.format), "%s", format);
@@ -800,7 +841,7 @@ static_function DmxElement *DmxCreateElement_(DmxElements *elements, str name, s
 	{
 		result = &elements->elements[elements->count++];
 		*result = (DmxElement){};
-		result->maxAttributes = 1024;
+		result->maxAttributes = DMX_MAX_ATTRIBUTES;
 		result->attributes = ArenaAlloc(arena, result->maxAttributes * sizeof(*result->attributes));
 		Format(result->type, sizeof(result->type), "%.*s", (i32)type.length, type.data);
 		Format(result->name, sizeof(result->name), "%.*s", (i32)name.length, name.data);
@@ -829,43 +870,134 @@ static_function DmxElement *DmxAddElement(DmxElements *elements, DmxElement *par
 	return result;
 }
 
+static_function void DmxPrint(Dmx dmx)
+{
+	for (i32 elemsType = 0; elemsType < 2; elemsType++)
+	{
+		DmxElements *elems = &dmx.body;
+		if (elemsType == 0)
+		{
+			elems = &dmx.prefix;
+		}
+		for (i32 elemInd = 0; elemInd < elems->count; elemInd++)
+		{
+			DmxElement *elem = &elems->elements[elemInd];
+			Print("\"%s\" \"%s\"\n{\n", elem->type, elem->name);
+			Print("    \"id\" \"elementid\" \"%08x-%04x-%04x-%04x-%04x%04x%04x\"\n",
+				  elem->guid.uints[0], elem->guid.shorts[2], elem->guid.shorts[3],
+				  elem->guid.shorts[4], elem->guid.shorts[5], elem->guid.shorts[6],
+				  elem->guid.shorts[7]);
+			for (i32 attrInd = 0; attrInd < elem->attributeCount; attrInd++)
+			{
+				DmxAttribute *attr = &elem->attributes[attrInd];
+				switch (attr->value.type)
+				{
+					case DMX_ATTR_INT32:
+					case DMX_ATTR_TIMESPAN:
+					{
+						Print("    \"%s\" \"%s\" \"%i\"\n",
+							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
+							  attr->value.int32);
+					} break;
+					
+					case DMX_ATTR_F32:
+					{
+						Print("    \"%s\" \"%s\" \"%f\"\n",
+							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
+							  attr->value.float32);
+					} break;
+					
+					case DMX_ATTR_BOOL:
+					{
+						Print("    \"%s\" \"%s\" \"%i\"\n",
+							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
+							  attr->value.boolean);
+					} break;
+					
+					case DMX_ATTR_STRING:
+					{
+						Print("    \"%s\" \"%s\" \"%s\"\n",
+							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
+							  attr->value.string);
+					} break;
+					
+					case DMX_ATTR_RGBA8:
+					{
+						Print("    \"%s\" \"%s\" \"%08x\"\n",
+							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
+							  attr->value.rgba);
+					} break;
+					
+					case DMX_ATTR_VECTOR2D:
+					{
+						Print("    \"%s\" \"%s\" \"%f %f\"\n",
+							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
+							  attr->value.vector2.x, attr->value.vector2.y);
+					} break;
+					
+					case DMX_ATTR_VECTOR3D:
+					case DMX_ATTR_QANGLE:
+					case DMX_ATTR_QUATERNION:
+					{
+						Print("    \"%s\" \"%s\" \"%f %f %f\"\n",
+							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
+							  attr->value.vector3.x, attr->value.vector3.y, attr->value.vector3.z);
+					} break;
+					
+					case DMX_ATTR_VECTOR4D:
+					{
+						Print("    \"%s\" \"%s\" \"%f %f %f %f\"\n",
+							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
+							  attr->value.vector4.x, attr->value.vector4.y,
+							  attr->value.vector4.z, attr->value.vector4.w);
+					} break;
+					
+					case DMX_ATTR_UINT64:
+					{
+						Print("    \"%s\" \"%s\" \"%lu\"\n",
+							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
+							  attr->value.uint64);
+					} break;
+					
+					case DMX_ATTR_BYTE:
+					{
+						Print("    \"%s\" \"%s\" \"%i\"\n",
+							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
+							  attr->value.byte);
+					} break;
+					
+					default:
+					{
+						Print("    \"%s\" \"%s\" \"\"\n",
+							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT]);
+					} break;
+				}
+			}
+			Print("%s", "}\n");
+		}
+	}
+}
+
 static_function void DmxTest(Arena *arena, Arena *tempArena)
 {
 	// load test
 	{
-		Dmx dmxTestNew = DmxImportBinaryNew("debug/empty.vmap", arena);
-		DmxReadBinary_v9 dmxTest = DmxImportBinary("debug/empty.vmap", arena);
+		Print("sizeof(DmxElement) = %lu, sizeof(DmxAttribute) = %lu\n", sizeof(DmxElement), sizeof(DmxAttribute));
+		Print("memory allocated per element: %luKB\n",
+			  ((sizeof(DmxElement) + sizeof(DmxAttribute) * DMX_MAX_ATTRIBUTES)) / KILOBYTES(1));
+		Print("max memory allocated per dmx: %luMB\n",
+			  ((sizeof(DmxElement) + sizeof(DmxAttribute) * DMX_MAX_ATTRIBUTES) * DMX_MAX_ELEMENTS) / MEGABYTES(1));
+		//Dmx dmxTest = DmxImportBinary("debug/empty.vmap", arena);
+		Dmx dmxTest = DmxImportBinary("debug/kz_victoria.vmap", arena);
+		//DmxReadBinary_v9 dmxTest = DmxImportBinary("debug/empty.vmap", arena);
 		//DmxReadBinary_v9 dmxTest = DmxImportBinary("debug/out.vmap", arena);
 		
 		// reexport test
-		//DmxExportBinary("debug/out.vmap", arena, dmxTest);
+		DmxExportBinary("debug/out.vmap", arena, dmxTest);
 		
-#if 1
-		for (i32 elem = 0; elem < dmxTest.prefixElementCount; elem++)
-		{
-			DmxReadElemBody *elemBody = &dmxTest.prefixElements[elem];
-			Print("{\n");
-			for (i32 attrInd = 0; attrInd < elemBody->attributeCount; attrInd++)
-			{
-				DmxAttribute *attr = &elemBody->attributes[attrInd];
-				Print("\t\"%s\" \"%i\" \"\"\n", attr->name, attr->value.type);
-			}
-			Print("%s", "}\n");
-		}
-		
-		for (i32 elem = 0; elem < dmxTest.elementCount; elem++)
-		{
-			DmxReadElemHeader *elemHeader = &dmxTest.elementHeaders[elem];
-			DmxReadElemBody *elemBody = &dmxTest.elements[elem];
-			Print("\"%s\" \"%s\"\n{\n", elemHeader->type, elemHeader->name);
-			for (i32 attrInd = 0; attrInd < elemBody->attributeCount; attrInd++)
-			{
-				DmxAttribute *attr = &elemBody->attributes[attrInd];
-				Print("\t\"%s\" \"%i\" \"\"\n", attr->name, attr->value.type);
-			}
-			Print("%s", "}\n");
-		}
-#endif
+		DmxPrint(dmxTest);
+		Dmx dmxTest2 = DmxImportBinary("debug/out.vmap", arena);
+		DmxPrint(dmxTest2);
 		
 		dmxTest = dmxTest;
 	}

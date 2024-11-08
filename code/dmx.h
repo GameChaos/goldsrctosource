@@ -9,8 +9,8 @@
 
 #define DMX_MAX_NAME_LEN 64
 #define DMX_MAX_PREFIX_ELEMS 64
-#define DMX_DEFAULT_MAX_ATTRIBUTES 64
-
+#define DMX_MAX_ATTRIBUTES 1024
+#define DMX_MAX_ELEMENTS 8192
 #define DMX_ENCODING_VERSION 9
 
 typedef enum DmxAttrType_s : u8
@@ -85,6 +85,7 @@ typedef enum
 typedef union
 {
 	u8 bytes[16];
+	u16 shorts[8];
 	u32 uints[4];
 } Guid;
 
@@ -170,8 +171,8 @@ typedef struct
 
 typedef struct
 {
-	i32 stringCount;
-    char **strings;
+	i32 count;
+    str *strings;
 } DmxStringTable;
 
 typedef struct
@@ -183,6 +184,8 @@ typedef struct
 	i32 attributeCount;
 	DmxAttribute *attributes;
 } DmxElement;
+// NOTE(GameChaos): roughly curb the maximum size of a dmx
+static_assert(((sizeof(DmxElement) + sizeof(DmxAttribute) * DMX_MAX_ATTRIBUTES) * DMX_MAX_ELEMENTS) / MEGABYTES(1) < MEGABYTES(1536));
 
 typedef struct
 {
