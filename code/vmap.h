@@ -31,6 +31,63 @@ typedef struct
 	CStoredCamera cameras;
 } CStoredCameras;
 
+typedef struct
+{
+	const char name[64];
+	const char standardAttributeName[64];
+	const char semanticName[64];
+	i32 semanticIndex;
+	i32 vertexBufferLocation;
+	i32 dataStateFlags; // TODO: what are the flags?
+	//i32 subdivisionBinding; // type is "element"?
+	//i32 dataCount;
+	//v3 *data;
+	DmxAttrValue data;
+} CDmePolygonMeshDataStream;
+
+typedef struct
+{
+	i32 size; // equals streams[i].dataCount?
+	i32 streamCount;
+	CDmePolygonMeshDataStream *streams;
+} CDmePolygonMeshDataArray;
+
+// will never need subdivision for goldsrc > source 2 conversion
+typedef struct
+{
+	i32 subdivisonLevelCount;
+	i32 *subdivisionLevels;
+	void *streams; // TODO: "element_array" type, need to get the actual data structure
+} CDmePolygonMeshSubdivisionData;
+
+typedef struct
+{
+	i32 vertexCount;
+	i32 *vertexEdgeIndices;
+	i32 *vertexDataIndices;
+	
+	i32 edgeCount;
+	i32 *edgeVertexIndices;
+	i32 *edgeOppositeIndices;
+	i32 *edgeNextIndices;
+	i32 *edgeFaceIndices;
+	i32 *edgeDataIndices;
+	i32 *edgeVertexDataIndices;
+	
+	i32 faceCount;
+	i32 *faceEdgeIndices;
+	i32 *faceDataIndices;
+	
+	i32 materialCount;
+	const char **materials;
+	
+	CDmePolygonMeshDataArray vertexData;
+	CDmePolygonMeshDataArray faceVertexData;
+	CDmePolygonMeshDataArray edgeData;
+	CDmePolygonMeshDataArray faceData;
+	CDmePolygonMeshSubdivisionData subdivisionData;
+} CDmePolygonMesh;
+
 typedef struct CMapEntity_s CMapEntity;
 struct CMapEntity_s
 {
@@ -105,6 +162,7 @@ typedef struct
 	char *variableNames;
 	DmePlugList *relayPlugData;
 	void *connectionsData;
+	
 	EditGameClassProps entity_properties;
 	i32 nextDecalID;
 	bool fixupEntityNames;
@@ -137,5 +195,10 @@ typedef struct
 	// TODO: this needs a count
 	void *nodeInstanceData;
 } CMapRootElement;
+
+typedef struct
+{
+	CMapRootElement root;
+} Vmap;
 
 #endif //VMAP_TYPES_H

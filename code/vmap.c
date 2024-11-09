@@ -5,6 +5,10 @@ static_function bool VmapFromGoldsrc(Arena *arena, Arena *tempArena, GsrcMapData
 {
 	bool result = false;
 	
+	Vmap vmap = {};
+	
+	
+	
 	Dmx dmx = DmxCreate(arena, "vmap", 35);
 	
 	// prefix attributes
