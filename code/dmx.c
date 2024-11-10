@@ -386,8 +386,7 @@ static_function Dmx DmxImportBinary(const char *path, Arena *arena)
 		for (i32 stringIndex = 0; stringIndex < stringtable.count; stringIndex++)
 		{
 			stringtable.strings[stringIndex] = ReadBufferGetStr(&buf);
-			Print("stringtable[%i]: %.*s\n", stringIndex,
-				  (i32)stringtable.strings[stringIndex].length, stringtable.strings[stringIndex].data);
+			MyPrintf("stringtable[$]: $\n", stringIndex, stringtable.strings[stringIndex]);
 		}
 		
 		// element headers
@@ -632,7 +631,7 @@ static_function void DmxExportBinary(const char *path, Arena *arena, Dmx dmx)
 	IntStringmapIter iter = {0};
 	while (IntStringmapNext(&stringtable, &iter, &pair))
 	{
-		Print("%s: %i\n", pair.key, pair.value);
+		MyPrintf("$: $\n", pair.key, pair.value);
 		BufferPushData(&buffer, pair.key, strlen(pair.key) + 1, false);
 	}
 	
@@ -719,7 +718,7 @@ static_function DmxAttribute *DmxAddAttribute(DmxElement *parent, str name, DmxA
 	return result;
 }
 
-static_function void DmxAttrSetData(DmxAttribute *attr, void *data, i64 bytes)
+static_function void DmxAttrSetData(DmxAttribute *attr, const void *data, i64 bytes)
 {
 	ASSERT(data && bytes);
 	
@@ -789,7 +788,7 @@ DEFINE_DMXADDATTRIBUTE_FUNC(DmxAddAttributeU8, u8, DMX_ATTR_BYTE)
 
 #undef DEFINE_DMXADDATTRIBUTE_FUNC
 
-static_function DmxAttribute *DmxAddAttributeBinary(DmxElement *parent, str name, void *binaryBlob, i64 bytes)
+static_function DmxAttribute *DmxAddAttributeBinary(DmxElement *parent, str name, const void *binaryBlob, i64 bytes)
 {
 	DmxAttribute *result = DmxAddAttribute(parent, name, DMX_ATTR_BINARYBLOB);
     if (result)
@@ -886,7 +885,7 @@ static_function void DmxPrint(Dmx dmx)
 		for (i32 elemInd = 0; elemInd < elems->count; elemInd++)
 		{
 			DmxElement *elem = &elems->elements[elemInd];
-			Print("\"%s\" \"%s\"\n{\n", elem->type, elem->name);
+			MyPrintf("\"$\" \"$\"\n{\n", elem->type, elem->name);
 			Print("    \"id\" \"elementid\" \"%08x-%04x-%04x-%04x-%04x%04x%04x\"\n",
 				  elem->guid.uints[0], elem->guid.shorts[2], elem->guid.shorts[3],
 				  elem->guid.shorts[4], elem->guid.shorts[5], elem->guid.shorts[6],
@@ -899,28 +898,28 @@ static_function void DmxPrint(Dmx dmx)
 					case DMX_ATTR_INT32:
 					case DMX_ATTR_TIMESPAN:
 					{
-						Print("    \"%s\" \"%s\" \"%i\"\n",
+						MyPrintf("    \"$\" \"$\" \"$\"\n",
 							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
 							  attr->value.int32);
 					} break;
 					
 					case DMX_ATTR_F32:
 					{
-						Print("    \"%s\" \"%s\" \"%f\"\n",
+						MyPrintf("    \"$\" \"$\" \"$\"\n",
 							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
 							  attr->value.float32);
 					} break;
 					
 					case DMX_ATTR_BOOL:
 					{
-						Print("    \"%s\" \"%s\" \"%i\"\n",
+						MyPrintf("    \"$\" \"$\" \"$\"\n",
 							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
 							  attr->value.boolean);
 					} break;
 					
 					case DMX_ATTR_STRING:
 					{
-						Print("    \"%s\" \"%s\" \"%s\"\n",
+						MyPrintf("    \"$\" \"$\" \"$\"\n",
 							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
 							  attr->value.string);
 					} break;
@@ -934,45 +933,44 @@ static_function void DmxPrint(Dmx dmx)
 					
 					case DMX_ATTR_VECTOR2D:
 					{
-						Print("    \"%s\" \"%s\" \"%f %f\"\n",
+						MyPrintf("    \"$\" \"$\" \"$\"\n",
 							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
-							  attr->value.vector2.x, attr->value.vector2.y);
+							  attr->value.vector2);
 					} break;
 					
 					case DMX_ATTR_VECTOR3D:
 					case DMX_ATTR_QANGLE:
 					case DMX_ATTR_QUATERNION:
 					{
-						Print("    \"%s\" \"%s\" \"%f %f %f\"\n",
+						MyPrintf("    \"$\" \"$\" \"$\"\n",
 							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
-							  attr->value.vector3.x, attr->value.vector3.y, attr->value.vector3.z);
+							  attr->value.vector3);
 					} break;
 					
 					case DMX_ATTR_VECTOR4D:
 					{
-						Print("    \"%s\" \"%s\" \"%f %f %f %f\"\n",
+						MyPrintf("    \"$\" \"$\" \"$\"\n",
 							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
-							  attr->value.vector4.x, attr->value.vector4.y,
-							  attr->value.vector4.z, attr->value.vector4.w);
+							  attr->value.vector4);
 					} break;
 					
 					case DMX_ATTR_UINT64:
 					{
-						Print("    \"%s\" \"%s\" \"%lu\"\n",
+						MyPrintf("    \"$\" \"$\" \"$\"\n",
 							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
 							  attr->value.uint64);
 					} break;
 					
 					case DMX_ATTR_BYTE:
 					{
-						Print("    \"%s\" \"%s\" \"%i\"\n",
+						MyPrintf("    \"$\" \"$\" \"$\"\n",
 							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT],
 							  attr->value.byte);
 					} break;
 					
 					default:
 					{
-						Print("    \"%s\" \"%s\" \"\"\n",
+						MyPrintf("    \"$\" \"$\" \"\"\n",
 							  attr->name, g_dmxAttrTypes[attr->value.type % DMX_ATTR_COUNT]);
 					} break;
 				}
@@ -986,13 +984,13 @@ static_function void DmxTest(Arena *arena, Arena *tempArena)
 {
 	// load test
 	{
-		Print("sizeof(DmxElement) = %lu, sizeof(DmxAttribute) = %lu\n", sizeof(DmxElement), sizeof(DmxAttribute));
-		Print("memory allocated per element: %luKB\n",
+		MyPrintf("sizeof(DmxElement) = $, sizeof(DmxAttribute) = $\n", sizeof(DmxElement), sizeof(DmxAttribute));
+		MyPrintf("memory allocated per element: $KB\n",
 			  ((sizeof(DmxElement) + sizeof(DmxAttribute) * DMX_MAX_ATTRIBUTES)) / KILOBYTES(1));
-		Print("max memory allocated per dmx: %luMB\n",
+		MyPrintf("max memory allocated per dmx: $MB\n",
 			  ((sizeof(DmxElement) + sizeof(DmxAttribute) * DMX_MAX_ATTRIBUTES) * DMX_MAX_ELEMENTS) / MEGABYTES(1));
-		//Dmx dmxTest = DmxImportBinary("debug/empty.vmap", arena);
-		Dmx dmxTest = DmxImportBinary("debug/kz_victoria.vmap", arena);
+		Dmx dmxTest = DmxImportBinary("debug/empty.vmap", arena);
+		//Dmx dmxTest = DmxImportBinary("debug/kz_victoria.vmap", arena);
 		//DmxReadBinary_v9 dmxTest = DmxImportBinary("debug/empty.vmap", arena);
 		//DmxReadBinary_v9 dmxTest = DmxImportBinary("debug/out.vmap", arena);
 		

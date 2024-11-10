@@ -1,20 +1,5 @@
 
-#define STR(strLiteral) ((str){sizeof(strLiteral) - 1, strLiteral})
-
-typedef struct
-{
-	i64 length;
-	const char *data;
-} str;
-
-typedef struct
-{
-	i64 length;
-	i64 storage;
-	char *data;
-} str_builder;
-
-static_function str StrFromSize(char *cstring, i64 length)
+static_function str StrFromSize(const char *cstring, i64 length)
 {
 	str result = {length, cstring};
 	return result;

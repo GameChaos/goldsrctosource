@@ -118,14 +118,14 @@ pub fn build(b: *std.Build) !void
 	{
 		exe.addCSourceFile(.{
 			.file = b.path("code/win32_goldsrctosource.c"),
-			.flags = &.{"-std=c23"},
+			.flags = &.{"-std=c23", "-fmacro-backtrace-limit=0"},
 		});
     }
 	else if (target.result.os.tag == .linux)
 	{
 		exe.addCSourceFile(.{
 			.file = b.path("code/linux_goldsrctosource.c"),
-			.flags = &.{"-fno-sanitize-trap=undefined", "-std=c23"}
+			.flags = &.{"-fno-sanitize-trap=undefined", "-fmacro-backtrace-limit=0", "-std=c23"}
 		});
 	}
     b.installArtifact(exe);

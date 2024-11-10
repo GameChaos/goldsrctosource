@@ -38,11 +38,10 @@
 #include "gc_common.h"
 #include "memory.h"
 #include "platform.h"
+#include "str.h"
 
 #define STRINGMAP_VALUE_TYPE i32
 #define STRINGMAP_NAME Int
-// NOTE(GameChaos): stringmap with key as char *
-//  name is kept without prefix.
 #include "gc_stringmap_generator.h"
 
 #include "memory.c"
@@ -87,7 +86,7 @@ static_global const char *g_cmdArgTypeStrings[CMDARGTYPE_COUNT] = {
 
 static_function void FatalError(const char *error)
 {
-	Print("FATAL ERROR: %s\n", error);
+	MyPrintf("FATAL ERROR: $\n", error);
 	ASSERT(0);
 	exit(EXIT_FAILURE);
 }
@@ -248,13 +247,13 @@ static_function void PrintCmdLineHelp(CmdArgs *cmdArgs)
 	{
 		if (cmdArgs->args[i].type == CMDARG_NONE)
 		{
-			Print("%s: %s \n",
+			MyPrintf("$: $ \n",
 				  cmdArgs->args[i].argName,
 				  cmdArgs->args[i].description);
 		}
 		else
 		{
-			Print("%s [%s] : %s \n",
+			MyPrintf("$ [$] : $ \n",
 				  cmdArgs->args[i].argName,
 				  g_cmdArgTypeStrings[cmdArgs->args[i].type],
 				  cmdArgs->args[i].description);

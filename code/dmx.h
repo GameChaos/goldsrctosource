@@ -237,7 +237,7 @@ static_function DmxAttribute *functionName(DmxElement *parent, str name, dataTyp
 
 static_function Dmx DmxCreate(Arena *arena, const char *format, i32 formatVersion);
 static_function DmxAttribute *DmxAddAttribute(DmxElement *parent, str name, DmxAttrType type);
-static_function void DmxAttrSetData(DmxAttribute *attr, void *data, i64 bytes);
+static_function void DmxAttrSetData(DmxAttribute *attr, const void *data, i64 bytes);
 static_function DmxElement *DmxAddElement(DmxElements *elements, DmxElement *parent, str name, str type, Arena *arena);
 
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeElementId, DmxElementId);
@@ -255,7 +255,7 @@ DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeMat4, mat4);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeU64, u64);
 DEFINE_DMXADDATTRIBUTE_FUNC_SIG(DmxAddAttributeU8, u8);
 
-static_function DmxAttribute *DmxAddAttributeBinary(DmxElement *parent, str name, void *binaryBlob, i64 bytes);
+static_function DmxAttribute *DmxAddAttributeBinary(DmxElement *parent, str name, const void *binaryBlob, i64 bytes);
 static_function DmxAttribute *DmxAddAttributeString(DmxElement *parent, str name, str value);
 
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayElementId, DmxElementId);
