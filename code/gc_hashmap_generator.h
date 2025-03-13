@@ -76,6 +76,9 @@ typedef struct HASHMAP_ITERATOR
 	HASHMAP_NODE *current_;
 } HASHMAP_ITERATOR;
 
+// cap must be power of 2!
+#define GCHM_POLICY(n, cap) ((n) & ((cap) - 1))
+
 #ifndef GCHM_MURMURHASH_INCLUDED
 #define GCHM_MURMURHASH_INCLUDED
 
@@ -192,7 +195,7 @@ static bool HASHMAP_PREFIX(HashmapPush)(HASHMAP *map, HASHMAP_PAIR pair)
 {
 	bool result = false;
 	
-	u64 index = Gchm_MurmurHash_(&pair.key, sizeof(pair.key)) % (map->cap - 1);
+	u64 index = GCHM_POLICY(Gchm_MurmurHash_(&pair.key, sizeof(pair.key)), map->cap);
 	u64 iterations = 0;
 	while (map->nodes[index].valid)
 	{
@@ -202,7 +205,7 @@ static bool HASHMAP_PREFIX(HashmapPush)(HASHMAP *map, HASHMAP_PAIR pair)
 			// linear probe!
 			index++;
 			// NOTE(GameChaos): clamp
-			index &= (map->cap - 1);
+			index = GCHM_POLICY(index, map->cap);
 		}
 		else
 		{
@@ -236,7 +239,7 @@ static bool HASHMAP_PREFIX(HashmapKeyExists)(HASHMAP *map, HASHMAP_KEY_TYPE key)
 {
 	bool result = false;
 	
-	u64 index = Gchm_MurmurHash_(&key, sizeof(key)) % (map->cap - 1);
+	u64 index = GCHM_POLICY(Gchm_MurmurHash_(&key, sizeof(key)), map->cap);
 	u64 iterations = 0;
 	while (map->nodes[index].valid)
 	{
@@ -251,7 +254,7 @@ static bool HASHMAP_PREFIX(HashmapKeyExists)(HASHMAP *map, HASHMAP_KEY_TYPE key)
 			// linear probe!
 			index++;
 			// NOTE(GameChaos): clamp
-			index &= (map->cap - 1);
+			index = GCHM_POLICY(index, map->cap);
 		}
 		if (iterations >= map->cap)
 		{
@@ -265,7 +268,7 @@ static bool HASHMAP_PREFIX(HashmapGet)(HASHMAP *map, HASHMAP_KEY_TYPE key, HASHM
 {
 	bool result = false;
 	
-	u64 index = Gchm_MurmurHash_(&key, sizeof(key)) % (map->cap - 1);
+	u64 index = GCHM_POLICY(Gchm_MurmurHash_(&key, sizeof(key)), map->cap);
 	u64 iterations = 0;
 	while (map->nodes[index].valid)
 	{
@@ -281,7 +284,7 @@ static bool HASHMAP_PREFIX(HashmapGet)(HASHMAP *map, HASHMAP_KEY_TYPE key, HASHM
 			// linear probe!
 			index++;
 			// NOTE(GameChaos): clamp
-			index &= (map->cap - 1);
+			index = GCHM_POLICY(index, map->cap);
 		}
 		if (iterations >= map->cap)
 		{
@@ -348,6 +351,7 @@ static bool HASHMAP_PREFIX(HashmapNext)(HASHMAP *map, HASHMAP_ITERATOR *iter, HA
 #undef HASHMAP_PREFIX
 #undef HASHMAP
 #undef HASHMAP_NODE
+#undef GCHM_POLICY
 
 #else
 #error "Please #define HASHMAP_NAME with a name prefix!"

@@ -75,6 +75,9 @@ typedef struct STRINGMAP_ITERATOR
 	STRINGMAP_NODE *current_;
 } STRINGMAP_ITERATOR;
 
+// cap must be power of 2!
+#define GCSM_POLICY(n, cap) ((n) & ((cap) - 1))
+
 #ifndef GCSM_MURMURHASH_INCLUDED
 #define GCSM_MURMURHASH_INCLUDED
 
@@ -200,7 +203,7 @@ static bool STRINGMAP_PREFIX(StringmapPush)(STRINGMAP *map, const char *key, STR
 		.value = value,
 	};
 	
-	int64_t index = Gcsm_MurmurHash_(pair.key, pair.keyLength) % (map->cap - 1);
+	int64_t index = GCSM_POLICY(Gcsm_MurmurHash_(pair.key, pair.keyLength), map->cap);
 	int64_t iterations = 0;
 	while (map->nodes[index].valid)
 	{
@@ -211,7 +214,7 @@ static bool STRINGMAP_PREFIX(StringmapPush)(STRINGMAP *map, const char *key, STR
 			// linear probe!
 			index++;
 			// NOTE(GameChaos): clamp
-			index &= (map->cap - 1);
+			index = GCSM_POLICY(index, map->cap);
 		}
 		else
 		{
@@ -245,7 +248,7 @@ static bool STRINGMAP_PREFIX(StringmapKeyExists)(STRINGMAP *map, const char *key
 	bool result = false;
 	
 	int32_t keyLength = strlen(key);
-	int64_t index = Gcsm_MurmurHash_(key, keyLength) % (map->cap - 1);
+	int64_t index = GCSM_POLICY(Gcsm_MurmurHash_(key, keyLength), map->cap);
 	int64_t iterations = 0;
 	while (map->nodes[index].valid)
 	{
@@ -261,7 +264,7 @@ static bool STRINGMAP_PREFIX(StringmapKeyExists)(STRINGMAP *map, const char *key
 			// linear probe!
 			index++;
 			// NOTE(GameChaos): clamp
-			index &= (map->cap - 1);
+			index = GCSM_POLICY(index, map->cap);
 		}
 		if (iterations >= map->cap)
 		{
@@ -276,7 +279,7 @@ static const STRINGMAP_PAIR STRINGMAP_PREFIX(StringmapGet)(STRINGMAP *map, const
 	STRINGMAP_PAIR result = {0};
 	
 	int32_t keyLength = strlen(key);
-	int64_t index = Gcsm_MurmurHash_(key, keyLength) % (map->cap - 1);
+	int64_t index = GCSM_POLICY(Gcsm_MurmurHash_(key, keyLength), map->cap);
 	int64_t iterations = 0;
 	while (map->nodes[index].valid)
 	{
@@ -292,7 +295,7 @@ static const STRINGMAP_PAIR STRINGMAP_PREFIX(StringmapGet)(STRINGMAP *map, const
 			// linear probe!
 			index++;
 			// NOTE(GameChaos): clamp
-			index &= (map->cap - 1);
+			index = GCSM_POLICY(index, map->cap);
 		}
 		if (iterations >= map->cap)
 		{
@@ -360,6 +363,7 @@ static bool STRINGMAP_PREFIX(StringmapNext)(STRINGMAP *map, STRINGMAP_ITERATOR *
 #undef STRINGMAP_PREFIX
 #undef STRINGMAP
 #undef STRINGMAP_NODE
+#undef GCSM_POLICY
 
 #else
 #error "Please #define STRINGMAP_NAME with a name prefix!"
