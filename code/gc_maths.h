@@ -145,6 +145,7 @@ gcm_func v2 v2round(v2 value);
 gcm_func v2 v2negate(v2 value);
 gcm_func v2 v2normalise(v2 value);
 gcm_func float v2normInPlace(v2 *value);
+gcm_func float v2lensq(v2 value);
 gcm_func float v2len(v2 value);
 gcm_func v2 v2lerp(v2 a, v2 b, float t);
 
@@ -175,6 +176,7 @@ gcm_func v3 v3round(v3 value);
 gcm_func v3 v3negate(v3 value);
 gcm_func v3 v3normalise(v3 value);
 gcm_func float v3normInPlace(v3 *value);
+gcm_func float v3lensq(v3 value);
 gcm_func float v3len(v3 value);
 gcm_func v3 v3lerp(v3 a, v3 b, float t);
 
@@ -197,6 +199,7 @@ gcm_func v4 v4sign(v4 value);
 gcm_func v4 v4abs(v4 value);
 gcm_func v4i v4tov4i(v4 value);
 gcm_func v4 v4fill(float value);
+gcm_func v4 v4fromv3(v3 xyz, float w);
 
 gcm_func v4 v4floor(v4 value);
 gcm_func v4 v4ceil(v4 value);
@@ -204,6 +207,7 @@ gcm_func v4 v4round(v4 value);
 gcm_func v4 v4negate(v4 value);
 gcm_func v4 v4normalise(v4 value);
 gcm_func float v4normInPlace(v4 *value);
+gcm_func float v4lensq(v4 value);
 gcm_func float v4len(v4 value);
 gcm_func v4 v4lerp(v4 a, v4 b, float t);
 
@@ -328,6 +332,7 @@ gcm_func double f64ceil(double value);
 
 gcm_func float f32lerp(float a, float b, float t);
 gcm_func void AnglesToVectors(v3 angles, v3 *forwards, v3 *right, v3 *up);
+gcm_func v3 VectorToAngles(v3 vector);
 
 gcm_func mat4 mat4transpose(mat4 matrix);
 gcm_func mat4 mat4diagonal(float diagonal);
@@ -348,15 +353,17 @@ gcm_func mat3 mat3scale2d(v2 scale);
 gcm_func mat3 mat3scalef32(float scale);
 gcm_func mat3 mat3mul(mat3 left, mat3 right);
 gcm_func v3 mat3mulv3(mat3 matrix, v3 vec);
+gcm_func mat3 mat3rotate(float angle, v3 axis);
 gcm_func mat4 mat3tomat4(mat3 matrix);
 
 gcm_func uint64_t NextPowerOf2(uint64_t value);
+
+#endif // GC_MATHS_H
 
 #ifdef GC_MATHS_IMPLEMENTATION
 
 #include "smmintrin.h"
 #include <math.h>
-#include "gc_maths.h"
 
 typedef union simd128 {
 	__m128 packedF;
@@ -500,6 +507,12 @@ gcm_func float v2normInPlace(v2 *value) {
 		invLength = 1.0f / invLength;
 	}
 	*value = v2muls(*value, invLength);
+	return result;
+}
+
+gcm_func float v2lensq(v2 value)
+{
+	float result = (value.x * value.x + value.y * value.y);
 	return result;
 }
 
@@ -665,6 +678,12 @@ gcm_func float v3normInPlace(v3 *value) {
 	return result;
 }
 
+gcm_func float v3lensq(v3 value)
+{
+	float result = (value.x * value.x + value.y * value.y + value.z * value.z);
+	return result;
+}
+
 gcm_func float v3len(v3 value)
 {
 	float result = f32sqrt(value.x * value.x + value.y * value.y + value.z * value.z);
@@ -769,6 +788,13 @@ gcm_func v4 v4fill(float value) {
 	return result;
 }
 
+gcm_func v4 v4fromv3(v3 xyz, float w) {
+	v4 result;
+	result.xyz = xyz;
+	result.w = w;
+	return result;
+}
+
 
 gcm_func v4 v4floor(v4 value) {
 	v4 result = {
@@ -823,6 +849,12 @@ gcm_func float v4normInPlace(v4 *value) {
 		invLength = 1.0f / invLength;
 	}
 	*value = v4muls(*value, invLength);
+	return result;
+}
+
+gcm_func float v4lensq(v4 value)
+{
+	float result = (value.x * value.x + value.y * value.y + value.z * value.z + value.w * value.w);
 	return result;
 }
 
@@ -1562,10 +1594,7 @@ gcm_func mat4 mat4diagonal(float diagonal)
 gcm_func mat4 mat4invert(mat4 in)
 {
 	float inv[16];
-	double det;
-	
 	float *m = (float *)&in;
-	
 	inv[0] = m[5]  * m[10] * m[15] - 
 		m[5]  * m[11] * m[14] - 
 		m[9]  * m[6]  * m[15] + 
@@ -1678,7 +1707,10 @@ gcm_func mat4 mat4invert(mat4 in)
 		m[8] * m[1] * m[6] - 
 		m[8] * m[2] * m[5];
 	
-	det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+	double det = (double)m[0] * (double)inv[0]
+		+ (double)m[1] * (double)inv[4]
+		+ (double)m[2] * (double)inv[8]
+		+ (double)m[3] * (double)inv[12];
 	
 	mat4 result = {};
 	if (det != 0)
@@ -1912,6 +1944,29 @@ gcm_func v3 mat3mulv3(mat3 matrix, v3 vec)
 	return result;
 }
 
+gcm_func mat3 mat3rotate(float angle, v3 axis)
+{
+	mat3 result = mat3diagonal(1);
+	
+	float sinTheta = f32sin(GCM_DEGTORAD(angle));
+	float cosTheta = f32cos(GCM_DEGTORAD(angle));
+	float cosValue = 1.0f - cosTheta;
+	
+	result.e[0][0] = (axis.x * axis.x * cosValue) + cosTheta;
+	result.e[0][1] = (axis.x * axis.y * cosValue) + (axis.z * sinTheta);
+	result.e[0][2] = (axis.x * axis.z * cosValue) - (axis.y * sinTheta);
+	
+	result.e[1][0] = (axis.y * axis.x * cosValue) - (axis.z * sinTheta);
+	result.e[1][1] = (axis.y * axis.y * cosValue) + cosTheta;
+	result.e[1][2] = (axis.y * axis.z * cosValue) + (axis.x * sinTheta);
+	
+	result.e[2][0] = (axis.z * axis.x * cosValue) + (axis.y * sinTheta);
+	result.e[2][1] = (axis.z * axis.y * cosValue) - (axis.x * sinTheta);
+	result.e[2][2] = (axis.z * axis.z * cosValue) + cosTheta;
+	
+	return result;
+}
+
 gcm_func mat4 mat3tomat4(mat3 matrix)
 {
 	mat4 result = mat4diagonal(1);
@@ -1938,5 +1993,5 @@ gcm_func uint64_t NextPowerOf2(uint64_t value)
 	}
 	return result;
 }
-#endif
-#endif //GC_MATHS_H
+#undef GC_MATHS_IMPLEMENTATION
+#endif // GC_MATHS_IMPLEMENTATION
