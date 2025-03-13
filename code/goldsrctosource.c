@@ -385,7 +385,6 @@ static_function void BSPMain(i32 argCount, char *arguments[])
 		{
 			VmapFromGoldsrc(&arena, &tempArena, &mapData, CMDARG_GET_STRING(cmdArgs.outputvmap), paths);
 		}
-		DmxTest(&arena, &tempArena);
 		
 		// convert to source
 		SrcMapData srcMapData = {};

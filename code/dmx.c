@@ -394,7 +394,6 @@ static_function Dmx DmxImportBinary(const char *path, Arena *arena)
 		ReadBufferReadI32(&buf, &elementCount);
 		for (i32 elemIndex = 0; elemIndex < elementCount; elemIndex++)
 		{
-			//DmxReadElemHeader *elemHeader = &result.elementHeaders[elem];
 			i32 typeIndex = 0;
 			i32 nameIndex = 0;
 			Guid guid = {};
@@ -823,6 +822,7 @@ DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(functionName, dataType)\
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayElementId, DmxElementId, DMX_ATTR_ELEMENT_ARRAY)
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayInt, i32, DMX_ATTR_INT32_ARRAY)
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayBool, bool, DMX_ATTR_BOOL_ARRAY)
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayString, const char *, DMX_ATTR_ELEMENT_ARRAY)
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayTimespan, i32, DMX_ATTR_TIMESPAN_ARRAY)
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayRgba8, u32, DMX_ATTR_RGBA8_ARRAY)
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC(DmxAddAttributeArrayV2, v2, DMX_ATTR_VECTOR2D_ARRAY)
@@ -873,7 +873,7 @@ static_function DmxElement *DmxAddElement(DmxElements *elements, DmxElement *par
 	return result;
 }
 
-static_function void DmxPrint(Dmx dmx)
+static_function void DmxDebugPrint(Dmx dmx)
 {
 	for (i32 elemsType = 0; elemsType < 2; elemsType++)
 	{
@@ -980,6 +980,7 @@ static_function void DmxPrint(Dmx dmx)
 	}
 }
 
+#if 0
 static_function void DmxTest(Arena *arena, Arena *tempArena)
 {
 	// load test
@@ -991,15 +992,13 @@ static_function void DmxTest(Arena *arena, Arena *tempArena)
 			  ((sizeof(DmxElement) + sizeof(DmxAttribute) * DMX_MAX_ATTRIBUTES) * DMX_MAX_ELEMENTS) / MEGABYTES(1));
 		Dmx dmxTest = DmxImportBinary("debug/empty.vmap", arena);
 		//Dmx dmxTest = DmxImportBinary("debug/kz_victoria.vmap", arena);
-		//DmxReadBinary_v9 dmxTest = DmxImportBinary("debug/empty.vmap", arena);
-		//DmxReadBinary_v9 dmxTest = DmxImportBinary("debug/out.vmap", arena);
 		
 		// reexport test
 		DmxExportBinary("debug/out.vmap", arena, dmxTest);
 		
-		DmxPrint(dmxTest);
+		DmxDebugPrint(dmxTest);
 		Dmx dmxTest2 = DmxImportBinary("debug/out.vmap", arena);
-		DmxPrint(dmxTest2);
+		DmxDebugPrint(dmxTest2);
 		
 		dmxTest = dmxTest;
 	}
@@ -1056,3 +1055,4 @@ static_function void DmxTest(Arena *arena, Arena *tempArena)
 #endif
 	return;
 }
+#endif

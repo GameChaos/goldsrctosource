@@ -5,6 +5,7 @@
 
 typedef v3 QAngle;
 
+// TODO: entity properties seem to all be encoded as strings
 typedef struct
 {
 	i32 propertyCount;
@@ -40,9 +41,7 @@ typedef struct
 	i32 vertexBufferLocation;
 	i32 dataStateFlags; // TODO: what are the flags?
 	//i32 subdivisionBinding; // type is "element"?
-	//i32 dataCount;
-	//v3 *data;
-	DmxAttrValue data;
+	DmxAttrValue data; // data type can be many things :(
 } CDmePolygonMeshDataStream;
 
 typedef struct
@@ -99,6 +98,7 @@ struct CMapEntity_s
 	EditGameClassProps entity_properties;
 	v3 hitNormal;
 	bool isProceduralEntity;
+	
 	v3 origin;
 	QAngle angles;
 	v3 scales;
@@ -113,6 +113,7 @@ typedef struct
 	CMapEntity *children;
 	char *variableTargetKeys;
 	char *variableNames;
+	
 	v3 origin;
 	QAngle angles;
 	v3 scales;
@@ -128,6 +129,7 @@ typedef struct
 	char *variableTargetKeys;
 	char *variableNames;
 	CMapGroup nodes;
+	
 	v3 origin;
 	QAngle angles;
 	v3 scales;
@@ -156,10 +158,52 @@ typedef struct
 
 typedef struct
 {
+	i32 nodeID;
+	u64 referenceID; // TODO: what's this
+	void *children; // element_array
+	void *variableTargetKeys; // element_array
+	void *variableNames; // element_array
+	const char *cubeMapName;
+	const char *lightGroup;
+	bool visexclude;
+	bool disablemerging;
+	bool renderwithdynamic;
+	bool disableHeightDisplacement;
+	f32 fademindist;
+	f32 fademaxdist;
+	bool bakelighting;
+	bool precomputelightprobes;
+	bool renderToCubemaps;
+	bool emissiveLightingEnabled;
+	float emissiveLightingBoost;
+	int disableShadows;
+	bool lightingDummy;
+	f32 smoothingAngle;
+	u32 tintColor; // TODO: rgba8888 struct?!
+	i32 renderAmt;
+	const char *physicsType;
+	const char *physicsGroup;
+	const char *physicsInteractsAs;
+	const char *physicsInteractsWith;
+	const char *physicsInteractsExclude;
+	CDmePolygonMesh meshData;
+	bool physicsSimplificationOverride;
+	f32 physicsSimplificationError;
+	
+	v3 origin;
+	v3 angles;
+	v3 scales;
+	bool transformLocked;
+	bool force_hidden;
+	bool editorOnly;
+} CMapMesh;
+
+typedef struct
+{
 	// TODO: these need counts
-	CMapEntity *children;
-	char *variableTargetKeys;
-	char *variableNames;
+	void *children; // CMapMesh and CMapEntity, maybe more?
+	char *variableTargetKeys; // element_array
+	char *variableNames; // element_array
 	DmePlugList *relayPlugData;
 	void *connectionsData;
 	
@@ -167,6 +211,7 @@ typedef struct
 	i32 nextDecalID;
 	bool fixupEntityNames;
 	char *mapUsageType;
+	
 	v3 origin;
 	QAngle angles;
 	v3 scales;
@@ -198,7 +243,7 @@ typedef struct
 
 typedef struct
 {
-	CMapRootElement root;
+	i32 unused;
 } Vmap;
 
 #endif //VMAP_TYPES_H

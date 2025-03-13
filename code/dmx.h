@@ -203,33 +203,6 @@ typedef struct
 } Dmx;
 
 
-
-
-typedef struct
-{
-	char *type;
-	char *name;
-	Guid guid;
-} DmxReadElemHeader;
-
-typedef struct
-{
-	i32 attributeCount;
-	DmxAttribute *attributes;
-} DmxReadElemBody;
-
-typedef struct
-{
-	ReadFileResult file;
-	char *header; // "<!-- dmx encoding binary 9 format %s %i -->\n"
-	i32 prefixElementCount;
-	DmxReadElemBody *prefixElements;
-	DmxStringTable stringTable;
-	i32 elementCount;
-	DmxReadElemHeader *elementHeaders;
-	DmxReadElemBody *elements;
-} DmxReadBinary_v9;
-
 #define DEFINE_DMXADDATTRIBUTE_FUNC_SIG(functionName, dataType)\
 static_function DmxAttribute *functionName(DmxElement *parent, str name, dataType value)
 #define DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(functionName, dataType)\
@@ -261,7 +234,7 @@ static_function DmxAttribute *DmxAddAttributeString(DmxElement *parent, str name
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayElementId, DmxElementId);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayInt, i32);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayBool, bool);
-DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayString, char *);
+DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayString, const char *);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayBinary, DmxBinaryBlob);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayTimespan, i32);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayRgba8, u32);
@@ -273,5 +246,7 @@ DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayQuaternion, v4);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayMat4, mat4);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayU64, u64);
 DEFINE_DMXADDATTRIBUTEARRAY_FUNC_SIG(DmxAddAttributeArrayU8, u8);
+
+static_function void DmxDebugPrint(Dmx dmx);
 
 #endif //DMX_H
