@@ -55,7 +55,7 @@ pub fn build(b: *std.Build) !void
 	
 	if (optimise == .Debug)
 	{
-		exe.defineCMacro("GC_DEBUG", "");
+		exe.root_module.addCMacro("GC_DEBUG", "");
 		const debugGraphics = true;
 		if (debugGraphics)
 		{
@@ -93,7 +93,7 @@ pub fn build(b: *std.Build) !void
 			
 			exe.linkLibrary(imgui);
 			// TODO: sokol-shdc!!!!!!
-			exe.defineCMacro("DEBUG_GRAPHICS", "");
+			exe.root_module.addCMacro("DEBUG_GRAPHICS", "");
 			if (target.result.os.tag == .windows)
 			{
 				exe.linkSystemLibrary("gdi32");
@@ -118,7 +118,7 @@ pub fn build(b: *std.Build) !void
 	{
 		exe.addCSourceFile(.{
 			.file = b.path("code/win32_goldsrctosource.c"),
-			.flags = &.{"-std=c23", "-fmacro-backtrace-limit=0"},
+			.flags = &.{"-fno-sanitize=undefined", "-std=c23", "-fmacro-backtrace-limit=0"},
 		});
     }
 	else if (target.result.os.tag == .linux)
