@@ -281,7 +281,9 @@ static_function void DebugGfxInit(void *userData)
 	};
 	
 	sg_pipeline_desc wirePipelineDesc = {
-		.layout.attrs[ATTR_wire_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
+		.layout.attrs[ATTR_wire_vs_iPos].format = SG_VERTEXFORMAT_FLOAT3,
+		.layout.attrs[ATTR_wire_vs_iNormal].format = SG_VERTEXFORMAT_FLOAT3,
+		.layout.attrs[ATTR_wire_vs_iUv].format = SG_VERTEXFORMAT_FLOAT2,
 		.shader = sg_make_shader(wire_shader_desc(sg_query_backend())),
 		.primitive_type = SG_PRIMITIVETYPE_LINES,
 		.index_type = SG_INDEXTYPE_UINT32,

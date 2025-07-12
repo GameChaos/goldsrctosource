@@ -11,14 +11,20 @@ uniform wire_vs_params {
 	vec3 uColour;
 };
 
-in vec3 pos;
+in vec3 iPos;
+in vec3 iNormal;
+in vec2 iUv;
 out vec3 colour;
+out vec3 normal;
+out vec2 uv;
 
 void main()
 {
-    gl_Position = mvp * vec4(pos, 1);
+    gl_Position = mvp * vec4(iPos, 1);
 	gl_Position.z -= 0.01f;
 	colour = uColour;
+	uv = iUv;
+	normal = iNormal;
 }
 
 #pragma sokol @end
@@ -26,6 +32,8 @@ void main()
 #pragma sokol @fs wire_fs
 
 in vec3 colour;
+in vec3 normal;
+in vec2 uv;
 out vec4 frag_color;
 
 void main()
