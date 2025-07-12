@@ -98,18 +98,23 @@ static_function i32 GetDirectoryFiles(const char *path, FileInfo *out, i32 maxFi
 
 static_function void *Plat_MemReserve(i64 bytes)
 {
-	void *result = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
+	void *result = mmap(NULL, bytes, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	if (result == MAP_FAILED)
+	{
+		result = NULL;
+	}
 	return result;
 }
 
 static_function void Plat_MemCommit(void *address, i64 bytes)
 {
-	// NOTE(GameChaos): not applicable on linux
+	mprotect(address, bytes, PROT_READ | PROT_WRITE);
 }
 
 static_function void Plat_MemDecommit(void *address, i64 bytes)
 {
-	// NOTE(GameChaos): not applicable on linux?
+	madvise(address, bytes, MADV_DONTNEED);
+	mprotect(address, bytes, PROT_NONE);
 }
 
 static_function void Plat_MemFree(void *address, i64 bytes)
@@ -127,7 +132,6 @@ static_function void Mem_Copy(const void *source, void *destination, size_t byte
 {
 	ASSERT(source);
 	ASSERT(destination);
-	ASSERT(bytes);
 	memcpy(destination, source, bytes);
 }
 

@@ -18,15 +18,14 @@ static_function Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *pat
 				result.textures = ArenaAlloc(arena, result.entryCount * sizeof(*result.textures));
 				for (u32 i = 0; i < header->dirEntries; i++)
 				{
-					Wad3DirEntry *entry = (Wad3DirEntry *)&data[header->firstDirEntryOffset + i * sizeof(*entry)];
-					result.entries[i] = entry;
-					if (entry->type != WAD3_IMAGE_TYPE_TEXTURE)
+					Mem_Copy(&data[header->firstDirEntryOffset + i * sizeof(Wad3DirEntry)], &result.entries[i], sizeof(result.entries[i]));
+					if (result.entries[i].type != WAD3_IMAGE_TYPE_TEXTURE)
 					{
 						continue;
 					}
-					if (entry->offset + sizeof(Wad3TextureHeader) < bytes)
+					if (result.entries[i].offset + sizeof(Wad3TextureHeader) < bytes)
 					{
-						result.textures[result.textureCount++] = (Wad3TextureHeader *)&data[entry->offset];
+						result.textures[result.textureCount++] = (Wad3TextureHeader *)&data[result.entries[i].offset];
 					}
 					else
 					{

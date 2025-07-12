@@ -132,7 +132,7 @@ uint32_t Gcsm_MurmurHash_(const char *key, uint32_t len)
 	for (i = -l; i != 0; ++i)
 	{
 		// next 4 byte chunk of `key'
-		k = chunks[i];
+		memcpy(&k, (u8 *)&chunks[i], sizeof(k));
 		
 		// encode next 4 byte chunk of `key'
 		k *= c1;

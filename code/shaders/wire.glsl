@@ -11,10 +11,8 @@ uniform wire_vs_params {
 	vec3 uColour;
 };
 
-out vec3 colour;
 in vec3 pos;
-in vec3 normal;
-in vec2 uv;
+out vec3 colour;
 
 void main()
 {

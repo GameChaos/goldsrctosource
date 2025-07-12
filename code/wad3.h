@@ -40,7 +40,7 @@ typedef struct
 {
 	bool valid;
 	u32 entryCount;
-	Wad3DirEntry **entries;
+	Wad3DirEntry *entries;
 	u32 textureCount;
 	Wad3TextureHeader **textures;
 	u8 *fileData;

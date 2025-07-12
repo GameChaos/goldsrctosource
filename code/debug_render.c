@@ -277,20 +277,18 @@ static_function void DebugGfxInit(void *userData)
 		.cull_mode = SG_CULLMODE_BACK,
 		.depth.compare = SG_COMPAREFUNC_LESS_EQUAL,
 		.depth.write_enabled = true,
-		.label = "pipeline",
+		.label = "world-pipeline",
 	};
 	
 	sg_pipeline_desc wirePipelineDesc = {
-		.layout.attrs[ATTR_world_vs_iPos].format = SG_VERTEXFORMAT_FLOAT3,
-		.layout.attrs[ATTR_world_vs_iNormal].format = SG_VERTEXFORMAT_FLOAT3,
-		.layout.attrs[ATTR_world_vs_iUv].format = SG_VERTEXFORMAT_FLOAT2,
+		.layout.attrs[ATTR_wire_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
 		.shader = sg_make_shader(wire_shader_desc(sg_query_backend())),
 		.primitive_type = SG_PRIMITIVETYPE_LINES,
 		.index_type = SG_INDEXTYPE_UINT32,
 		.cull_mode = SG_CULLMODE_BACK,
 		.depth.compare = SG_COMPAREFUNC_LESS_EQUAL,
 		.depth.write_enabled = true,
-		.label = "pipeline",
+		.label = "wire-pipeline",
 	};
 	
 	state->passAction = (sg_pass_action){

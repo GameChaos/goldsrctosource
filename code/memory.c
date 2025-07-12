@@ -38,8 +38,9 @@ static_function Arena ArenaCreate(i64 bytes)
 	Arena result = {0};
 	
 	ASSERT(bytes);
-	result.data = Plat_MemReserve(bytes);
 	result.bytes = bytes;
+	result.reservedBytes = AlignUp_(bytes, Plat_GetPageSize());
+	result.data = Plat_MemReserve(result.reservedBytes);
 	ASSERT(result.data);
 	
 	return result;
@@ -52,8 +53,13 @@ static_function void *ArenaAlloc(Arena *arena, i64 bytes)
 	ASSERT(arena);
 	if (bytes <= arena->bytes - arena->allocPos)
 	{
+		i64 nextCommittedBytes = AlignUp_(arena->allocPos + bytes, Plat_GetPageSize());
+		if (nextCommittedBytes > arena->committedBytes)
+		{
+			Plat_MemCommit((u8 *)arena->data + arena->committedBytes, nextCommittedBytes - arena->committedBytes);
+			arena->committedBytes = nextCommittedBytes;
+		}
 		result = (u8 *)arena->data + arena->allocPos;
-		Plat_MemCommit((u8 *)arena->data + arena->allocPos, bytes);
 		// NOTE(GameChaos): guarantee zeroed allocation
 		if (arena->allocPos < arena->maxAllocPos)
 		{
@@ -72,8 +78,10 @@ static_function void ArenaReset(Arena *arena)
 {
 	ASSERT(arena->data);
 	ASSERT(arena->bytes);
-	Plat_MemDecommit(arena->data, arena->bytes);
+	Plat_MemDecommit(arena->data, arena->committedBytes);
 	arena->allocPos = 0;
+	arena->committedBytes = 0;
+	arena->maxAllocPos = 0;
 }
 
 static_function void ArenaResetTo(Arena *arena, i64 pos)
@@ -81,11 +89,13 @@ static_function void ArenaResetTo(Arena *arena, i64 pos)
 	if (pos < arena->allocPos)
 	{
 		i64 decommitStart = AlignUp_(pos, Plat_GetPageSize());
-		i64 decommitEnd = arena->bytes;
+		i64 decommitEnd = arena->reservedBytes;
 		if (decommitStart < decommitEnd)
 		{
 			Plat_MemDecommit((u8 *)arena->data + decommitStart,
 							 decommitEnd - decommitStart);
+			arena->committedBytes = decommitStart;
+			arena->maxAllocPos = GCM_MIN(arena->maxAllocPos, decommitStart);
 		}
 		
 		arena->allocPos = pos;
@@ -117,18 +127,7 @@ static_function ArenaTemp ArenaBeginTemp(Arena *arena)
 
 static_function void ArenaEndTemp(ArenaTemp temp)
 {
-	if (temp.originalAllocPos != temp.arena->allocPos)
-	{
-		i64 decommitStart = AlignUp_(temp.originalAllocPos, Plat_GetPageSize());
-		i64 decommitEnd = AlignUp_(temp.arena->bytes, Plat_GetPageSize());
-		if (decommitStart < decommitEnd)
-		{
-			Plat_MemDecommit((u8 *)temp.arena->data + decommitStart,
-							 decommitEnd - decommitStart);
-		}
-		
-		temp.arena->allocPos = temp.originalAllocPos;
-	}
+	ArenaResetTo(temp.arena, temp.originalAllocPos);
 }
 
 static_function Pool PoolCreate(i64 maxElements, i64 chunkSize)

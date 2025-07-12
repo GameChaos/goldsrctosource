@@ -8,6 +8,8 @@ typedef struct Arena {
 	i64 allocPos;
 	i64 maxAllocPos; // keep track of maximum allocPos, for zeroing.
 	i64 bytes;
+	i64 reservedBytes;
+	i64 committedBytes;
 } Arena;
 
 typedef struct ArenaTemp{
