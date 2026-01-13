@@ -289,7 +289,7 @@ static_function bool MakePolygon(SrcPlane *planes, i32 planeCount, i32 planeInde
 	v3 tangentY = v3cross(plane.normal, tangentX);
 	tangentY = v3normalise(tangentY);
 	
-	v3 pointOnPlane = v3subs(plane.normal, plane.distance);
+	v3 pointOnPlane = v3muls(plane.normal, plane.distance);
 	static_assert(SRC_MAX_SIDE_VERTS > 4, "");
 	// generate an initial polygon that's bigger than the map and is in the same direction of the plane.
 #if 1
