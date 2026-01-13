@@ -748,47 +748,6 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 	}
 	
 	//
-	// LUMP_LEAF_AMBIENT_INDEX
-	//
-	
-	{
-		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
-		i32 ambientIndexCount = 0;
-		SrcLeafAmbientIndex *dummyAmbientIndex = ArenaAlloc(tempArena, sizeof(*dummyAmbientIndex) * mapData->leafCount);
-		for (i32 leaf = 0; leaf < mapData->leafCount; leaf++)
-		{
-			SrcLeafAmbientIndex ambientIndex = {};
-			ambientIndex.ambientSampleCount = 1;
-			ambientIndex.firstAmbientSample = 0;
-			dummyAmbientIndex[ambientIndexCount++] = ambientIndex;
-		}
-		BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_LEAF_AMBIENT_INDEX,
-									 dummyAmbientIndex, sizeof(*dummyAmbientIndex) * ambientIndexCount);
-		ArenaEndTemp(arenaTmp);
-	}
-	
-	//
-	// LUMP_LEAF_AMBIENT_LIGHTING
-	//
-	
-	// NOTE(GameChaos): dummy ambient lighting
-	{
-		SrcLeafAmbientLighting dummyAmbient = {};
-		for (i32 i = 0; i < 6; i++)
-		{
-			dummyAmbient.cube.colour[i].r = 1;
-			dummyAmbient.cube.colour[i].g = 1;
-			dummyAmbient.cube.colour[i].b = 1;
-		}
-		dummyAmbient.x = 128;
-		dummyAmbient.y = 128;
-		dummyAmbient.z = 128;
-		
-		fileHeader->lump[SRC_LUMP_LEAF_AMBIENT_LIGHTING].version = 1;
-		BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_LEAF_AMBIENT_LIGHTING, &dummyAmbient, sizeof(dummyAmbient));
-	}
-	
-	//
 	// LUMP_WORLDLIGHTS
 	//
 	// NOTE(GameChaos): dummy worldlight
@@ -807,6 +766,8 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 	// ====================================================================
 	
 	//
+	// LUMP_LEAF_AMBIENT_INDEX
+	// LUMP_LEAF_AMBIENT_LIGHTING
 	// LUMP_NODES
 	// LUMP_LEAFS
 	// LUMP_BRUSHES
@@ -984,6 +945,41 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 	{
 		state->leafMinDistToWater[state->leafMinDistToWaterCount++] = -1;
 	}
+	
+	// ambient leaves
+	{
+		ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
+		i32 ambientIndexCount = 0;
+		SrcLeafAmbientIndex *dummyAmbientIndex = ArenaAlloc(tempArena, sizeof(*dummyAmbientIndex) * state->leafCount);
+		for (i32 leaf = 0; leaf < state->leafCount; leaf++)
+		{
+			SrcLeafAmbientIndex ambientIndex = {};
+			ambientIndex.ambientSampleCount = 1;
+			ambientIndex.firstAmbientSample = 0;
+			dummyAmbientIndex[ambientIndexCount++] = ambientIndex;
+		}
+		BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_LEAF_AMBIENT_INDEX,
+									 dummyAmbientIndex, sizeof(*dummyAmbientIndex) * ambientIndexCount);
+		ArenaEndTemp(arenaTmp);
+	}
+	
+	// NOTE(GameChaos): dummy ambient lighting
+	{
+		SrcLeafAmbientLighting dummyAmbient = {};
+		for (i32 i = 0; i < 6; i++)
+		{
+			dummyAmbient.cube.colour[i].r = 1;
+			dummyAmbient.cube.colour[i].g = 1;
+			dummyAmbient.cube.colour[i].b = 1;
+		}
+		dummyAmbient.x = 128;
+		dummyAmbient.y = 128;
+		dummyAmbient.z = 128;
+		
+		fileHeader->lump[SRC_LUMP_LEAF_AMBIENT_LIGHTING].version = 1;
+		BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_LEAF_AMBIENT_LIGHTING, &dummyAmbient, sizeof(dummyAmbient));
+	}
+	
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_NODES, state->nodes, sizeof(*state->nodes) * state->nodeCount);
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_LEAFS, state->leaves, sizeof(*state->leaves) * state->leafCount);
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_LEAFBRUSHES, state->leafBrushes, sizeof(*state->leafBrushes) * state->leafBrushCount);
