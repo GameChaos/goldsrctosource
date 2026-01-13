@@ -370,7 +370,8 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 				texture.vecs[st].scale = invLen;
 			}
 		}
-		char *texName = mapData->lumpTextures.mipTextures[mapData->lumpTexinfo[i].miptex]->name;
+		Wad3TextureHeader miptex = *mapData->lumpTextures.mipTextures[mapData->lumpTexinfo[i].miptex]; // avoid misaligned memory access
+		char *texName = miptex.name;
 		Format(texture.name, sizeof(texture.name), CONVERTED_MATERIAL_FOLDER "%s", texName);
 		g_textures[textureCount++] = texture;
 	}

@@ -454,13 +454,14 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 	for (i32 i = 0; i < (i64)mapData->lumpTextures.mipTextureCount; i++)
 	{
 		// TODO: nameStringTableID
+		Wad3TextureHeader miptex = *mapData->lumpTextures.mipTextures[i];
 		state->texdata[state->texdataCount++] = (SrcTexdata){
 			{0.5f, 0.5f, 0.5f},
 			i,
-			(i32)mapData->lumpTextures.mipTextures[i]->width,
-			(i32)mapData->lumpTextures.mipTextures[i]->height,
-			(i32)mapData->lumpTextures.mipTextures[i]->width,
-			(i32)mapData->lumpTextures.mipTextures[i]->height,
+			(i32)miptex.width,
+			(i32)miptex.height,
+			(i32)miptex.width,
+			(i32)miptex.height,
 		};
 	}
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_TEXDATA, state->texdata, sizeof(*state->texdata) * state->texdataCount);
@@ -478,19 +479,20 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 		{
 			continue;
 		}
+		Wad3TextureHeader miptex = *mapData->lumpTextures.mipTextures[i];
 		i32 offset = (i32)(tdStringData - state->tdStringData);
 		state->tdStringTable[state->tdTableCount++] = offset;
 		i32 len = (i32)(tdStringDataEnd - tdStringData);
 		i32 formattedLen = 0;
-		if (StringEquals(mapData->lumpTextures.mipTextures[i]->name, "sky", false))
+		if (StringEquals(miptex.name, "sky", false))
 		{
 			formattedLen = Format(tdStringData, len, "%s", "tools/toolsskybox2d");
 		}
 		else
 		{
-			formattedLen = Format(tdStringData, len, CONVERTED_MATERIAL_FOLDER "%s", mapData->lumpTextures.mipTextures[i]->name);
+			formattedLen = Format(tdStringData, len, CONVERTED_MATERIAL_FOLDER "%s", miptex.name);
 		}
-		Print("Texture: %s\n", mapData->lumpTextures.mipTextures[i]->name);
+		Print("Texture: %s\n", miptex.name);
 		tdStringData += formattedLen + 1;
 	}
 	BufferPushDataAndSetLumpSize(&buffer, fileHeader, SRC_LUMP_TEXDATA_STRING_DATA,
@@ -519,7 +521,8 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 				texinfo.lightmapVecs[st][xyzw] = mapData->lumpTexinfo[i].vecs[st][xyzw] / 16.0f;
 			}
 		}
-		char *texName = mapData->lumpTextures.mipTextures[mapData->lumpTexinfo[i].miptex]->name;
+		Wad3TextureHeader miptex = *mapData->lumpTextures.mipTextures[mapData->lumpTexinfo[i].miptex];
+		char *texName = miptex.name;
 		if (StringEquals(texName, "sky", false))
 		{
 			texinfo.flags |= SRC_SURF_NOLIGHT | SRC_SURF_SKY | SRC_SURF_SKY2D;
