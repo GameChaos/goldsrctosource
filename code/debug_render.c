@@ -781,6 +781,7 @@ static_function void DebugGfxFrame(void *userData)
 		.action = state->passAction,
 		.swapchain = sglue_swapchain(),
 	});
+	igText("Controls:\nWASD - move around\nSHIFT - slow down\nCONTROL - speed up\nESCAPE - toggle mouse camera movement\nF1 toggle between render styles: textured, untextured and none\nF2 - toggle wireframe.\nF11 - toggle fullscreen", state->wireframe, state->solidDrawType);
 	igText("Wireframe: %i\nSolid type: %i", state->wireframe, state->solidDrawType);
 	igCheckbox("Draw world faces", &state->drawWorld);
 	igCheckbox("Draw brushes", &state->drawBrushes);

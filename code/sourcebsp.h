@@ -417,6 +417,7 @@ typedef struct
 	u16 firstPrimID;
 	u32 smoothingGroups; // lightmap smoothing group
 } SrcFace;
+static_assert(sizeof(SrcFace) == 56);
 
 typedef struct
 {
