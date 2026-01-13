@@ -144,7 +144,7 @@ static_function bool ParseCmdArgs(CmdArgs *cmdArgs, i32 argCount, char *argument
 	for (i32 i = 1; i < argCount; i++)
 	{
 		bool found = false;
-		for (i32 j = 0; j < ARRAYCOUNT(cmdArgs->args); j++)
+		for (i32 j = 0; j < (i64)ARRAYCOUNT(cmdArgs->args); j++)
 		{
 			if (i >= argCount)
 			{
@@ -171,7 +171,7 @@ static_function bool ParseCmdArgs(CmdArgs *cmdArgs, i32 argCount, char *argument
 							if (cmdArgs->args[j].type == CMDARG_STRING)
 							{
 								i64 argLen = StringLength(arguments[i + 1]);
-								if (argLen >= sizeof(cmdArgs->args[j].stringValue))
+								if (argLen >= (i64)sizeof(cmdArgs->args[j].stringValue))
 								{
 									Error("String is too long for argument %s! Maximum length is %lli characters.\n\n",
 										  arguments[i], (i64)sizeof(MEMBER(CmdArg, stringValue)) - 1);
@@ -243,7 +243,7 @@ static_function bool ParseCmdArgs(CmdArgs *cmdArgs, i32 argCount, char *argument
 static_function void PrintCmdLineHelp(CmdArgs *cmdArgs)
 {
 	PrintString("Available commands:\n");
-	for (i32 i = 0; i < ARRAYCOUNT(cmdArgs->args); i++)
+	for (i32 i = 0; i < (i64)ARRAYCOUNT(cmdArgs->args); i++)
 	{
 		if (cmdArgs->args[i].type == CMDARG_NONE)
 		{

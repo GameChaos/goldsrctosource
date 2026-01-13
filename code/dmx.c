@@ -84,13 +84,13 @@ bool result = ReadBufferRead(buffer, out, sizeof(*out));\
 return result;\
 }\
 
-DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadU8, u8);
-DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadI32, i32);
-DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadU64, u64);
-DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadV3, v3);
-DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadV4, v4);
-DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadMat4, mat4);
-DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadGuid, Guid);
+DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadU8, u8)
+DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadI32, i32)
+DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadU64, u64)
+DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadV3, v3)
+DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadV4, v4)
+DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadMat4, mat4)
+DEFINE_READINGBUFFER_READ_TYPE(ReadBufferReadGuid, Guid)
 
 static_function char *ReadBufferGetString(ReadBuffer *buffer)
 {
@@ -263,7 +263,7 @@ static_function bool ReadBufferReadDmxAttribute(ReadBuffer *buffer, DmxAttribute
 		if (ReadBufferReadI32(buffer, &index) && index >= 0 && index < stringTable->count)
 		{
 			str string = stringTable->strings[index];
-			ASSERT(string.length < sizeof(attr->name));
+			ASSERT(string.length < (i64)sizeof(attr->name));
 			Format(attr->name, sizeof(attr->name), "%.*s", (i32)string.length, string.data);
 		}
 		ASSERT(index >= 0 && index < stringTable->count);
@@ -416,7 +416,7 @@ static_function Dmx DmxImportBinary(const char *path, Arena *arena)
 			ReadBufferReadI32(&buf, &attributeCount);
 			// TODO: make this a real check you lazy bum
 			ASSERT(attributeCount < I16_MAX);
-			for (i32 attr = 0; attr < attributeCount; attr++)
+			for (i32 attrInd = 0; attrInd < attributeCount; attrInd++)
 			{
 				DmxAttribute *attr = DmxAddAttribute(elem, STR(""), DMX_ATTR_UNKNOWN);
 				ReadBufferReadDmxAttribute(&buf, attr, arena, &stringtable);
@@ -543,7 +543,7 @@ static_function void WriteDmxAttribute_(FileWritingBuffer *buffer, DmxAttribute 
 			{
 				if (valueType == DMX_ATTR_STRING)
 				{
-					valueType = valueType;
+					//valueType = valueType;
 				}
 				// NOTE(GameChaos): this doesn't reference the stringtable ever
 				WriteDmxAttributeValue_(buffer, (u8 *)attr->value.array + containerBytes * i, valueType, NULL);

@@ -142,11 +142,13 @@ str MyFormatV4i_(v4i a, char buf[static MY_FPRINTF_BUF_SIZE])
 
 str MyFormatStr_(str a, char unused[])
 {
+	(void)unused;
 	return a;
 }
 
 str MyFormatString_(const char * a, char unused[])
 {
+	(void)unused;
     str result = StrFromSize(a, strlen(a));
     return result;
 }

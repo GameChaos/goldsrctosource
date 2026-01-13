@@ -925,7 +925,7 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 						// NOTE(GameChaos): generate bevel planes based on polygons
 						AddBrushBevels(state, &brush, polys, polyCount, mins, maxs);
 						
-						if (brush.sides >= 4)
+						if (polyCount >= 4)
 						{
 							leaf.firstLeafBrush = state->leafBrushCount;
 							state->leafBrushes[state->leafBrushCount++] = (u16)state->brushCount;
@@ -936,7 +936,7 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 						else
 						{
 							state->brushSideCount = brush.firstSide;
-							Error("Invalid brush with <4 sides! Leaf index %i\n", gsrcLeafIndex);
+							Warning("Invalid brush with <4 sides! Leaf index %i\n", gsrcLeafIndex);
 						}
 					}
 					
@@ -951,7 +951,7 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 					if (leaf.contents & SRC_CONTENTS_WATER)
 					{
 						leaf.leafWaterDataIndex = state->leafWaterDataCount;
-						ASSERT(state->leafWaterDataCount < sizeof(state->leafWaterData));
+						ASSERT(state->leafWaterDataCount < (i64)sizeof(state->leafWaterData));
 						SrcLeafWaterData waterData = {0};
 						// TODO: bounds check!!!
 						state->leafWaterData[state->leafWaterDataCount++] = waterData;

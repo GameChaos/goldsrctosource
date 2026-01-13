@@ -49,7 +49,7 @@ static_function bool GsrcImportBsp(Arena *arena, GsrcMapData *mapData)
 		Print("%s %i\n", g_gsrcLumpNames[i], mapData->header->lump[i].offset);
 		
 		GsrcLump lump = mapData->header->lump[i];
-		if (lump.offset + lump.length > mapData->fileDataSize)
+		if (lump.offset + lump.length > (i64)mapData->fileDataSize)
 		{
 			Error("%s is out of bounds! Lump offset: %i, length: %i. BSP file size: %lli\n", g_gsrcLumpNames[i], lump.offset, lump.length, mapData->fileDataSize);
 			return result;
@@ -413,4 +413,3 @@ static_function bool GsrcExportBsp(Arena *tempArena, char *filename, GsrcMapData
 	
 	return true;
 }
-

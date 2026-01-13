@@ -136,7 +136,7 @@ static_function Pool PoolCreate(i64 maxElements, i64 chunkSize)
 	if (maxElements && chunkSize)
 	{
 		i64 bufferBytes = maxElements * chunkSize;
-		ASSERT(chunkSize > sizeof(PoolFreeNode));
+		ASSERT(chunkSize > (i64)sizeof(PoolFreeNode));
 		ASSERT(bufferBytes >= chunkSize);
 		result.buffer = (u8 *)Plat_MemReserve(bufferBytes);
 		if (result.buffer)

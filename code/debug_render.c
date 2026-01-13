@@ -181,7 +181,7 @@ static_function void DebugGfxAddBrushSide(Verts *poly, v3 normal, i32 textureInd
 static_function void DebugGfxAddBrush(i32 sideCount)
 {
 	GfxState *state = g_gfxState;
-	if (state->brushCount < ARRAYCOUNT(state->brushes))
+	if (state->brushCount < (i64)ARRAYCOUNT(state->brushes))
 	{
 		GfxBrush brush = {};
 		brush.sideCount = sideCount;
@@ -190,7 +190,7 @@ static_function void DebugGfxAddBrush(i32 sideCount)
 			brush.firstSide = (state->brushes[state->brushCount - 1].firstSide
 							   + state->brushes[state->brushCount - 1].sideCount);
 		}
-		if (brush.firstSide + brush.sideCount < ARRAYCOUNT(state->brushSides))
+		if (brush.firstSide + brush.sideCount < (i64)ARRAYCOUNT(state->brushSides))
 		{
 			state->brushes[state->brushCount++] = brush;
 		}
@@ -482,7 +482,7 @@ static_function void UpdateSpecificBrush(GfxState *state)
 		// create specific brush mesh
 		GfxBrush brush = state->brushes[state->specificBrushIndex];
 		// NOTE(GameChaos): destroy buffers
-		for (i32 i = 0; i < ARRAYCOUNT(state->specificBrushMeshes); i++)
+		for (i32 i = 0; i < (i64)ARRAYCOUNT(state->specificBrushMeshes); i++)
 		{
 			GfxMesh *mesh = &state->specificBrushMeshes[i];
 			sg_destroy_buffer(mesh->vertexBuffer);
@@ -887,7 +887,6 @@ static_function void DebugGfxFrame(void *userData)
 					state->specificBrushIndex = hitBrushInd;
 					UpdateSpecificBrush(state);
 				}
-				rayDir = rayDir;
 			}
 			else if (state->pickFace)
 			{
@@ -907,7 +906,6 @@ static_function void DebugGfxFrame(void *userData)
 					state->specificFaceIndex = hitFaceInd;
 					UpdateSpecificFace(state);
 				}
-				rayDir = rayDir;
 			}
 			state->pickFace = false;
 			state->pickBrush = false;
@@ -1041,7 +1039,7 @@ static_function void DebugGfxFrame(void *userData)
 	sg_commit();
 	
 	// NOTE(GameChaos): finish input processing
-	for (i32 i = 0; i < ARRAYCOUNT(input->buttons); i++)
+	for (i32 i = 0; i < (i64)ARRAYCOUNT(input->buttons); i++)
 	{
 		input->buttons[i].actionCount = 0;
 	}

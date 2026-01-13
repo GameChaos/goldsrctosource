@@ -48,6 +48,7 @@ static_function i64 Id(void)
 
 static_function void WriteBrush(str_builder *out, Brush brush, Texture *textures, i32 textureCount, bool vertsPlusplus/* = true*/)
 {
+	(void)textureCount;
 	StrbuilderCat(out, STR("\tsolid\n\t{\n"));
 	StrbuilderPushFormat(out, "\t\t\"id\" \"%lli\"\n", Id());
 	
@@ -722,8 +723,8 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 									break;
 								}
 							}
-							ASSERT(validTexCount < ARRAYCOUNT(validTextures));
-							if (!found && validTexCount < ARRAYCOUNT(validTextures))
+							ASSERT((i64)validTexCount < (i64)ARRAYCOUNT(validTextures));
+							if (!found && validTexCount < (i64)ARRAYCOUNT(validTextures))
 							{
 								validTextures[validTexCount] = face->texture;
 								validTextureArea[validTexCount] = intersectedArea * sideAreaInv;

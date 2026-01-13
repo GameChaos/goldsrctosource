@@ -274,7 +274,7 @@ static bool STRINGMAP_PREFIX(StringmapKeyExists)(STRINGMAP *map, const char *key
 	return result;
 }
 
-static const STRINGMAP_PAIR STRINGMAP_PREFIX(StringmapGet)(STRINGMAP *map, const char *key)
+static STRINGMAP_PAIR STRINGMAP_PREFIX(StringmapGet)(STRINGMAP *map, const char *key)
 {
 	STRINGMAP_PAIR result = {0};
 	

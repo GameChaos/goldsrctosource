@@ -216,6 +216,7 @@ static_function void EntPushProp(EntProperties *out, str key, str value)
 
 static_function ModelInfo EntConvertCommonBrush(Arena *arena, EntProperties *gsrcEnt, EntProperties *out)
 {
+	(void)arena;
 	ModelInfo result = {
 		.model = -1, .rendermode = -1
 	};

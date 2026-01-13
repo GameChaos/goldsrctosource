@@ -68,6 +68,9 @@ static_function DmxElement *VmapCreateCMapWorld(Dmx *dmx, DmxElement *mapRootEle
 
 static_function bool VmapFromGoldsrc(Arena *arena, Arena *tempArena, GsrcMapData *mapData, char *outputPath, GamePaths *paths)
 {
+	(void)tempArena;
+	(void)mapData;
+	(void)paths;
 	bool result = false;
 	
 	

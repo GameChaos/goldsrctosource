@@ -48,9 +48,11 @@ pub fn build(b: *std.Build) !void
     
     const exe = b.addExecutable(.{
         .name = "goldsrctosource",
-        .target = target,
-        .optimize = optimise,
-        .link_libc = true,
+		.root_module = b.createModule(.{
+	        .target = target,
+	        .optimize = optimise,
+	        .link_libc = true,
+		}),
 	});
 	
 	if (optimise == .Debug)
@@ -59,11 +61,13 @@ pub fn build(b: *std.Build) !void
 		const debugGraphics = true;
 		if (debugGraphics)
 		{
-			const imgui = b.addStaticLibrary(.{
+			const imgui = b.addLibrary(.{
 				.name = "imgui",
-				.target = target,
-				.optimize = .ReleaseFast,
-				.link_libc = true,
+				.root_module = b.createModule(.{
+					.target = target,
+					.optimize = .ReleaseFast,
+					.link_libc = true,
+				}),
 			});
 			
 			imgui.addCSourceFiles(.{
@@ -114,18 +118,38 @@ pub fn build(b: *std.Build) !void
 	}
 	
 	exe.linkLibC();
+	var cflags = std.ArrayList([]const u8).empty;
+	const cflagsBase = [_][]const u8{
+		"-Wall",
+		"-Wextra",
+		"-Wpedantic",
+		"-Werror",
+		"-Wshadow",
+		"-Wno-missing-braces",
+		"-Wno-unused-function",
+		"-Wno-missing-field-initializers",
+		"-std=c23",
+		"-fno-fast-math",
+		"-fmacro-backtrace-limit=0",
+		// remove in full builds
+		"-Wno-unused-variable",
+		"-Wno-unused-but-set-variable",
+	};
+	try cflags.appendSlice(b.allocator, &cflagsBase);
 	if (target.result.os.tag == .windows)
 	{
+		try cflags.append(b.allocator, "-fno-sanitize=undefined");
 		exe.addCSourceFile(.{
 			.file = b.path("code/win32_goldsrctosource.c"),
-			.flags = &.{"-fno-sanitize=undefined", "-std=c23", "-fmacro-backtrace-limit=0"},
+			.flags = cflags.items,
 		});
     }
 	else if (target.result.os.tag == .linux)
 	{
+		try cflags.append(b.allocator, "-fno-sanitize-trap=undefined");
 		exe.addCSourceFile(.{
 			.file = b.path("code/linux_goldsrctosource.c"),
-			.flags = &.{"-fno-sanitize-trap=undefined", "-fmacro-backtrace-limit=0", "-std=c23"}
+			.flags = cflags.items,
 		});
 	}
     b.installArtifact(exe);

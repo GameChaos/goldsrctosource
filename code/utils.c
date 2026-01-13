@@ -76,20 +76,20 @@ void *result = BufferPushData(buffer, &value, sizeof(type), align);\
 return result;\
 }\
 
-DEFINE_BUFFER_WRITE_TYPE(BufferPushU8, u8);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushU16, u16);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushU32, u32);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushU64, u64);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushI8, i8);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushI16, i16);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushI32, i32);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushI64, i64);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushF32, f32);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushF64, f64);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushV2, v2);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushV3, v3);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushV4, v4);
-DEFINE_BUFFER_WRITE_TYPE(BufferPushMat4, mat4);
+DEFINE_BUFFER_WRITE_TYPE(BufferPushU8, u8)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushU16, u16)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushU32, u32)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushU64, u64)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushI8, i8)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushI16, i16)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushI32, i32)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushI64, i64)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushF32, f32)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushF64, f64)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushV2, v2)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushV3, v3)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushV4, v4)
+DEFINE_BUFFER_WRITE_TYPE(BufferPushMat4, mat4)
 
 static_function bool AabbCheck(aabb b1, aabb b2) 
 { 
@@ -185,7 +185,7 @@ static_function bool ClipPolygon(Verts *poly, SrcPlane plane)
 		if (point1Behind)
 		{
 			newPoly.verts[newPoly.vertCount++] = point1;
-			ASSERT(newPoly.vertCount < ARRAYCOUNT(newPoly.verts));
+			ASSERT((i64)newPoly.vertCount < (i64)ARRAYCOUNT(newPoly.verts));
 		}
 		
 		if (newPoly.vertCount >= SRC_MAX_SIDE_VERTS)
@@ -196,12 +196,12 @@ static_function bool ClipPolygon(Verts *poly, SrcPlane plane)
 		}
 		
 		// intersect line with plane. only if the 2 points are on either side of the plane
-		if (point1Behind && !point2Behind || !point1Behind && point2Behind)
+		if ((point1Behind && !point2Behind) || (!point1Behind && point2Behind))
 		{
 			f32 frac = point1Distance / (point1Distance - point2Distance);
 			v3 newPoint = LinearInterpolate(point1, point2, frac);
 			newPoly.verts[newPoly.vertCount++] = newPoint;
-			ASSERT(newPoly.vertCount < ARRAYCOUNT(newPoly.verts));
+			ASSERT((i64)newPoly.vertCount < (i64)ARRAYCOUNT(newPoly.verts));
 		}
 		
 		if (newPoly.vertCount >= SRC_MAX_SIDE_VERTS)
@@ -292,12 +292,12 @@ static_function bool MakePolygon(SrcPlane *planes, i32 planeCount, i32 planeInde
 	v3 pointOnPlane = v3subs(plane.normal, plane.distance);
 	static_assert(SRC_MAX_SIDE_VERTS > 4, "");
 	// generate an initial polygon that's bigger than the map and is in the same direction of the plane.
-#if 0
-	out->verts[out->vertCount++] = (-tangentX + -tangentY) * spread + pointOnPlane;
-	out->verts[out->vertCount++] = (-tangentX +  tangentY) * spread + pointOnPlane;
-	out->verts[out->vertCount++] = ( tangentX +  tangentY) * spread + pointOnPlane;
-	out->verts[out->vertCount++] = ( tangentX + -tangentY) * spread + pointOnPlane;
-#endif
+#if 1
+	out->verts[out->vertCount++] = v3add(v3muls(v3add(v3negate(tangentX), v3negate(tangentY)), spread), pointOnPlane);
+	out->verts[out->vertCount++] = v3add(v3muls(v3add(v3negate(tangentX),           tangentY), spread), pointOnPlane);
+	out->verts[out->vertCount++] = v3add(v3muls(v3add(          tangentX,           tangentY), spread), pointOnPlane);
+	out->verts[out->vertCount++] = v3add(v3muls(v3add(          tangentX, v3negate(tangentY)), spread), pointOnPlane);
+#else
 	for (i32 i = 0; i < 4; i++)
 	{
 		i32 negX = -(i == 0 || i == 1);
@@ -307,7 +307,8 @@ static_function bool MakePolygon(SrcPlane *planes, i32 planeCount, i32 planeInde
 		vert = v3add(vert, pointOnPlane);
 		out->verts[out->vertCount++] = vert;
 	}
-	ASSERT(out->vertCount < ARRAYCOUNT(out->verts));
+#endif
+	ASSERT((i64)out->vertCount < (i64)ARRAYCOUNT(out->verts));
 	
 	for (i32 planeInd = 0; planeInd < planeCount; planeInd++)
 	{

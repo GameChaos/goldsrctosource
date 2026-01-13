@@ -112,6 +112,7 @@ static_function void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *ou
 	{
 		channels = 4;
 	}
+	
 	// generate mipmaps
 	// NOTE(GameChaos): mipmaps are stored smallest (1x1) to largest
 	ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
@@ -435,7 +436,7 @@ typedef struct
 static_function GsrcBspTreeIterator *GsrcBspTreeIteratorBegin(Arena *arena, GsrcMapData *mapData, i32 model)
 {
 	GsrcBspTreeIterator *result = ArenaAlloc(arena, sizeof(*result));
-	for (i32 i = 0; i < ARRAYCOUNT(result->parents); i++)
+	for (i32 i = 0; i < (i64)ARRAYCOUNT(result->parents); i++)
 	{
 		result->parents[i] = I32_MIN;
 	}
@@ -530,7 +531,7 @@ static_function SrcLeaf MakeSrcLeaf(GsrcMapData *mapData, GsrcLeaf gsrcLeaf, boo
 	return result;
 }
 
-static_function i32 GetLeafClipPlanes(GsrcMapData *mapData, SrcPlane bboxPlanes[6], i32 *leafParents, i32 gsrcNodeIndex, i32 child, i32 maxPlanes, SrcPlane *outPlanes)
+static_function i32 GetLeafClipPlanes(GsrcMapData *mapData, const SrcPlane bboxPlanes[static 6], i32 *leafParents, i32 gsrcNodeIndex, i32 child, i32 maxPlanes, SrcPlane *outPlanes)
 {
 	i32 result = 0; // NOTE(GameChaos): plane count
 	// NOTE(GameChaos): make a list of clip planes to cut with
@@ -631,6 +632,7 @@ static_function bool GsrcGetSkyTexture(Arena *tempArena,
 							   char *valvePath,
 							   SkySide side)
 {
+	(void)tempArena;
 	bool result = false;
 	
 	char *basePaths[2] = {
@@ -648,7 +650,7 @@ static_function bool GsrcGetSkyTexture(Arena *tempArena,
 	v2i textureSize = {};
 	u8 *texture = stbi_load(skyfacePath, &textureSize.x, &textureSize.y, NULL, 3);
 	if (texture
-		&& textureSize.x <= U16_MAX && textureSize.y <= U16_MAX
+		&& textureSize.x <= (i32)U16_MAX && textureSize.y <= (i32)U16_MAX
 		&& textureSize.x > 0 && textureSize.y > 0)
 	{
 		VtfHeader vtfHeader = VtfDefaultHeader();

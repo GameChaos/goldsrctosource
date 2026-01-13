@@ -33,7 +33,7 @@ static_function bool WriteEntireFile(const char *filename, const void *memory, i
 	FILE *file = fopen(filename, "wb");
 	if (file)
 	{
-		if (fwrite(memory, 1, bytes, file) == bytes)
+		if ((i64)fwrite(memory, 1, bytes, file) == bytes)
 		{
 			result = true;
 		}
