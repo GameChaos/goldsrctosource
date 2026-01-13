@@ -576,7 +576,16 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 		{
 			face.styles[j] = mapData->lumpFaces[i].styles[j];
 		}
-		face.lightOffset = mapData->lumpFaces[i].lightmapOffset / 3 * 4;
+		if (mapData->lumpFaces[i].lightmapOffset % 3 == 0
+			&& mapData->lumpFaces[i].lightmapOffset >= 0)
+		{
+			face.lightOffset = mapData->lumpFaces[i].lightmapOffset / 3 * 4;
+		}
+		else
+		{
+			face.lightOffset = 0;
+		}
+		ASSERT(face.lightOffset >= 0);
 		face.area = 420.69f; // TODO: calculate area
 		face.origFace = i;
 		

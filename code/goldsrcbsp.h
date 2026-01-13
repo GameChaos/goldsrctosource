@@ -130,7 +130,7 @@ typedef struct
 	u16 edges;          // Number of consecutive surfedges
 	u16 texInfoIndex;   // Index of the texture info structure
 	u8 styles[4];       // Specify lighting styles
-	u32 lightmapOffset; // Byte offset into the raw lightmap data
+	i32 lightmapOffset; // Byte offset into the raw lightmap data
 } GsrcFace;
 
 typedef struct
