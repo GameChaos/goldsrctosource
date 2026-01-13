@@ -861,5 +861,6 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 		PrintString("VMF export finished!\n");
 	}
 	ArenaEndTemp(arenaTemp);
+	result = true;
 	return result;
 }

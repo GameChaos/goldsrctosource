@@ -390,6 +390,7 @@ static_function void BSPMain(i32 argCount, char *arguments[])
 		SrcMapData srcMapData = {};
 		if (cmdArgs.outputbsp.isInCmdLine)
 		{
+			ArenaTemp arenaTmp = ArenaBeginTemp(&arena);
 			if (BspFromGoldsource(&arena, &tempArena, &mapData, &srcMapData, CMDARG_GET_STRING(cmdArgs.outputbsp),
 								  paths->mod, paths->valve))
 			{		
@@ -409,6 +410,7 @@ static_function void BSPMain(i32 argCount, char *arguments[])
 						  secondPart);
 				}
 			}
+			ArenaEndTemp(arenaTmp);
 		}
 		if (cmdArgs.outputvmf.isInCmdLine)
 		{

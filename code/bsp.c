@@ -288,7 +288,6 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 		return result;
 	}
 	
-	ArenaTemp arenaTemp = ArenaBeginTemp(arena);
 	BspState *state = &g_bspConversionState;
 	Plat_MemSetToZero(state, sizeof(*state));
 	
@@ -1048,6 +1047,5 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 	// save bsp
 	result = WriteEntireFile(outputPath, buffer.memory, BufferGetSize(buffer));
 	
-	ArenaEndTemp(arenaTemp);
 	return result;
 }
