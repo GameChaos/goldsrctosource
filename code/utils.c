@@ -321,7 +321,16 @@ static_function bool MakePolygon(SrcPlane *planes, i32 planeCount, i32 planeInde
 	// NOTE(GameChaos): remove duplicate vertices
 	for (i32 ind1 = 0; ind1 < out->vertCount; ind1++)
 	{
+		i32 ind2 = (ind1 + 1) % out->vertCount;
 		v3 vert1 = out->verts[ind1];
+		v3 vert2 = out->verts[ind2];
+		for (i32 v = ind2; v < out->vertCount - 1; v++)
+		{
+			out->verts[v] = out->verts[v + 1];
+		}
+		out->vertCount--;
+#if 0
+		// this removes all duplicate vertices whether they're connected or not
 		for (i32 ind2 = 0; ind2 < out->vertCount; ind2++)
 		{
 			v3 vert2 = out->verts[ind2];
@@ -336,6 +345,7 @@ static_function bool MakePolygon(SrcPlane *planes, i32 planeCount, i32 planeInde
 				ind2--;
 			}
 		}
+#endif
 	}
 	
 	result = out->vertCount >= 3;

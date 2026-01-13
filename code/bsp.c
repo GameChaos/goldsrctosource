@@ -154,7 +154,6 @@ static_function bool AddBrushBevels(BspState *state, SrcBrush *brush, Verts *pol
 		result = true;
 		return result; // pure axial
 	}
-#if 1
 	else
 	{
 #ifdef GC_DEBUG
@@ -271,7 +270,6 @@ static_function bool AddBrushBevels(BspState *state, SrcBrush *brush, Verts *pol
 			}
 		}
 	}
-#endif
 	
 	return result;
 }
@@ -851,14 +849,14 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 						
 						for (i32 planeInd = 0; planeInd < clipPlaneCount; planeInd++)
 						{
+							if (polyCount > SRC_MAX_BRUSH_SIDES)
+							{
+								FatalError("Exceeded maximum amount of sides on brush! (128)");
+							}
 							polys[polyCount].vertCount = 0;
 							if (MakePolygon(planes, clipPlaneCount, planeInd, &polys[polyCount]))
 							{
 								SrcBrushSide side = {};
-								if (polyCount > SRC_MAX_BRUSH_SIDES)
-								{
-									FatalError("Exceeded maximum amount of sides on brush! (128)");
-								}
 								ASSERT(state->planeCount < SRC_MAX_MAP_PLANES);
 								side.plane = (u16)AddPlane(state->planes, &state->planeCount, planes[planeInd]);
 								AddBrushSide(state->brushSides, &state->brushSideCount, side);
