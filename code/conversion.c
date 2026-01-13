@@ -75,7 +75,7 @@ static_function VtfHeader VtfDefaultHeader(void)
 	return result;
 }
 
-static_function void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *out, GsrcMipTexture mipTexture, u8 *mipTextureData)
+static_function void GsrcMipTextureToVtf(Arena *tempArena, FileWritingBuffer *out, Wad3TextureHeader mipTexture, u8 *mipTextureData)
 {
 	bool result = false;
 	

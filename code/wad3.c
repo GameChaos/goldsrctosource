@@ -25,7 +25,9 @@ static_function Wad3 Wad3FromBuffer(Arena *arena, u8 *data, u64 bytes, char *pat
 					}
 					if (result.entries[i].offset + sizeof(Wad3TextureHeader) < bytes)
 					{
-						result.textures[result.textureCount++] = (Wad3TextureHeader *)&data[result.entries[i].offset];
+						Mem_Copy(&data[result.entries[i].offset], &result.textures[result.textureCount].header, sizeof(*result.textures));
+						result.textures[result.textureCount].textureData = &data[result.entries[i].offset];
+						result.textureCount++;
 					}
 					else
 					{
@@ -79,7 +81,7 @@ static_function u32 Wad3FindTexture(Wad3 wad, char *name, i32 nameStrlen)
 	{
 		for (u32 i = 0; i < wad.textureCount; i++)
 		{
-			Wad3TextureHeader *textureHeader = wad.textures[i];
+			Wad3TextureHeader *textureHeader = &wad.textures[i].header;
 			// TODO: does this need to be case sensitive?
 			if (StringEquals(name, textureHeader->name, false))
 			{

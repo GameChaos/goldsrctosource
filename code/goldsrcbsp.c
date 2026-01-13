@@ -71,7 +71,7 @@ static_function bool GsrcImportBsp(Arena *arena, GsrcMapData *mapData)
 	// offsets. this is located 4 bytes after the start of the textures lump.
 	mapData->lumpTextures.mipTextureOffsets = ((i32 *)mapData->lumpTextureMemory) + 1;
 	
-	mapData->lumpTextures.mipTextures = ArenaAlloc(arena, mapData->lumpTextures.mipTextureCount * sizeof(GsrcMipTexture *));
+	mapData->lumpTextures.mipTextures = ArenaAlloc(arena, mapData->lumpTextures.mipTextureCount * sizeof(Wad3TextureHeader *));
 	
 	ASSERT(mapData->lumpTextures.mipTextures);
 	if (mapData->lumpTextures.mipTextures == NULL)
@@ -90,7 +90,7 @@ static_function bool GsrcImportBsp(Arena *arena, GsrcMapData *mapData)
 					  mapData->lumpTextures.mipTextureOffsets[i], i);
 				return result;
 			}
-			mapData->lumpTextures.mipTextures[i] = (GsrcMipTexture *)((u8 *)mapData->lumpTextureMemory + mapData->lumpTextures.mipTextureOffsets[i]);
+			mapData->lumpTextures.mipTextures[i] = (Wad3TextureHeader *)((u8 *)mapData->lumpTextureMemory + mapData->lumpTextures.mipTextureOffsets[i]);
 		}
 	}
 	

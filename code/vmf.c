@@ -284,18 +284,18 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 			{
 				continue;
 			}
-			GsrcMipTexture mipTexture = *mapData->lumpTextures.mipTextures[i];
+			Wad3TextureHeader mipTexture = *mapData->lumpTextures.mipTextures[i];
 			u8 *textureData = (u8 *)mapData->lumpTextures.mipTextures[i];
 			// NOTE(GameChaos): wad3 texture header and bsp miptexture structs are
 			// the exact same and they point to the exact same data as well!
-			static_assert(sizeof(Wad3TextureHeader) == sizeof(GsrcMipTexture), "");
+			static_assert(sizeof(Wad3TextureHeader) == sizeof(Wad3TextureHeader), "");
 			if (mipTexture.offsets[0] <= 0)
 			{
 				FindTextureResult find = FindTextureInWads(wads, wadCount, mipTexture.name);
 				if (find.found)
 				{
-					mipTexture = *(GsrcMipTexture *)wads[find.wadIndex].textures[find.textureIndex];
-					textureData = (u8 *)wads[find.wadIndex].textures[find.textureIndex];
+					mipTexture = wads[find.wadIndex].textures[find.textureIndex].header;
+					textureData = (u8 *)wads[find.wadIndex].textures[find.textureIndex].textureData;
 				}
 				else
 				{

@@ -54,7 +54,7 @@ static_function void DebugGfxAddTexture(u8 *data, i32 width, i32 height, bool rg
 	}
 }
 
-static_function void DebugGfxAddMiptexture(Arena *tempArena, GsrcMipTexture mipTexture, u8 *textureData)
+static_function void DebugGfxAddMiptexture(Arena *tempArena, Wad3TextureHeader mipTexture, u8 *textureData)
 {
 	ArenaTemp arenaTmp = ArenaBeginTemp(tempArena);
 	u8 *tempImgDataRgb888 = ArenaAlloc(tempArena, mipTexture.width * mipTexture.height * 3);

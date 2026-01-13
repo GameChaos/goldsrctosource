@@ -8,6 +8,8 @@
 enum
 {
 	WAD3_IMAGE_TYPE_TEXTURE = 0x43,
+	WAD3_MAXTEXTURENAMELEN = 16,
+	WAD3_MIPLEVELS = 4,
 };
 
 typedef struct
@@ -28,13 +30,19 @@ typedef struct
 	char name[16];
 } Wad3DirEntry;
 
-typedef struct
+typedef struct Wad3TextureHeader
 {
-	char name[16];
+	char name[WAD3_MAXTEXTURENAMELEN];
 	u32 width;
 	u32 height;
-	u32 offsets[4];
+	u32 offsets[WAD3_MIPLEVELS];
 } Wad3TextureHeader;
+
+typedef struct Wad3Texture
+{
+	Wad3TextureHeader header;
+	void *textureData;
+} Wad3Texture;
 
 typedef struct
 {
@@ -42,7 +50,7 @@ typedef struct
 	u32 entryCount;
 	Wad3DirEntry *entries;
 	u32 textureCount;
-	Wad3TextureHeader **textures;
+	Wad3Texture *textures;
 	u8 *fileData;
 } Wad3;
 

@@ -85,12 +85,6 @@ enum
 	GSRC_CONTENTS_TRANSLUCENT  = -15,
 };
 
-enum
-{
-	GSRC_MAXTEXTURENAME = 16,
-	GSRC_MIPLEVELS = 4,
-};
-
 typedef struct
 {
 	v3 normal;
@@ -98,13 +92,7 @@ typedef struct
 	i32 type;
 } GsrcPlane;
 
-typedef struct
-{
-	char name[GSRC_MAXTEXTURENAME]; // Name of texture
-	u32 width;
-	u32 height;
-	u32 offsets[GSRC_MIPLEVELS]; // Offsets to texture mipmaps MipTexture;
-} GsrcMipTexture;
+typedef struct Wad3TextureHeader Wad3TextureHeader;
 
 typedef struct
 {
@@ -113,7 +101,7 @@ typedef struct
 	i32 *mipTextureOffsets; // array of MipTexture offsets
 	
 	// data
-	GsrcMipTexture **mipTextures;  // array of pointers to pointers of MipTextures
+	Wad3TextureHeader **mipTextures;  // array of pointers to pointers of MipTextures
 } GsrcLumpTextures;
 
 typedef struct
