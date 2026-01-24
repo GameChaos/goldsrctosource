@@ -324,13 +324,16 @@ static_function bool MakePolygon(SrcPlane *planes, i32 planeCount, i32 planeInde
 		i32 ind2 = (ind1 + 1) % out->vertCount;
 		v3 vert1 = out->verts[ind1];
 		v3 vert2 = out->verts[ind2];
-		for (i32 v = ind2; v < out->vertCount - 1; v++)
+		if (v3equals(vert1, vert2))
 		{
-			out->verts[v] = out->verts[v + 1];
+			for (i32 v = ind2; v < out->vertCount - 1; v++)
+			{
+				out->verts[v] = out->verts[v + 1];
+			}
+			out->vertCount--;
 		}
-		out->vertCount--;
 #if 0
-		// this removes all duplicate vertices whether they're connected or not
+		// this removes all duplicate vertices whether they're connected or not, BAD!
 		for (i32 ind2 = 0; ind2 < out->vertCount; ind2++)
 		{
 			v3 vert2 = out->verts[ind2];
