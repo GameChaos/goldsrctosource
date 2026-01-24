@@ -363,7 +363,7 @@ static_function bool MakePolygon(SrcPlane *planes, i32 planeCount, i32 planeInde
 	return result;
 }
 
-static_function i32 Add_(u8 *array, i32 *count, void *data, i32 elementSize, i32 maxElements, const char *arrayName)
+static_function i32 AppendDeduplicated_(u8 *array, i32 *count, void *data, i32 elementSize, i32 maxElements, const char *arrayName)
 {
 	i32 result = 0;
 	if (*count < maxElements)
@@ -389,7 +389,7 @@ static_function i32 Add_(u8 *array, i32 *count, void *data, i32 elementSize, i32
 	return result;
 }
 
-static_function i32 AddSimple_(u8 *array, i32 *count, void *data, i32 elementSize, i32 maxElements, const char *arrayName)
+static_function i32 Append_(u8 *array, i32 *count, void *data, i32 elementSize, i32 maxElements, const char *arrayName)
 {
 	i32 result = 0;
 	if (*count < maxElements)
@@ -407,9 +407,9 @@ static_function i32 AddSimple_(u8 *array, i32 *count, void *data, i32 elementSiz
 	return result;
 }
 
-#define AddLeaf(array, count, data) AddSimple_((u8 *)(array), (count), &(data), sizeof(data), SRC_MAX_MAP_LEAFS, "leaves")
-#define AddBrushSide(array, count, data) AddSimple_((u8 *)(array), (count), &(data), sizeof(data), SRC_MAX_MAP_BRUSHSIDES, "brush sides")
-#define AddPlane(array, count, data) Add_((u8 *)(array), (count), &(data), sizeof(data), SRC_MAX_MAP_PLANES, "planes")
+#define AddLeaf(array, count, data) Append_((u8 *)(array), (count), &(data), sizeof(data), SRC_MAX_MAP_LEAFS, "leaves")
+#define AddBrushSide(array, count, data) Append_((u8 *)(array), (count), &(data), sizeof(data), SRC_MAX_MAP_BRUSHSIDES, "brush sides")
+#define AddPlane(array, count, data) AppendDeduplicated_((u8 *)(array), (count), &(data), sizeof(data), SRC_MAX_MAP_PLANES, "planes")
 
 static_function bool IsWhiteSpace(char c)
 {
