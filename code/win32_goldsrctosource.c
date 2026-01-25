@@ -13,7 +13,9 @@
 typedef wchar_t wchar;
 
 static_global SYSTEM_INFO g_systemInfo = {0};
-static_global wchar g_wcharBuffer[2048];
+static_global char g_charBuffer[2048];
+static_global wchar g_wcharBuffer1[2048];
+static_global wchar g_wcharBuffer2[2048];
 
 static_function i32 Win32Utf8ToUtf16(const char *utf8, wchar *utf16, i32 utf16Chars)
 {
@@ -71,6 +73,17 @@ static_function void Win32FixInconsistentSlashes(char *path)
 	}
 }
 
+static_function void Win32FixInconsistentSlashesW(wchar *path)
+{
+	for (wchar *c = path; *c != 0; c++)
+	{
+		if (*c == L'/')
+		{
+			*c = L'\\';
+		}
+	}
+}
+
 static_function wchar *Win32GetFileExtension(wchar *file)
 {
 	wchar *result = NULL;
@@ -118,10 +131,10 @@ static_function i32 GetDirectoryFiles(const char *path, FileInfo *out, i32 maxFi
 	Format(wildcardPath, sizeof(wildcardPath), "%s", path);
 	AppendToPath(wildcardPath, sizeof(wildcardPath), "*");
 	
-	Win32Utf8ToUtf16(wildcardPath, g_wcharBuffer, ARRAYCOUNT(g_wcharBuffer));
+	Win32Utf8ToUtf16(wildcardPath, g_wcharBuffer1, ARRAYCOUNT(g_wcharBuffer1));
 	Win32Utf8ToUtf16(fileExtFilter, fileExtFilterW, ARRAYCOUNT(fileExtFilterW));
 	
-	HANDLE findFile = FindFirstFile(g_wcharBuffer, &findFileData);
+	HANDLE findFile = FindFirstFile(g_wcharBuffer1, &findFileData);
 	
 	i32 result = 0;
 	if (findFile != INVALID_HANDLE_VALUE)
@@ -157,6 +170,42 @@ static_function i32 GetDirectoryFiles(const char *path, FileInfo *out, i32 maxFi
 		}
 	}
 	FindClose(findFile);
+	return result;
+}
+
+// https://stackoverflow.com/a/16719260
+static_function bool Plat_MakeDirectories(char *path)
+{
+	ASSERT(!"This needs to be tested before being used");
+	bool result = true;
+	Format(g_charBuffer, sizeof(g_charBuffer), "%s", path);
+	Win32FixInconsistentSlashes(g_charBuffer);
+	
+	Win32Utf8ToUtf16(g_charBuffer, g_wcharBuffer1, ARRAYCOUNT(g_wcharBuffer1));
+	wchar *wpath = g_wcharBuffer1;
+	
+	wchar *folder = g_wcharBuffer2;
+	*folder = L'\0';
+	wchar *end;
+	
+	end = wcschr(wpath, L'\\');
+	
+	while (end)
+	{
+		wcsncpy(folder, wpath, end - wpath + 1);
+		if (!CreateDirectory(folder, NULL))
+		{
+			DWORD err = GetLastError();
+			
+			if (err != ERROR_ALREADY_EXISTS)
+			{
+				result = false;
+				break;
+			}
+		}
+		end = wcschr(++end, L'\\');
+	}
+	
 	return result;
 }
 

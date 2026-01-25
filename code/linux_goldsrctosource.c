@@ -6,11 +6,13 @@
 #include "cstdlib_goldsrctosource.c"
 
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
 #include <strings.h>
+#include <errno.h>
 
 static_global char g_charBuffer[2048];
 
@@ -95,6 +97,28 @@ static_function i32 GetDirectoryFiles(const char *path, FileInfo *out, i32 maxFi
 	return count;
 }
 
+// https://stackoverflow.com/a/70358229
+static_function bool Plat_MakeDirectories(char *path)
+{
+	char *nextSeparator = strchr(path, '/');
+	bool result = true;
+	while (nextSeparator != NULL)
+	{
+		i32 dirPathLen = (i32)(nextSeparator - path);
+		Format(g_charBuffer, sizeof(g_charBuffer), "%.*s", dirPathLen, path);
+		if (mkdir(g_charBuffer, S_IRWXU | S_IRWXG | S_IROTH) == -1)
+		{
+			if (errno != EEXIST)
+			{
+				result = false;
+				break;
+			}
+		}
+		nextSeparator = strchr(nextSeparator + 1, '/');
+	}
+	
+	return result;
+}
 
 static_function void *Plat_MemReserve(i64 bytes)
 {
