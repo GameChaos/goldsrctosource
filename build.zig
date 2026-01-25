@@ -44,7 +44,7 @@ pub fn build(b: *std.Build) !void
 	
     const optimise = b.standardOptimizeOption(.{});
     
-	_ = try b.default_step.addDirectoryWatchInput(.{.cwd_relative = "code/*"});
+	_ = try b.default_step.addDirectoryWatchInput(b.path("code/"));
     
     const exe = b.addExecutable(.{
         .name = "goldsrctosource",
