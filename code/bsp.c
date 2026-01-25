@@ -377,7 +377,7 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 				ZipBuilderAddFile(&zipBuilder, vtfFileName, vtfFileNameLen, texBuffer.memory, texBuffer.usedBytes);
 				
 				char texturePath[128];
-				Format(texturePath, sizeof(texturePath), "skybox/%.*s%s",
+				Format(texturePath, sizeof(texturePath), "materials/skybox/%.*s%s",
 					   (i32)skyname->value.length, skyname->value.data, g_skySides[side]);
 				
 				char vmt[512];
