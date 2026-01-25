@@ -74,7 +74,7 @@ static_function inline void *BufferPushDataAndSetLumpSize(FileWritingBuffer *buf
 	return result;
 }
 
-// NOTE(GameChaos): https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/q3map/map.c#L125
+// NOTE(GameChaos): https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/q3map/map.c#L370
 static_function bool AddBrushBevels(BspState *state, SrcBrush *brush, Verts *polys, i32 polyCount, v3 mins, v3 maxs)
 {
 	bool result = false;
@@ -92,6 +92,7 @@ static_function bool AddBrushBevels(BspState *state, SrcBrush *brush, Verts *pol
 			i32 sideInd;
 			for (sideInd = 0; sideInd < brush->sides; sideInd++)
 			{
+				// NOTE(GameChaos): if any component of a normal vector is 1/-1, then it's axis aligned
 				if (state->planes[brushSides[sideInd].plane].normal.e[axis] == dir)
 				{
 					break;
@@ -217,6 +218,22 @@ static_function bool AddBrushBevels(BspState *state, SrcBrush *brush, Verts *pol
 						normal = v3muls(normal, 1.0f / normalLength);
 						f32 dist = v3dot(poly->verts[j], normal);
 						
+						// reject axis aligned planes
+						// TODO: check if it does any harm
+						bool axisAligned = false;
+						for (i32 axis2 = 0; axis2 < 3; axis2++)
+						{
+							// NOTE(GameChaos): if any component of a normal vector is 1/-1, then it's axis aligned
+							if (GCM_ABS(normal.e[axis2]) == 1)
+							{
+								axisAligned = true;
+								break;
+							}
+						}
+						if (axisAligned)
+						{
+							continue;
+						}
 						// if all the points on all the sides are
 						// behind this plane, it is a proper edge bevel
 						for (k = 0; k < brush->sides && k < polyCount; k++)
