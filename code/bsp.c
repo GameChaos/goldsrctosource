@@ -376,15 +376,16 @@ static_function bool BspFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 											(i32)skyname->value.length, skyname->value.data, g_skySides[side]);
 				ZipBuilderAddFile(&zipBuilder, vtfFileName, vtfFileNameLen, texBuffer.memory, texBuffer.usedBytes);
 				
+				// don't put "materials/" in vmt basetexture path
 				char texturePath[128];
-				Format(texturePath, sizeof(texturePath), "materials/skybox/%.*s%s",
+				Format(texturePath, sizeof(texturePath), "skybox/%.*s%s",
 					   (i32)skyname->value.length, skyname->value.data, g_skySides[side]);
 				
 				char vmt[512];
 				i32 vmtFileLength = MakeSkyTextureVmt(vmt, sizeof(vmt), texturePath);
 				
 				char vmtFileName[128];
-				i32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), "%s.vmt", texturePath);
+				i32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), "materials/%s.vmt", texturePath);
 				ZipBuilderAddFile(&zipBuilder, vmtFileName, vmtFileNameLen, vmt, vmtFileLength);
 			}
 			else
