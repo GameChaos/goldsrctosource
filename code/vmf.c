@@ -312,11 +312,10 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 			DebugGfxAddMiptexture(tempArena, mipTexture, textureData);
 #endif
 			
+			// TODO: write into subdirectories of wad file names
 			char pathBuffer[512];
-			Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
-			char vtfFileName[64];
-			Format(vtfFileName, sizeof(vtfFileName), CONVERTED_MATERIAL_PATH "%s.vtf", mipTexture.name);
-			AppendToPath(pathBuffer, sizeof(pathBuffer), vtfFileName);
+			Format(pathBuffer, sizeof(pathBuffer), "%s/" CONVERTED_MATERIAL_PATH "%s.vtf",
+				   assetPath, mipTexture.name);
 			WriteEntireFile(pathBuffer, texBuffer.memory, texBuffer.usedBytes);
 			
 			char vmt[512];
@@ -324,10 +323,8 @@ static_function bool VmfFromGoldsource(Arena *arena, Arena *tempArena, GsrcMapDa
 			bool transparent = mipTexture.name[0] == '{';
 			i32 vmtFileLength = MakeVmt(vmt, sizeof(vmt), mipTexture.name, transparent);
 			
-			Format(pathBuffer, sizeof(pathBuffer), "%s", assetPath);
-			char vmtFileName[64];
-			i32 vmtFileNameLen = Format(vmtFileName, sizeof(vmtFileName), CONVERTED_MATERIAL_PATH "%s.vmt", mipTexture.name);
-			AppendToPath(pathBuffer, sizeof(pathBuffer), vmtFileName);
+			Format(pathBuffer, sizeof(pathBuffer), "%s/" CONVERTED_MATERIAL_PATH "%s.vmt",
+				   assetPath, mipTexture.name);
 			WriteEntireFile(pathBuffer, vmt, vmtFileLength);
 		}
 	}

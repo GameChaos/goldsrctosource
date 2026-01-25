@@ -107,6 +107,19 @@ static_function wchar *Win32GetFileExtension(wchar *file)
 	return result;
 }
 
+static_function wchar *Win32CanonicalisePath(const char *path, wchar *buf, size_t bufLen, wchar *tempBuf, size_t tempBufLen)
+{
+	Format(g_charBuffer, sizeof(g_charBuffer), "%s", path);
+	Win32FixInconsistentSlashes(g_charBuffer);
+	
+	wchar *result = NULL;
+	Win32Utf8ToUtf16(g_charBuffer, tempBuf, tempBufLen);
+	GetFullPathNameW(tempBuf, bufLen, buf, &result);
+	
+	// returns file part
+	return result;
+}
+
 static_function void AppendToPath(char *path, i64 pathLength, const char *file)
 {
 	size_t pathStrLen = strlen(path);
@@ -178,10 +191,12 @@ static_function bool Plat_MakeDirectories(char *path)
 {
 	ASSERT(!"This needs to be tested before being used");
 	bool result = true;
-	Format(g_charBuffer, sizeof(g_charBuffer), "%s", path);
-	Win32FixInconsistentSlashes(g_charBuffer);
-	
-	Win32Utf8ToUtf16(g_charBuffer, g_wcharBuffer1, ARRAYCOUNT(g_wcharBuffer1));
+	wchar *filepart = Win32CanonicalisePath(path, g_wcharBuffer1, ARRAYCOUNT(g_wcharBuffer1), g_wcharBuffer2, ARRAYCOUNT(g_wcharBuffer2));
+	if (filepart)
+	{
+		// no file. only path.
+		*filepart = L'\0';
+	}
 	wchar *wpath = g_wcharBuffer1;
 	
 	wchar *folder = g_wcharBuffer2;
@@ -207,6 +222,14 @@ static_function bool Plat_MakeDirectories(char *path)
 	}
 	
 	return result;
+}
+
+static_function bool Plat_FileExists(char *path)
+{
+	Win32CanonicalisePath(path, g_wcharBuffer1, ARRAYCOUNT(g_wcharBuffer1), g_wcharBuffer2, ARRAYCOUNT(g_wcharBuffer2));
+	DWORD attributes = GetFileAttributes(g_wcharBuffer1);
+	
+	return (attributes != INVALID_FILE_ATTRIBUTES);
 }
 
 static_function void *Plat_MemReserve(i64 bytes)

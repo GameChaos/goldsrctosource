@@ -120,6 +120,13 @@ static_function bool Plat_MakeDirectories(char *path)
 	return result;
 }
 
+static_function bool Plat_FileExists(char *path)
+{
+	struct stat sb;
+	bool result = stat(path, &sb) == 0;
+	return result;
+}
+
 static_function void *Plat_MemReserve(i64 bytes)
 {
 	void *result = mmap(NULL, bytes, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);

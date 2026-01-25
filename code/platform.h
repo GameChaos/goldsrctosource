@@ -20,6 +20,7 @@ static_function bool WriteEntireFile(const char *filename, const void *memory, i
 static_function void AppendToPath(char *path, i64 pathLength, const char *file);
 static_function i32 GetDirectoryFiles(const char *path, FileInfo *out, i32 maxFileCount, const char *fileExtFilter);
 static_function bool Plat_MakeDirectories(char *path);
+static_function bool Plat_FileExists(char *path);
 
 static_function void *Plat_MemReserve(i64 bytes);
 static_function void Plat_MemCommit(void *address, i64 bytes);

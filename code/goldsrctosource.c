@@ -410,6 +410,13 @@ static_function void BSPMain(i32 argCount, char *arguments[])
 		}
 		if (cmdArgs.outputvmf.isInCmdLine)
 		{
+			if (*paths->assets)
+			{
+				char pathBuffer[512];
+				// TODO: configurable material folder name
+				Format(pathBuffer, sizeof(pathBuffer), "%s/" CONVERTED_MATERIAL_PATH, paths->assets);
+				Plat_MakeDirectories(pathBuffer);
+			}
 			VmfFromGoldsource(&arena, &tempArena, &mapData, CMDARG_GET_STRING(cmdArgs.outputvmf),
 							  paths->mod, paths->valve, paths->assets);
 		}
