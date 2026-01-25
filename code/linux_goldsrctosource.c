@@ -98,6 +98,7 @@ static_function i32 GetDirectoryFiles(const char *path, FileInfo *out, i32 maxFi
 }
 
 // https://stackoverflow.com/a/70358229
+// TODO: fails to create last directory if there's no forward slash at the end
 static_function bool Plat_MakeDirectories(char *path)
 {
 	char *nextSeparator = strchr(path, '/');

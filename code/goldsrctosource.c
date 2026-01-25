@@ -414,7 +414,12 @@ static_function void BSPMain(i32 argCount, char *arguments[])
 			{
 				char pathBuffer[512];
 				// TODO: configurable material folder name
-				Format(pathBuffer, sizeof(pathBuffer), "%s/" CONVERTED_MATERIAL_PATH, paths->assets);
+				Format(pathBuffer, sizeof(pathBuffer), "%s", paths->assets);
+				AppendToPath(pathBuffer, sizeof(pathBuffer), CONVERTED_MATERIAL_PATH);
+				Plat_MakeDirectories(pathBuffer);
+				
+				Format(pathBuffer, sizeof(pathBuffer), "%s", paths->assets);
+				AppendToPath(pathBuffer, sizeof(pathBuffer), "materials/skybox/");
 				Plat_MakeDirectories(pathBuffer);
 			}
 			VmfFromGoldsource(&arena, &tempArena, &mapData, CMDARG_GET_STRING(cmdArgs.outputvmf),
