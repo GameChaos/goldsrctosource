@@ -123,7 +123,7 @@ static_function i32 GetDirectoryFiles(const char *path, FileInfo *out, i32 maxFi
 	
 	HANDLE findFile = FindFirstFile(g_wcharBuffer, &findFileData);
 	
-	u32 result = 0;
+	i32 result = 0;
 	if (findFile != INVALID_HANDLE_VALUE)
 	{
 		// NOTE: skip "." and ".." entries

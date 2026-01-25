@@ -110,6 +110,10 @@ pub fn build(b: *std.Build) !void
 				exe.linkSystemLibrary("gl");
 				exe.linkSystemLibrary("rt");
 			}
+			
+			exe.addCSourceFile(.{
+				.file = b.path("code/sokol_quarantine.c"),
+			});
 		}
 		if (target.result.os.tag == .linux)
 		{
@@ -131,14 +135,19 @@ pub fn build(b: *std.Build) !void
 		"-std=c23",
 		"-fno-fast-math",
 		"-fmacro-backtrace-limit=0",
-		// remove in full builds
+		// occasionally enable these to catch unused stuff
 		"-Wno-unused-variable",
 		"-Wno-unused-but-set-variable",
 	};
 	try cflags.appendSlice(b.allocator, &cflagsBase);
+	
+	if (optimise != .Debug)
+	{
+		try cflags.append(b.allocator, "-Wno-unused-parameter");
+	}
+	
 	if (target.result.os.tag == .windows)
 	{
-		try cflags.append(b.allocator, "-fno-sanitize=undefined");
 		exe.addCSourceFile(.{
 			.file = b.path("code/win32_goldsrctosource.c"),
 			.flags = cflags.items,
@@ -146,7 +155,6 @@ pub fn build(b: *std.Build) !void
     }
 	else if (target.result.os.tag == .linux)
 	{
-		try cflags.append(b.allocator, "-fno-sanitize-trap=undefined");
 		exe.addCSourceFile(.{
 			.file = b.path("code/linux_goldsrctosource.c"),
 			.flags = cflags.items,
