@@ -1,5 +1,11 @@
 /* date = October 12th 2022 3:31 pm */
 
+/*
+Update notes:
+2025-12-06:
+foreign type improvements: GCM_FOREIGN_TO_*
+add v3orthogonal
+*/
 #ifndef GC_MATHS_H
 #define GC_MATHS_H
 
@@ -19,8 +25,42 @@
 
 #define GCM_MIN(a, b) ((a) > (b) ? (b) : (a))
 #define GCM_MAX(a, b) ((a) < (b) ? (b) : (a))
+#define GCM_MIN3(a, b, c) (GCM_MIN(a, GCM_MIN(b, c)))
+#define GCM_MAX3(a, b, c) (GCM_MAX(a, GCM_MAX(b, c)))
 #define GCM_ABS(value) ((value) < 0 ? -(value) : (value))
 #define GCM_CLAMP(min, val, max) (GCM_MAX(GCM_MIN(val, max), min))
+
+#ifdef GCM_FOREIGN_V2I_TYPE
+#define GCM_FOREIGN_TO_V2I(v) ((v2i){.foreign = v})
+#endif
+
+#ifdef GCM_FOREIGN_V3I_TYPE
+#define GCM_FOREIGN_TO_V3I(v) ((v3i){.foreign = v})
+#endif
+
+#ifdef GCM_FOREIGN_V4I_TYPE
+#define GCM_FOREIGN_TO_V4I(v) ((v3i){.foreign = v})
+#endif
+
+#ifdef GCM_FOREIGN_V2_TYPE
+#define GCM_FOREIGN_TO_V2(v) ((v2){.foreign = v})
+#endif
+
+#ifdef GCM_FOREIGN_V3_TYPE
+#define GCM_FOREIGN_TO_V3(v) ((v3){.foreign = v})
+#endif
+
+#ifdef GCM_FOREIGN_V4_TYPE
+#define GCM_FOREIGN_TO_V4(v) ((v4){.foreign = v})
+#endif
+
+#ifdef GCM_FOREIGN_MAT3_TYPE
+#define GCM_FOREIGN_TO_MAT3(v) ((mat3){.foreign = v})
+#endif
+
+#ifdef GCM_FOREIGN_MAT4_TYPE
+#define GCM_FOREIGN_TO_MAT4(v) ((mat4){.foreign = v})
+#endif
 
 #include <stdalign.h>
 #include <stdint.h>
@@ -33,6 +73,10 @@ typedef union v2i {
 		int32_t u, v;
 	};
 	int32_t e[2];
+#ifdef GCM_FOREIGN_V2I_TYPE
+	static_assert(sizeof(GCM_FOREIGN_V2I_TYPE) == 8);
+	GCM_FOREIGN_V2I_TYPE foreign;
+#endif
 } v2i;
 
 typedef union v3i {
@@ -43,6 +87,10 @@ typedef union v3i {
 		int32_t r, g, b;
 	};
 	int32_t e[3];
+#ifdef GCM_FOREIGN_V3I_TYPE
+	static_assert(sizeof(GCM_FOREIGN_V3I_TYPE) == 12);
+	GCM_FOREIGN_V3I_TYPE foreign;
+#endif
 } v3i;
 
 typedef union v4i {
@@ -59,6 +107,10 @@ typedef union v4i {
 		v3i rgb;
 	};
 	int32_t e[4];
+#ifdef GCM_FOREIGN_V4I_TYPE
+	static_assert(sizeof(GCM_FOREIGN_V4I_TYPE) == 16);
+	GCM_FOREIGN_V4I_TYPE foreign;
+#endif
 } v4i;
 
 typedef union v2 {
@@ -69,6 +121,10 @@ typedef union v2 {
 		float u, v;
 	};
 	float e[2];
+#ifdef GCM_FOREIGN_V2_TYPE
+	static_assert(sizeof(GCM_FOREIGN_V2_TYPE) == 8);
+	GCM_FOREIGN_V2_TYPE foreign;
+#endif
 } v2;
 
 typedef union v3 {
@@ -83,6 +139,10 @@ typedef union v3 {
 	};
 	v2 xy;
 	float e[3];
+#ifdef GCM_FOREIGN_V3_TYPE
+	static_assert(sizeof(GCM_FOREIGN_V3_TYPE) == 12);
+	GCM_FOREIGN_V3_TYPE foreign;
+#endif
 } v3;
 
 typedef union v4 {
@@ -96,18 +156,30 @@ typedef union v4 {
 	v3 xyz;
 	v3 rgb;
 	float e[4];
+#ifdef GCM_FOREIGN_V4_TYPE
+	static_assert(sizeof(GCM_FOREIGN_V4_TYPE) == 16);
+	GCM_FOREIGN_V4_TYPE foreign;
+#endif
 } v4;
 
 typedef union mat3 {
 	float e[3][3];
 	float arr[9];
 	v3 col[3]; // column
+#ifdef GCM_FOREIGN_MAT3_TYPE
+	static_assert(sizeof(GCM_FOREIGN_MAT3_TYPE) == 36);
+	GCM_FOREIGN_MAT3_TYPE foreign;
+#endif
 } mat3;
 
 typedef union mat4 {
 	float e[4][4];
 	float arr[16];
 	v4 col[4]; // column
+#ifdef GCM_FOREIGN_MAT4_TYPE
+	static_assert(sizeof(GCM_FOREIGN_MAT4_TYPE) == 64);
+	GCM_FOREIGN_MAT4_TYPE foreign;
+#endif
 } mat4;
 
 #ifndef gcm_bool
@@ -133,6 +205,7 @@ gcm_func v2 v2mod(v2 a, v2 b);
 gcm_func v2 v2mods(v2 a, float b);
 gcm_func v2 v2max(v2 a, v2 b);
 gcm_func v2 v2min(v2 a, v2 b);
+gcm_func v2 v2fma(v2 a, v2 b, v2 c);
 gcm_func gcm_bool v2equals(v2 a, v2 b);
 gcm_func v2 v2sign(v2 value);
 gcm_func v2 v2abs(v2 value);
@@ -164,6 +237,7 @@ gcm_func v3 v3mod(v3 a, v3 b);
 gcm_func v3 v3mods(v3 a, float b);
 gcm_func v3 v3max(v3 a, v3 b);
 gcm_func v3 v3min(v3 a, v3 b);
+gcm_func v3 v3fma(v3 a, v3 b, v3 c);
 gcm_func gcm_bool v3equals(v3 a, v3 b);
 gcm_func v3 v3sign(v3 value);
 gcm_func v3 v3abs(v3 value);
@@ -175,6 +249,7 @@ gcm_func v3 v3ceil(v3 value);
 gcm_func v3 v3round(v3 value);
 gcm_func v3 v3negate(v3 value);
 gcm_func v3 v3normalise(v3 value);
+gcm_func v3 v3orthogonal(v3 value);
 gcm_func float v3normInPlace(v3 *value);
 gcm_func float v3lensq(v3 value);
 gcm_func float v3len(v3 value);
@@ -194,6 +269,7 @@ gcm_func v4 v4mod(v4 a, v4 b);
 gcm_func v4 v4mods(v4 a, float b);
 gcm_func v4 v4max(v4 a, v4 b);
 gcm_func v4 v4min(v4 a, v4 b);
+gcm_func v4 v4fma(v4 a, v4 b, v4 c);
 gcm_func gcm_bool v4equals(v4 a, v4 b);
 gcm_func v4 v4sign(v4 value);
 gcm_func v4 v4abs(v4 value);
@@ -311,6 +387,11 @@ gcm_func float f32sign(float value);
 gcm_func float f32round(float value);
 gcm_func float f32floor(float value);
 gcm_func float f32ceil(float value);
+gcm_func float f32fma(float a, float b, float c);
+gcm_func int8_t f32toi8(float value);
+gcm_func int16_t f32toi16(float value);
+gcm_func int32_t f32toi32(float value);
+gcm_func int64_t f32toi64(float value);
 
 gcm_func double f64cos(double value);
 gcm_func double f64sin(double value);
@@ -329,6 +410,11 @@ gcm_func double f64sign(double value);
 gcm_func double f64round(double value);
 gcm_func double f64floor(double value);
 gcm_func double f64ceil(double value);
+gcm_func double f64fma(double a, double b, double c);
+gcm_func int8_t f64toi8(double value);
+gcm_func int16_t f64toi16(double value);
+gcm_func int32_t f64toi32(double value);
+gcm_func int64_t f64toi64(double value);
 
 gcm_func float f32lerp(float a, float b, float t);
 gcm_func void AnglesToVectors(v3 angles, v3 *forwards, v3 *right, v3 *up);
@@ -441,6 +527,11 @@ gcm_func v2 v2max(v2 a, v2 b) {
 
 gcm_func v2 v2min(v2 a, v2 b) {
 	v2 result = {GCM_MIN(a.x, b.x), GCM_MIN(a.y, b.y)};
+	return result;
+}
+
+gcm_func v2 v2fma(v2 a, v2 b, v2 c) {
+	v2 result = {f32fma(a.x, b.x, c.x), f32fma(a.y, b.y, c.y)};
 	return result;
 }
 
@@ -600,6 +691,11 @@ gcm_func v3 v3min(v3 a, v3 b) {
 	return result;
 }
 
+gcm_func v3 v3fma(v3 a, v3 b, v3 c) {
+	v3 result = {f32fma(a.x, b.x, c.x), f32fma(a.y, b.y, c.y), f32fma(a.z, b.z, c.z)};
+	return result;
+}
+
 gcm_func gcm_bool v3equals(v3 a, v3 b) {
 	gcm_bool result = (a.x == b.x && a.y == b.y && a.z == b.z);
 	return result;
@@ -664,6 +760,36 @@ gcm_func v3 v3normalise(v3 value) {
 		length = 1.0f / length;
 	}
 	v3 result = v3muls(value, length);
+	return result;
+}
+
+gcm_func v3 v3orthogonal(v3 value)
+{
+	v3 result = {};
+	
+	if (!(value.x == 0 && value.y == 0 && value.z == 0))
+	{
+		v3 temp = {};
+		
+		// TODO: make faster?
+		v3 absolute = v3abs(value);
+		
+		if (absolute.x < absolute.y)
+		{
+			temp.x = 1.0;
+		}
+		else if (absolute.y < absolute.z)
+		{
+			temp.y = 1.0;
+		}
+		else
+		{
+			temp.z = 1.0;
+		}
+		
+		result = v3cross(value, temp);
+	}
+	
 	return result;
 }
 
@@ -760,6 +886,11 @@ gcm_func v4 v4max(v4 a, v4 b) {
 
 gcm_func v4 v4min(v4 a, v4 b) {
 	v4 result = {GCM_MIN(a.x, b.x), GCM_MIN(a.y, b.y), GCM_MIN(a.z, b.z), GCM_MIN(a.w, b.w)};
+	return result;
+}
+
+gcm_func v4 v4fma(v4 a, v4 b, v4 c) {
+	v4 result = {f32fma(a.x, b.x, c.x), f32fma(a.y, b.y, c.y), f32fma(a.z, b.z, c.z), f32fma(a.w, b.w, c.w)};
 	return result;
 }
 
@@ -1372,6 +1503,60 @@ gcm_func float f32ceil(float value)
 	return result;
 }
 
+gcm_func float f32fma(float a, float b, float c)
+{
+	float result = fmaf(a, b, c);
+	return result;
+}
+
+gcm_func int8_t f32toi8(float value) {
+	int8_t result;
+	if (value > (float)INT8_MAX) {
+		result = INT8_MAX;
+	} else if (value < (float)INT8_MIN) {
+		result = INT8_MIN;
+	} else {
+		result = (int8_t)value;
+	}
+	return result;
+}
+
+gcm_func int16_t f32toi16(float value) {
+	int16_t result;
+	if (value > (float)INT16_MAX) {
+		result = INT16_MAX;
+	} else if (value < (float)INT16_MIN) {
+		result = INT16_MIN;
+	} else {
+		result = (int16_t)value;
+	}
+	return result;
+}
+
+gcm_func int32_t f32toi32(float value) {
+	int32_t result;
+	if (value > (float)INT32_MAX) {
+		result = INT32_MAX;
+	} else if (value < (float)INT32_MIN) {
+		result = INT32_MIN;
+	} else {
+		result = (int32_t)value;
+	}
+	return result;
+}
+
+gcm_func int64_t f32toi64(float value) {
+	int64_t result;
+	if (value > (float)INT64_MAX) {
+		result = INT64_MAX;
+	} else if (value < (float)INT64_MIN) {
+		result = INT64_MIN;
+	} else {
+		result = (int64_t)value;
+	}
+	return result;
+}
+
 
 
 gcm_func double f64cos(double value)
@@ -1481,6 +1666,60 @@ gcm_func double f64floor(double value)
 gcm_func double f64ceil(double value)
 {
 	double result = ceil(value);
+	return result;
+}
+
+gcm_func double f64fma(double a, double b, double c)
+{
+	double result = fmaf(a, b, c);
+	return result;
+}
+
+gcm_func int8_t f64toi8(double value) {
+	int8_t result;
+	if (value > (double)INT8_MAX) {
+		result = INT8_MAX;
+	} else if (value < (double)INT8_MIN) {
+		result = INT8_MIN;
+	} else {
+		result = (int8_t)value;
+	}
+	return result;
+}
+
+gcm_func int16_t f64toi16(double value) {
+	int16_t result;
+	if (value > (double)INT16_MAX) {
+		result = INT16_MAX;
+	} else if (value < (double)INT16_MIN) {
+		result = INT16_MIN;
+	} else {
+		result = (int16_t)value;
+	}
+	return result;
+}
+
+gcm_func int32_t f64toi32(double value) {
+	int32_t result;
+	if (value > (double)INT32_MAX) {
+		result = INT32_MAX;
+	} else if (value < (double)INT32_MIN) {
+		result = INT32_MIN;
+	} else {
+		result = (int32_t)value;
+	}
+	return result;
+}
+
+gcm_func int64_t f64toi64(double value) {
+	int64_t result;
+	if (value > (double)INT64_MAX) {
+		result = INT64_MAX;
+	} else if (value < (double)INT64_MIN) {
+		result = INT64_MIN;
+	} else {
+		result = (int64_t)value;
+	}
 	return result;
 }
 

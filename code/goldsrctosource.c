@@ -17,6 +17,9 @@
 #define GC_MATHS_IMPLEMENTATION
 #include "gc_maths.h"
 
+#define GC_MEMORY_IMPLEMENTATION
+#include "gc_memory.h"
+
 #ifdef DEBUG_GRAPHICS
 #ifdef GC_DEBUG
 #define SOKOL_DEBUG
@@ -31,7 +34,6 @@
 #endif // DEBUG_GRAPHICS
 
 #include "gc_common.h"
-#include "memory.h"
 #include "platform.h"
 #include "str.h"
 
@@ -39,7 +41,6 @@
 #define STRINGMAP_NAME Int
 #include "gc_stringmap_generator.h"
 
-#include "memory.c"
 #include "printing.c"
 #define dmx_serialise
 #define dmx_name_override(name)
